@@ -18,7 +18,42 @@
 *.zip
 *.tar.gz
 *.rar
+*.diff
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Build directories
+target/
+bin/
+build/
+
+# IDE specific files
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+nbproject/
+nb-configuration.xml
+
+# OS specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Maven specific
+.mvn/
+mvnw
+mvnw.cmd
+
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
