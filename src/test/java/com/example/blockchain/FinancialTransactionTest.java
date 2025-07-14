@@ -1,36 +1,43 @@
 package com.example.blockchain;
 
 import com.example.blockchain.transactions.FinancialTransaction;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class FinancialTransactionTest extends TestCase {
+public class FinancialTransactionTest {
 
-    public void testIsValidTrue() {
+    @Test
+    void testIsValidTrue() {
         FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 10.0);
         assertTrue(tx.isValid());
     }
 
-    public void testIsValidNullSender() {
+    @Test
+    void testIsValidNullSender() {
         FinancialTransaction tx = new FinancialTransaction(null, "Bob", 10.0);
         assertFalse(tx.isValid());
     }
 
-    public void testIsValidNullReceiver() {
+    @Test
+    void testIsValidNullReceiver() {
         FinancialTransaction tx = new FinancialTransaction("Alice", null, 10.0);
         assertFalse(tx.isValid());
     }
 
-    public void testIsValidZeroAmount() {
+    @Test
+    void testIsValidZeroAmount() {
         FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 0.0);
         assertFalse(tx.isValid());
     }
 
-    public void testIsValidNegativeAmount() {
+    @Test
+    void testIsValidNegativeAmount() {
         FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", -5.0);
         assertFalse(tx.isValid());
     }
 
-    public void testGetSummary() {
+    @Test
+    void testGetSummary() {
         FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 25.5);
         assertEquals("Alice -> Bob : $25.5", tx.getSummary());
     }

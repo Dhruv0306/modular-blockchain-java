@@ -3,37 +3,44 @@ package com.example.blockchain;
 import com.example.blockchain.blockchain.Block;
 import com.example.blockchain.blockchain.Transaction;
 import com.example.blockchain.consensus.ProofOfWork;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ProofOfWorkTest extends TestCase {
+public class ProofOfWorkTest {
 
     private ProofOfWork<MockTransaction> pow;
     private Block<MockTransaction> genesisBlock;
 
-    protected void setUp() {
+    @BeforeEach
+    void setUp() {
         pow = new ProofOfWork<>();
         genesisBlock = new Block<>(0, "0", System.currentTimeMillis(), new ArrayList<>(), 0, "0000genesis");
     }
 
-    public void testValidateBlockValid() {
+    @Test
+    void testValidateBlockValid() {
         List<MockTransaction> txs = new ArrayList<>();
         Block<MockTransaction> validBlock = pow.generateBlock(txs, genesisBlock);
         assertTrue(pow.validateBlock(validBlock, genesisBlock));
     }
 
-    public void testValidateBlockInvalidPreviousHash() {
+    @Test
+    void testValidateBlockInvalidPreviousHash() {
         Block<MockTransaction> invalidBlock = new Block<>(1, "wrong", System.currentTimeMillis(), new ArrayList<>(), 0, "0000hash");
         assertFalse(pow.validateBlock(invalidBlock, genesisBlock));
     }
 
-    public void testValidateBlockInvalidHash() {
+    @Test
+    void testValidateBlockInvalidHash() {
         Block<MockTransaction> invalidBlock = new Block<>(1, genesisBlock.getHash(), System.currentTimeMillis(), new ArrayList<>(), 0, "wronghash");
         assertFalse(pow.validateBlock(invalidBlock, genesisBlock));
     }
 
-    public void testGenerateBlock() {
+    @Test
+    void testGenerateBlock() {
         List<MockTransaction> txs = new ArrayList<>();
         txs.add(new MockTransaction(true));
         Block<MockTransaction> newBlock = pow.generateBlock(txs, genesisBlock);

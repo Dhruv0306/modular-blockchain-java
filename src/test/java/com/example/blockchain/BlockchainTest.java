@@ -3,31 +3,37 @@ package com.example.blockchain;
 import com.example.blockchain.blockchain.Block;
 import com.example.blockchain.blockchain.Blockchain;
 import com.example.blockchain.blockchain.Transaction;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class BlockchainTest extends TestCase {
+public class BlockchainTest {
 
     private Blockchain<MockTransaction> blockchain;
 
-    protected void setUp() {
+    @BeforeEach
+    void setUp() {
         blockchain = new Blockchain<>();
     }
 
-    public void testAddValidTransaction() {
+    @Test
+    void testAddValidTransaction() {
         MockTransaction validTx = new MockTransaction(true);
         blockchain.addTransaction(validTx);
         assertEquals(1, blockchain.getPendingTransactions().size());
         assertTrue(blockchain.getPendingTransactions().contains(validTx));
     }
 
-    public void testAddInvalidTransaction() {
+    @Test
+    void testAddInvalidTransaction() {
         MockTransaction invalidTx = new MockTransaction(false);
         blockchain.addTransaction(invalidTx);
         assertEquals(0, blockchain.getPendingTransactions().size());
     }
 
-    public void testAddMultipleValidTransactions() {
+    @Test
+    void testAddMultipleValidTransactions() {
         MockTransaction tx1 = new MockTransaction(true);
         MockTransaction tx2 = new MockTransaction(true);
         blockchain.addTransaction(tx1);
@@ -35,7 +41,8 @@ public class BlockchainTest extends TestCase {
         assertEquals(2, blockchain.getPendingTransactions().size());
     }
 
-    public void testAddMixedTransactions() {
+    @Test
+    void testAddMixedTransactions() {
         MockTransaction validTx = new MockTransaction(true);
         MockTransaction invalidTx = new MockTransaction(false);
         blockchain.addTransaction(validTx);
@@ -44,20 +51,23 @@ public class BlockchainTest extends TestCase {
         assertTrue(blockchain.getPendingTransactions().contains(validTx));
     }
 
-    public void testGetPendingTransactions() {
+    @Test
+    void testGetPendingTransactions() {
         MockTransaction tx = new MockTransaction(true);
         blockchain.addTransaction(tx);
         assertEquals(1, blockchain.getPendingTransactions().size());
         assertEquals(tx, blockchain.getPendingTransactions().get(0));
     }
 
-    public void testGetLastBlock() {
+    @Test
+    void testGetLastBlock() {
         Block<MockTransaction> lastBlock = blockchain.getLastBlock();
         assertEquals("GENESIS_HASH", lastBlock.getHash());
         assertEquals(0, lastBlock.getIndex());
     }
 
-    public void testAddBlock() {
+    @Test
+    void testAddBlock() {
         MockTransaction tx = new MockTransaction(true);
         blockchain.addTransaction(tx);
         assertEquals(1, blockchain.getPendingTransactions().size());
@@ -70,7 +80,8 @@ public class BlockchainTest extends TestCase {
         assertEquals(newBlock, blockchain.getLastBlock());
     }
 
-    public void testGetChain() {
+    @Test
+    void testGetChain() {
         assertEquals(1, blockchain.getChain().size());
         assertEquals("GENESIS_HASH", blockchain.getChain().get(0).getHash());
     }
