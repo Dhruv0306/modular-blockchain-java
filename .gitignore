@@ -57,3 +57,7 @@ mvnw.cmd
 *.bak
 *.swp
 *.swo
+
+# Logging
+logs/
+*.log.*
