@@ -111,9 +111,9 @@ public class BlockchainTest {
     }
 
     @Test
-    void testIsValidChainWithValidChain() {
+    void testisChainValidWithValidChain() {
         // A blockchain with just the genesis block should be valid
-        assertTrue(blockchain.isValidChain());
+        assertTrue(blockchain.isChainValid());
 
         // Add a new valid block
         List<MockTransaction> txs = new ArrayList<>();
@@ -122,11 +122,11 @@ public class BlockchainTest {
         blockchain.addBlock(validBlock);
 
         // Chain should still be valid
-        assertTrue(blockchain.isValidChain());
+        assertTrue(blockchain.isChainValid());
     }
 
     @Test
-    void testIsValidChainWithTamperedBlock() {
+    void testisChainValidWithTamperedBlock() {
         // Create a valid chain with two blocks
         List<MockTransaction> txs = new ArrayList<>();
         txs.add(new MockTransaction(true));
@@ -134,7 +134,7 @@ public class BlockchainTest {
         blockchain.addBlock(validBlock);
 
         // Chain should be valid
-        assertTrue(blockchain.isValidChain());
+        assertTrue(blockchain.isChainValid());
 
         // Now tamper with the transaction in the second block
         List<Block<MockTransaction>> chain = blockchain.getChain();
@@ -156,11 +156,11 @@ public class BlockchainTest {
         chain.set(1, tamperedBlock);
 
         // Chain should now be invalid
-        assertFalse(blockchain.isValidChain());
+        assertFalse(blockchain.isChainValid());
     }
 
     @Test
-    void testIsValidChainWithNonSequentialIndex() {
+    void testisChainValidWithNonSequentialIndex() {
         // Create a blockchain with a mock consensus that always validates blocks
         Consensus<MockTransaction> mockConsensus = new Consensus<MockTransaction>() {
             @Override
@@ -192,11 +192,11 @@ public class BlockchainTest {
         testBlockchain.addBlock(nonSequentialBlock);
 
         // Chain should be invalid due to non-sequential index
-        assertFalse(testBlockchain.isValidChain());
+        assertFalse(testBlockchain.isChainValid());
     }
 
     @Test
-    void testIsValidChainWithInvalidPreviousHash() {
+    void testisChainValidWithInvalidPreviousHash() {
         // Create a block with invalid previous hash
         List<MockTransaction> txs = new ArrayList<>();
         Block<MockTransaction> invalidBlock = new Block<>(
@@ -211,7 +211,7 @@ public class BlockchainTest {
         blockchain.addBlock(invalidBlock);
 
         // Chain should be invalid due to incorrect previous hash
-        assertFalse(blockchain.isValidChain());
+        assertFalse(blockchain.isChainValid());
     }
 
     private static class MockTransaction implements Transaction {

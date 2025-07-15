@@ -31,7 +31,7 @@ class BlockchainIntegrationTest {
         assertEquals(0, blockchain.getChain().get(0).getIndex());
 
         // Chain with just genesis block should be valid
-        assertTrue(blockchain.isValidChain(), "Genesis block chain should be valid");
+        assertTrue(blockchain.isChainValid(), "Genesis block chain should be valid");
 
         // Add transactions
         blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
@@ -76,7 +76,7 @@ class BlockchainIntegrationTest {
         assertEquals("0", genesis.getPreviousHash());
 
         // Chain with just custom genesis block should be valid
-        assertTrue(blockchain.isValidChain(), "Custom genesis blockchain should be valid");
+        assertTrue(blockchain.isChainValid(), "Custom genesis blockchain should be valid");
 
         // Add and mine new transactions
         blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
@@ -146,7 +146,7 @@ class BlockchainIntegrationTest {
         Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
 
         // Chain with just genesis block should be valid
-        assertTrue(blockchain.isValidChain(), "Genesis blockchain should be valid");
+        assertTrue(blockchain.isChainValid(), "Genesis blockchain should be valid");
 
         // Create an invalid block with a non-sequential index (skip from 0 to 2)
         List<FinancialTransaction> txs = new ArrayList<>();
@@ -168,7 +168,7 @@ class BlockchainIntegrationTest {
         blockchain.addBlock(nonSequentialBlock);
 
         // Chain validation should fail due to non-sequential index
-        assertFalse(blockchain.isValidChain(), "Chain should be invalid with non-sequential indices");
+        assertFalse(blockchain.isChainValid(), "Chain should be invalid with non-sequential indices");
     }
 
     /**
@@ -207,6 +207,6 @@ class BlockchainIntegrationTest {
         blockchain.addBlock(invalidPrevHashBlock);
 
         // Chain validation should fail due to incorrect previous hash
-        assertFalse(blockchain.isValidChain(), "Chain should be invalid with incorrect previous hash");
+        assertFalse(blockchain.isChainValid(), "Chain should be invalid with incorrect previous hash");
     }
 }
