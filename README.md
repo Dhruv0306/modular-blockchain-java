@@ -56,6 +56,29 @@ This project is designed for developers, researchers, and educators who want to 
 
 ---
 
+## 🔐 Digital Signatures & Chain Validation
+
+The blockchain now supports **transaction-level digital signatures** using RSA.
+
+### Key Enhancements
+
+- **SignedTransaction Interface**  
+  Introduced `SignedTransaction` to define contracts for verifiable transactions.
+
+- **SignedFinancialTransaction**  
+  A concrete class implementing signature verification for financial transfers.
+
+- **CryptoUtils**  
+  Utility for RSA keypair generation, signing, and verifying messages.
+
+- **Chain Validation**  
+  `isChainValid()` now ensures:
+  - All blocks are sequential
+  - All hashes match computed ones
+  - All signed transactions are verified
+
+---
+
 ## 🏗️ Architecture Overview
 
 ```mermaid
@@ -208,15 +231,34 @@ mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 
 4. Or use the convenience script:
 
+**For Linux/Mac**
 ```bash
 # Make the script executable
 chmod +x run-blockchain.sh
+
+# Run with default settings
+./run-blockchain.sh
 
 # Run with development environment
 ./run-blockchain.sh --env dev
 
 # Run with production environment but debug logging
 ./run-blockchain.sh --env prod --log DEBUG
+```
+
+**For Windows**
+```bash
+#Run with default settings
+run-blockchain.bat # CMD
+.\run-blockchain.bat # PowerShell
+
+# Run with development environment
+run-blockchain.bat --env dev
+.\run-blockchain.bat --env dev # PowerShell
+
+# Run with production environment but debug logging
+run-blockchain.bat --env prod --log DEBUG
+.\run-blockchain.bat --env prod --log DEBUG # PowerShell
 ```
 
 ---
@@ -229,6 +271,11 @@ chmod +x run-blockchain.sh
 | `com.example.blockchain.consensus`     | Interfaces and algorithms for consensus |
 | `com.example.blockchain.transactions`  | Your custom transaction types           |
 | `com.example.blockchain.Main`          | Demo runner showing how it all works    |
+
+## 🔧 Utility Classes
+
+- `BlockUtils`: Encapsulates hash computation logic for blocks.
+- `CryptoUtils`: Provides methods for RSA keypair generation, signing, and signature verification.
 
 ## ⚙️ Configuration
 
@@ -381,9 +428,11 @@ This allows for scenarios like:
 
 The project includes comprehensive unit tests built with JUnit 5:
 
-- `BlockchainTest`: Tests the core blockchain functionality
-- `FinancialTransactionTest`: Tests the transaction implementation
-- `ProofOfWorkTest`: Tests the consensus algorithm
+- `BlockchainTest`: Validates basic chain logic.
+- `BlockUtilsTest`: Ensures consistent hash computation logic.
+- `CryptoUtilsTest`: Verifies RSA key pair generation and digital signature functions.
+- `SignedFinancialTransactionTest`: Confirms signature-based transaction validity.
+- `BlockchainIntegrationTest`: Covers end-to-end scenarios including invalid chains.
 
 Run the tests with:
 
@@ -396,6 +445,19 @@ Generate test coverage reports with:
 ```bash
 mvn verify
 ```
+
+You can also run individual tests like:
+
+```bash
+mvn test -Dtest=CryptoUtilsTest
+```
+
+Or target a specific method:
+
+```bash
+mvn test -Dtest=SignedFinancialTransactionTest#testValidSignedTransaction
+```
+
 
 ---
 
@@ -423,6 +485,8 @@ mvn verify
 
 Want to add a new consensus algorithm? Support SQLite or JSON file storage? Submit a pull request!  
 This project is open to educational and experimental contributions.
+
+> 📘 For guidelines on writing and running tests, see [`docs/TestGuide.md`](docs/TestGuide.md)
 
 ---
 
