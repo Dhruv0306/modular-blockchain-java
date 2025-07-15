@@ -1,6 +1,7 @@
 package com.example.blockchain;
 
 import com.example.blockchain.blockchain.Block;
+import com.example.blockchain.blockchain.BlockUtils;
 import com.example.blockchain.blockchain.Transaction;
 import com.example.blockchain.consensus.ProofOfWork;
 import java.lang.reflect.Method;
@@ -122,7 +123,7 @@ public class ProofOfWorkTest {
         int nonce = 123;
 
         // Use reflection to compute the correct hash
-        Method computeHashMethod = ProofOfWork.class.getDeclaredMethod("computeHash", int.class, String.class,
+        Method computeHashMethod = BlockUtils.class.getDeclaredMethod("computeHash", int.class, String.class,
                 long.class, List.class, int.class);
         computeHashMethod.setAccessible(true);
         String correctHash = (String) computeHashMethod.invoke(pow, index, prevHash, timestamp, txs, nonce);
@@ -144,7 +145,7 @@ public class ProofOfWorkTest {
 
     @Test
     void testComputeHashWithNullTransactions() throws Exception {
-        Method computeHashMethod = ProofOfWork.class.getDeclaredMethod("computeHash", int.class, String.class,
+        Method computeHashMethod = BlockUtils.class.getDeclaredMethod("computeHash", int.class, String.class,
                 long.class, List.class, int.class);
         computeHashMethod.setAccessible(true);
         String hash = (String) computeHashMethod.invoke(pow, 1, "prevHash", 123L, null, 0);
