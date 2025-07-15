@@ -4,8 +4,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import org.slf4j.Logger;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 
 public class BlockchainConfig {
+    private static final Logger logger = BlockchainLoggerFactory.getLogger(BlockchainConfig.class);
+    
     // Default values - used if no config file is found
     private static final int DEFAULT_DIFFICULTY = 4;
     private static final String DEFAULT_GENESIS_HASH = "GENESIS_HASH";
@@ -20,6 +24,7 @@ public class BlockchainConfig {
     private int difficulty;
     private String genesisHash;
     private String configFile;
+    private String logLevel;
     
     // Private constructor for singleton pattern
     private BlockchainConfig() {
@@ -59,16 +64,16 @@ public class BlockchainConfig {
         try (InputStream input = new FileInputStream(configFile)) {
             properties.load(input);
             configLoaded = true;
-            System.out.println("Loaded configuration from: " + configFile);
+            logger.info("Loaded configuration from: {}", configFile);
         } catch (IOException ex) {
-            System.out.println("Config file not found: " + configFile + ". Using default or environment values.");
+            logger.warn("Config file not found: {}. Using default or environment values.", configFile);
         }
         
         // Load difficulty
         String difficultyStr = System.getenv("BLOCKCHAIN_DIFFICULTY");
         if (difficultyStr != null && !difficultyStr.isEmpty()) {
             difficulty = Integer.parseInt(difficultyStr);
-            System.out.println("Using environment difficulty: " + difficulty);
+            logger.info("Using environment difficulty: {}", difficulty);
         } else if (configLoaded) {
             difficulty = Integer.parseInt(properties.getProperty("difficulty", String.valueOf(DEFAULT_DIFFICULTY)));
         } else {
@@ -79,12 +84,15 @@ public class BlockchainConfig {
         String genesisHashEnv = System.getenv("BLOCKCHAIN_GENESIS_HASH");
         if (genesisHashEnv != null && !genesisHashEnv.isEmpty()) {
             genesisHash = genesisHashEnv;
-            System.out.println("Using environment genesis hash: " + genesisHash);
+            logger.info("Using environment genesis hash: {}", genesisHash);
         } else if (configLoaded) {
             genesisHash = properties.getProperty("genesis_hash", DEFAULT_GENESIS_HASH);
         } else {
             genesisHash = DEFAULT_GENESIS_HASH;
         }
+
+        // Load log level
+        logLevel = properties.getProperty("log_level", "INFO");
     }
     
     // Getters for config values
@@ -94,6 +102,10 @@ public class BlockchainConfig {
     
     public String getGenesisHash() {
         return genesisHash;
+    }
+
+    public String getLogLevel() {
+        return logLevel;
     }
     
     // Method to reload config (useful for testing or runtime changes)

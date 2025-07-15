@@ -7,6 +7,10 @@ import com.example.blockchain.blockchain.CustomGenesisBlockFactory;
 import com.example.blockchain.consensus.Consensus;
 import com.example.blockchain.consensus.ProofOfWork;
 import com.example.blockchain.transactions.FinancialTransaction;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
+import com.example.blockchain.logging.LoggingUtils;
+
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +25,8 @@ import java.util.List;
  * 4. Adding and mining new blocks with transactions
  */
 public class Main {
+    private static final Logger logger = BlockchainLoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
         // Load the appropriate config based on environment or command line argument
         String configFile = "blockchain.properties"; // default
@@ -39,21 +45,25 @@ public class Main {
         // Initialize config with the appropriate file
         BlockchainConfig config = BlockchainConfig.getInstance(configFile);
         
+        // Configure logging based on blockchain configuration
+        LoggingUtils.configureLoggingFromConfig();
+        
         // Output the current configuration
-        System.out.println("Using configuration:");
-        System.out.println("- Difficulty: " + config.getDifficulty());
-        System.out.println("- Genesis hash: " + config.getGenesisHash());
-        System.out.println();
+        logger.info("Using configuration:");
+        logger.info("- Difficulty: " + config.getDifficulty());
+        logger.info("- Genesis hash: " + config.getGenesisHash());
+        logger.info("- Log level: " + config.getLogLevel());
+        logger.info("");
         
         // EXAMPLE 1: Default blockchain with automatic genesis block
-        System.out.println("Example 1: Default blockchain with automatic genesis block");
+        logger.info("Example 1: Default blockchain with automatic genesis block");
         Blockchain<FinancialTransaction> defaultBlockchain = new Blockchain<>();
         runBlockchainExample(defaultBlockchain, config);
         
-        System.out.println("\n" + "=".repeat(50) + "\n");
+        logger.info("\n" + "=".repeat(50) + "\n");
         
         // EXAMPLE 2: Blockchain with custom genesis block containing initial transactions
-        System.out.println("Example 2: Blockchain with custom genesis block");
+        logger.info("Example 2: Blockchain with custom genesis block");
         
         // Create initial genesis transactions
         List<FinancialTransaction> genesisTransactions = new ArrayList<>();
@@ -84,18 +94,18 @@ public class Main {
         Consensus<FinancialTransaction> consensus = new ProofOfWork<>();
 
         // Show the genesis block first
-        System.out.println("\nGenesis block:");
+        logger.info("\nGenesis block:");
         Block<FinancialTransaction> genesisBlock = blockchain.getChain().get(0);
-        System.out.println("Block #" + genesisBlock.getIndex() + " | Hash: " + genesisBlock.getHash());
+        logger.info("Block #" + genesisBlock.getIndex() + " | Hash: " + genesisBlock.getHash());
         for (FinancialTransaction tx : genesisBlock.getTransactions()) {
-            System.out.println("  - " + tx);
+            logger.info("  - " + tx);
         }
         
         // Add regular transactions
         blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
         blockchain.addTransaction(new FinancialTransaction("Charlie", "Dave", 75));
 
-        System.out.println("\nMining block... (difficulty=" + config.getDifficulty() + ")");
+        logger.info("\nMining block... (difficulty=" + config.getDifficulty() + ")");
         long startTime = System.currentTimeMillis();
         
         Block<FinancialTransaction> newBlock = consensus.generateBlock(
@@ -104,18 +114,18 @@ public class Main {
         );
         
         long endTime = System.currentTimeMillis();
-        System.out.println("Block mined in " + (endTime - startTime) + "ms");
+        logger.info("Block mined in " + (endTime - startTime) + "ms");
 
         if (consensus.validateBlock(newBlock, blockchain.getLastBlock())) {
             blockchain.addBlock(newBlock);
-            System.out.println("✅ Block added to chain");
+            logger.info("✅ Block added to chain");
         }
 
-        System.out.println("\nFinal blockchain state:");
+        logger.info("\nFinal blockchain state:");
         for (Block<FinancialTransaction> block : blockchain.getChain()) {
-            System.out.println("Block #" + block.getIndex() + " | Hash: " + block.getHash());
+            logger.info("Block #" + block.getIndex() + " | Hash: " + block.getHash());
             for (FinancialTransaction tx : block.getTransactions()) {
-                System.out.println("  - " + tx);
+                logger.info("  - " + tx);
             }
         }
     }

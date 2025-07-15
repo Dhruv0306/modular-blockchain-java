@@ -51,6 +51,7 @@ This project is designed for developers, researchers, and educators who want to 
 | 🔐 SHA-256 Hashing          | Secure hashing mechanism for PoW/validation                                  |
 | ⚙️ Environment-based Config | Customize difficulty and other parameters per environment                    |
 | 🧿 Customizable Genesis     | Define your own genesis block with custom transactions and metadata          |
+| 📝 Structured Logging       | SLF4J logging with environment-specific configurations                       |
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
 
 ---
@@ -142,6 +143,19 @@ set BLOCKCHAIN_ENV=dev
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 ```
 
+4. Or use the convenience script:
+
+```bash
+# Make the script executable
+chmod +x run-blockchain.sh
+
+# Run with development environment
+./run-blockchain.sh --env dev
+
+# Run with production environment but debug logging
+./run-blockchain.sh --env prod --log DEBUG
+```
+
 ---
 
 ## 📦 Key Packages
@@ -168,6 +182,7 @@ The blockchain uses a modular configuration system that allows for different set
 |---------------|--------------------------------------------------|-------------|
 | `difficulty`   | Number of leading zeros required for PoW hashing | 4           |
 | `genesis_hash` | Hash value used for the genesis block            | GENESIS_HASH |
+| `log_level`    | Logging level (TRACE, DEBUG, INFO, WARN, ERROR)  | INFO        |
 
 ### Usage in Code
 
@@ -182,6 +197,42 @@ String genesisHash = config.getGenesisHash();
 // Load a different configuration at runtime
 config.setConfigFile("blockchain-dev.properties");
 config.reloadConfig();
+```
+
+---
+
+## 📝 Logging
+
+The blockchain framework uses SLF4J with Logback for flexible and powerful logging:
+
+- **Centralized Configuration**: Environment-specific logging settings
+- **Multiple Log Levels**: TRACE, DEBUG, INFO, WARN, ERROR
+- **File & Console Output**: Logs are written to both console and files
+- **Configurable via Properties**: Change log levels without code modification
+
+### Log Files
+
+- `logs/blockchain.log`: Main log file (rotated daily)
+- `logs/blockchain-dev.log`: Development environment logs (when using dev config)
+- `logs/blockchain-prod.log`: Production environment logs (when using prod config)
+- `logs/blockchain-error.log`: Error-specific logs (production only)
+
+### Customizing Logs
+
+You can configure logging behavior through:
+
+1. **Configuration files**: Set the `log_level` property in blockchain.properties
+2. **Environment-specific configs**: Use different logging profiles for dev/prod
+3. **Runtime adjustment**: Use `LoggingUtils.setLogLevel()` to change log levels dynamically
+
+Example of dynamically changing log levels:
+
+```java
+// Set blockchain package to DEBUG
+LoggingUtils.setBlockchainLogLevel("DEBUG");
+
+// Set a specific class to TRACE
+LoggingUtils.setLogLevel("com.example.blockchain.consensus.ProofOfWork", "TRACE");
 ```
 
 ---
