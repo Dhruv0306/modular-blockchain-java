@@ -8,7 +8,7 @@ import org.slf4j.Logger;
  * switching of logging backends without changing client code.
  */
 public class BlockchainLoggerFactory {
-    
+
     /**
      * Get a logger for the specified class.
      *
@@ -18,7 +18,7 @@ public class BlockchainLoggerFactory {
     public static Logger getLogger(Class<?> clazz) {
         return org.slf4j.LoggerFactory.getLogger(clazz);
     }
-    
+
     /**
      * Get a logger with the specified name.
      *

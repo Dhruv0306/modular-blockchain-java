@@ -58,18 +58,81 @@ This project is designed for developers, researchers, and educators who want to 
 
 ## 🏗️ Architecture Overview
 
-```text
-Blockchain<T extends Transaction>
-├── List<Block<T>> chain
-├── List<T> pendingTransactions
-├── Consensus<T> consensusPlugin
-└── GenesisBlockFactory<T> genesisBlockFactory
+```mermaid
+%%{init: {"themeVariables": { "fontFamily": "Roboto, sans-serif", "fontSize" : "17px" }}}%%
+classDiagram
+    class Transaction {
+        <<interface>>
+        +isValid() boolean
+        +getSender() String
+        +getReceiver() String
+        +getSummary() String
+    }
+    
+    class Block~T~ {
+        -index int
+        -timestamp long
+        -transactions List~T~
+        -previousHash String
+        -hash String
+        -nonce long
+    }
+    
+    class Consensus~T~ {
+        <<interface>>
+        +validateBlock(Block~T~, Block~T~) boolean
+        +generateBlock(List~T~, Block~T~) Block~T~
+    }
+    
+    class GenesisBlockFactory~T~ {
+        <<interface>>
+        +createGenesisBlock() Block~T~
+    }
+    
+    class Blockchain~T~ {
+        -chain List~Block~T~~
+        -pendingTransactions List~T~
+        -consensusPlugin Consensus~T~
+        -genesisBlockFactory GenesisBlockFactory~T~
+        +addTransaction(T) void
+        +addBlock(Block~T~) void
+        +isChainValid() boolean
+    }
+    
+    class FinancialTransaction {
+        -sender String
+        -receiver String
+        -amount double
+    }
+    
+    class ProofOfWork {
+        -difficulty int
+        +mineBlock(Block~T~) void
+    }
+    
+    Transaction <|.. FinancialTransaction
+    Consensus~T~ <|.. ProofOfWork
+    Blockchain~T~ *-- Block~T~ : contains
+    Blockchain~T~ --> Consensus~T~ : uses
+    Blockchain~T~ --> GenesisBlockFactory~T~ : uses
+    Block~T~ *-- Transaction : contains
+    
+    %% Individual styling with colors at 60% opacity and bold text
+    style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
+    style Block fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
+    style Transaction fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
+    style Consensus fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
+    style GenesisBlockFactory fill:#F39C1299,stroke:#D68910,stroke-width:2px,color:#000,font-weight:bold
+    style FinancialTransaction fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
+    style ProofOfWork fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
 ```
 
-- `Block<T>` holds a list of user-defined transactions
-- `Transaction` is an interface that you implement
-- `Consensus<T>` defines how blocks are created and validated
-- `GenesisBlockFactory<T>` creates the initial block of the chain
+**Key Relationships:**
+- `Blockchain<T>` orchestrates the entire system
+- `Block<T>` contains transactions and links to previous blocks
+- `Consensus<T>` defines block creation and validation rules
+- `Transaction` interface allows custom transaction types
+- `GenesisBlockFactory<T>` creates the initial block
 
 ---
 

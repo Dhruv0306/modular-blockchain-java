@@ -55,7 +55,7 @@ public class FinancialTransactionTest {
         FinancialTransaction tx3 = new FinancialTransaction("Alice", "Charlie", 10.0);
         FinancialTransaction tx4 = new FinancialTransaction("Charlie", "Bob", 10.0);
         FinancialTransaction tx5 = new FinancialTransaction("Alice", "Bob", 15.0);
-        
+
         assertTrue(tx1.equals(tx1));
         assertTrue(tx1.equals(tx2));
         assertFalse(tx1.equals(tx3)); // different receiver
@@ -69,7 +69,7 @@ public class FinancialTransactionTest {
     void testHashCode() {
         FinancialTransaction tx1 = new FinancialTransaction("Alice", "Bob", 10.0);
         FinancialTransaction tx2 = new FinancialTransaction("Alice", "Bob", 10.0);
-        
+
         assertEquals(tx1.hashCode(), tx2.hashCode());
     }
 }

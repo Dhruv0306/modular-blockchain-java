@@ -9,34 +9,34 @@ import com.example.blockchain.logging.BlockchainLoggerFactory;
 
 public class BlockchainConfig {
     private static final Logger logger = BlockchainLoggerFactory.getLogger(BlockchainConfig.class);
-    
+
     // Default values - used if no config file is found
     private static final int DEFAULT_DIFFICULTY = 4;
     private static final String DEFAULT_GENESIS_HASH = "GENESIS_HASH";
-    
+
     // Config file path
     private static final String DEFAULT_CONFIG_FILE = "blockchain.properties";
-    
+
     // Singleton instance
     private static BlockchainConfig instance;
-    
+
     // Configuration properties
     private int difficulty;
     private String genesisHash;
     private String configFile;
     private String logLevel;
-    
+
     // Private constructor for singleton pattern
     private BlockchainConfig() {
         this(DEFAULT_CONFIG_FILE);
     }
-    
+
     // Private constructor with specific config file
     private BlockchainConfig(String configFile) {
         this.configFile = configFile;
         loadConfig();
     }
-    
+
     // Get singleton instance
     public static synchronized BlockchainConfig getInstance() {
         if (instance == null) {
@@ -44,7 +44,7 @@ public class BlockchainConfig {
         }
         return instance;
     }
-    
+
     // Get or create instance with specific config file
     public static synchronized BlockchainConfig getInstance(String configFile) {
         if (instance == null) {
@@ -54,12 +54,12 @@ public class BlockchainConfig {
         }
         return instance;
     }
-    
+
     // Load configuration from file or environment
     private void loadConfig() {
         Properties properties = new Properties();
         boolean configLoaded = false;
-        
+
         // Try to load from config file
         try (InputStream input = new FileInputStream(configFile)) {
             properties.load(input);
@@ -68,7 +68,7 @@ public class BlockchainConfig {
         } catch (IOException ex) {
             logger.warn("Config file not found: {}. Using default or environment values.", configFile);
         }
-        
+
         // Load difficulty
         String difficultyStr = System.getenv("BLOCKCHAIN_DIFFICULTY");
         if (difficultyStr != null && !difficultyStr.isEmpty()) {
@@ -79,7 +79,7 @@ public class BlockchainConfig {
         } else {
             difficulty = DEFAULT_DIFFICULTY;
         }
-        
+
         // Load genesis hash
         String genesisHashEnv = System.getenv("BLOCKCHAIN_GENESIS_HASH");
         if (genesisHashEnv != null && !genesisHashEnv.isEmpty()) {
@@ -94,12 +94,12 @@ public class BlockchainConfig {
         // Load log level
         logLevel = properties.getProperty("log_level", "INFO");
     }
-    
+
     // Getters for config values
     public int getDifficulty() {
         return difficulty;
     }
-    
+
     public String getGenesisHash() {
         return genesisHash;
     }
@@ -107,15 +107,15 @@ public class BlockchainConfig {
     public String getLogLevel() {
         return logLevel;
     }
-    
+
     // Method to reload config (useful for testing or runtime changes)
     public void reloadConfig() {
         loadConfig();
     }
-    
+
     // Method to switch configuration file at runtime
     public void setConfigFile(String configFile) {
         this.configFile = configFile;
         reloadConfig();
     }
-} 
+}

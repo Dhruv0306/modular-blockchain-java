@@ -32,7 +32,8 @@ class LoggingTest {
     }
 
     /**
-     * Helper method to reset the BlockchainConfig singleton instance using reflection
+     * Helper method to reset the BlockchainConfig singleton instance using
+     * reflection
      */
     private void resetBlockchainConfigSingleton() throws Exception {
         Field instance = BlockchainConfig.class.getDeclaredField("instance");
@@ -46,14 +47,14 @@ class LoggingTest {
     private File createPropertiesFile(String logLevel) throws IOException {
         Path tempDir = Files.createTempDirectory("blockchain-test");
         File configFile = tempDir.resolve(TEST_CONFIG_FILENAME).toFile();
-        
+
         Properties props = new Properties();
         props.setProperty("log_level", logLevel);
-        
+
         try (FileOutputStream outputStream = new FileOutputStream(configFile)) {
             props.store(outputStream, "Test blockchain configuration");
         }
-        
+
         return configFile;
     }
 
@@ -61,7 +62,7 @@ class LoggingTest {
     void testBlockchainLoggerFactoryClassLogger() {
         // Get a logger for a class
         org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(LoggingTest.class);
-        
+
         // Verify the logger was created with the correct name
         assertNotNull(logger);
         assertEquals("com.example.blockchain.LoggingTest", logger.getName());
@@ -72,7 +73,7 @@ class LoggingTest {
         // Get a logger with a custom name
         String customName = "test.custom.logger";
         org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(customName);
-        
+
         // Verify the logger was created with the correct name
         assertNotNull(logger);
         assertEquals(customName, logger.getName());
@@ -81,16 +82,16 @@ class LoggingTest {
     @Test
     void testSetLogLevel() {
         String loggerName = "com.example.test.logger";
-        
+
         // Set log level to DEBUG
         boolean result = LoggingUtils.setLogLevel(loggerName, "DEBUG");
         assertTrue(result, "Setting log level should succeed");
-        
+
         // Verify the log level was set correctly
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger logger = context.getLogger(loggerName);
         assertEquals(Level.DEBUG, logger.getLevel());
-        
+
         // Change to ERROR
         result = LoggingUtils.setLogLevel(loggerName, "ERROR");
         assertTrue(result, "Changing log level should succeed");
@@ -100,11 +101,11 @@ class LoggingTest {
     @Test
     void testSetLogLevelWithInvalidLevel() {
         String loggerName = "com.example.test.invalid";
-        
+
         // Set an invalid log level - should default to INFO
         boolean result = LoggingUtils.setLogLevel(loggerName, "INVALID_LEVEL");
         assertTrue(result, "Setting default log level should succeed");
-        
+
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger logger = context.getLogger(loggerName);
         assertEquals(Level.INFO, logger.getLevel());
@@ -115,7 +116,7 @@ class LoggingTest {
         // Set root log level to WARN
         boolean result = LoggingUtils.setRootLogLevel("WARN");
         assertTrue(result, "Setting root log level should succeed");
-        
+
         // Verify the log level was set correctly
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger rootLogger = context.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
@@ -127,7 +128,7 @@ class LoggingTest {
         // Set blockchain package log level to TRACE
         boolean result = LoggingUtils.setBlockchainLogLevel("TRACE");
         assertTrue(result, "Setting blockchain log level should succeed");
-        
+
         // Verify the log level was set correctly
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger blockchainLogger = context.getLogger("com.example.blockchain");
@@ -138,13 +139,13 @@ class LoggingTest {
     void testConfigureLoggingFromConfig() throws IOException {
         // Create config file with DEBUG log level
         File configFile = createPropertiesFile("DEBUG");
-        
+
         // Set the config file path in BlockchainConfig
         BlockchainConfig config = BlockchainConfig.getInstance(configFile.getAbsolutePath());
-        
+
         // Configure logging from config
         LoggingUtils.configureLoggingFromConfig();
-        
+
         // Verify blockchain log level was set to DEBUG
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger blockchainLogger = context.getLogger("com.example.blockchain");
@@ -162,26 +163,26 @@ class LoggingTest {
     void testConfigureLoggingFromConfigException() {
         // Create a scenario where the method will throw an exception
         // by temporarily breaking the logging system
-        
+
         // Save original logger factory
         org.slf4j.ILoggerFactory originalFactory = LoggerFactory.getILoggerFactory();
-        
+
         try {
             // Replace with a broken factory that will cause issues
             Field factoryField = LoggerFactory.class.getDeclaredField("INITIALIZATION_STATE");
             factoryField.setAccessible(true);
-            
+
             // This should cause the method to fail and trigger catch block
             assertDoesNotThrow(() -> {
                 // Create a config with invalid log level that will cause exception
                 resetBlockchainConfigSingleton();
                 BlockchainConfig config = BlockchainConfig.getInstance();
-                
+
                 // Set an invalid log level using reflection
                 Field logLevelField = BlockchainConfig.class.getDeclaredField("logLevel");
                 logLevelField.setAccessible(true);
                 logLevelField.set(config, "\u0000INVALID\u0000"); // Null characters should cause issues
-                
+
                 LoggingUtils.configureLoggingFromConfig();
             });
         } catch (Exception e) {
@@ -203,4 +204,4 @@ class LoggingTest {
         BlockchainLoggerFactory factory = new BlockchainLoggerFactory();
         assertNotNull(factory);
     }
-} 
+}

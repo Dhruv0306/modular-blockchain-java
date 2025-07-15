@@ -24,7 +24,8 @@ class GenesisBlockFactoryTest {
     }
 
     /**
-     * Helper method to reset the BlockchainConfig singleton instance using reflection
+     * Helper method to reset the BlockchainConfig singleton instance using
+     * reflection
      */
     private void resetBlockchainConfigSingleton() throws Exception {
         Field instance = BlockchainConfig.class.getDeclaredField("instance");
@@ -36,18 +37,18 @@ class GenesisBlockFactoryTest {
     void testDefaultGenesisBlockFactory() {
         // Create a default genesis block factory
         DefaultGenesisBlockFactory<TestTransaction> factory = new DefaultGenesisBlockFactory<>();
-        
+
         // Create a genesis block
         Block<TestTransaction> genesisBlock = factory.createGenesisBlock();
-        
+
         // Verify properties
         assertEquals(0, genesisBlock.getIndex(), "Genesis block should have index 0");
         assertEquals("0", genesisBlock.getPreviousHash(), "Genesis block should have previous hash '0'");
         assertEquals(0, genesisBlock.getNonce(), "Genesis block should have nonce 0");
-        assertEquals(BlockchainConfig.getInstance().getGenesisHash(), genesisBlock.getHash(), 
-                    "Genesis block hash should match configuration");
-        assertTrue(genesisBlock.getTransactions().isEmpty(), 
-                  "Default genesis block should have no transactions");
+        assertEquals(BlockchainConfig.getInstance().getGenesisHash(), genesisBlock.getHash(),
+                "Genesis block hash should match configuration");
+        assertTrue(genesisBlock.getTransactions().isEmpty(),
+                "Default genesis block should have no transactions");
     }
 
     @Test
@@ -57,17 +58,17 @@ class GenesisBlockFactoryTest {
                 .<TestTransaction>builder()
                 .withHash("CUSTOM_HASH")
                 .build();
-        
+
         // Create a genesis block
         Block<TestTransaction> genesisBlock = factory.createGenesisBlock();
-        
+
         // Verify properties
         assertEquals(0, genesisBlock.getIndex(), "Genesis block should have index 0");
         assertEquals("0", genesisBlock.getPreviousHash(), "Genesis block should have previous hash '0'");
         assertEquals(0, genesisBlock.getNonce(), "Genesis block should have nonce 0");
         assertEquals("CUSTOM_HASH", genesisBlock.getHash(), "Genesis block should have custom hash");
-        assertTrue(genesisBlock.getTransactions().isEmpty(), 
-                  "Genesis block should have no transactions if none specified");
+        assertTrue(genesisBlock.getTransactions().isEmpty(),
+                "Genesis block should have no transactions if none specified");
     }
 
     @Test
@@ -75,7 +76,7 @@ class GenesisBlockFactoryTest {
         // Create test transactions
         TestTransaction tx1 = new TestTransaction("Alice", "Bob", 1000.0);
         TestTransaction tx2 = new TestTransaction("Genesis", "Alice", 5000.0);
-        
+
         // Create a custom genesis block factory with transactions
         CustomGenesisBlockFactory<TestTransaction> factory = CustomGenesisBlockFactory
                 .<TestTransaction>builder()
@@ -83,10 +84,10 @@ class GenesisBlockFactoryTest {
                 .addTransaction(tx1)
                 .addTransaction(tx2)
                 .build();
-        
+
         // Create a genesis block
         Block<TestTransaction> genesisBlock = factory.createGenesisBlock();
-        
+
         // Verify properties
         assertEquals(0, genesisBlock.getIndex(), "Genesis block should have index 0");
         assertEquals("GENESIS_WITH_TX", genesisBlock.getHash(), "Genesis block should have custom hash");
@@ -101,17 +102,17 @@ class GenesisBlockFactoryTest {
         TestTransaction tx1 = new TestTransaction("Alice", "Bob", 1000.0);
         TestTransaction tx2 = new TestTransaction("Genesis", "Alice", 5000.0);
         List<TestTransaction> transactions = Arrays.asList(tx1, tx2);
-        
+
         // Create a custom genesis block factory with a transaction list
         CustomGenesisBlockFactory<TestTransaction> factory = CustomGenesisBlockFactory
                 .<TestTransaction>builder()
                 .withHash("GENESIS_WITH_TX_LIST")
                 .withTransactions(transactions)
                 .build();
-        
+
         // Create a genesis block
         Block<TestTransaction> genesisBlock = factory.createGenesisBlock();
-        
+
         // Verify properties
         assertEquals(2, genesisBlock.getTransactions().size(), "Genesis block should have 2 transactions");
         assertEquals(tx1, genesisBlock.getTransactions().get(0), "First transaction should match");
@@ -122,7 +123,7 @@ class GenesisBlockFactoryTest {
     void testCustomGenesisBlockFactoryFullyCustomized() {
         // Create test transactions
         TestTransaction tx = new TestTransaction("System", "Alice", 1000.0);
-        
+
         // Create a fully customized genesis block factory
         CustomGenesisBlockFactory<TestTransaction> factory = CustomGenesisBlockFactory
                 .<TestTransaction>builder()
@@ -133,17 +134,17 @@ class GenesisBlockFactoryTest {
                 .withMetadata("creator", "Test")
                 .withMetadata("timestamp", 1234567890L)
                 .build();
-        
+
         // Create a genesis block
         Block<TestTransaction> genesisBlock = factory.createGenesisBlock();
-        
+
         // Verify properties
         assertEquals(0, genesisBlock.getIndex(), "Genesis block should have index 0");
         assertEquals("NONE", genesisBlock.getPreviousHash(), "Genesis block should have custom previous hash");
         assertEquals(42, genesisBlock.getNonce(), "Genesis block should have custom nonce");
         assertEquals("FULLY_CUSTOM", genesisBlock.getHash(), "Genesis block should have custom hash");
         assertEquals(1, genesisBlock.getTransactions().size(), "Genesis block should have 1 transaction");
-        
+
         // Verify metadata
         Map<String, Object> metadata = factory.getMetadata();
         assertEquals("Test", metadata.get("creator"), "Metadata should contain creator");
@@ -184,4 +185,4 @@ class GenesisBlockFactoryTest {
             return sender + " -> " + receiver + ": " + amount;
         }
     }
-} 
+}

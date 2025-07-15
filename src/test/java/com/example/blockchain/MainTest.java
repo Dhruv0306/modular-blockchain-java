@@ -22,13 +22,13 @@ class MainTest {
 
     @Test
     void testMainWithDefaultConfig() {
-        Main.main(new String[]{});
+        Main.main(new String[] {});
         // Just verify it runs without exception
     }
 
     @Test
     void testMainWithConfigFile() {
-        Main.main(new String[]{"blockchain.properties"});
+        Main.main(new String[] { "blockchain.properties" });
         // Just verify it runs without exception
     }
 
@@ -36,7 +36,7 @@ class MainTest {
     void testMainWithEnvironmentVariable() {
         System.setProperty("BLOCKCHAIN_ENV", "test");
         try {
-            Main.main(new String[]{});
+            Main.main(new String[] {});
         } finally {
             System.clearProperty("BLOCKCHAIN_ENV");
         }

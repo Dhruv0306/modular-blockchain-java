@@ -23,21 +23,21 @@ LOG_LEVEL=""
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -e|--env)
-      ENV="$2"
-      shift 2
-      ;;
-    -l|--log)
-      LOG_LEVEL="$2"
-      shift 2
-      ;;
-    -h|--help)
-      show_help
-      ;;
-    *)
-      echo "Unknown option: $1"
-      show_help
-      ;;
+  -e | --env)
+    ENV="$2"
+    shift 2
+    ;;
+  -l | --log)
+    LOG_LEVEL="$2"
+    shift 2
+    ;;
+  -h | --help)
+    show_help
+    ;;
+  *)
+    echo "Unknown option: $1"
+    show_help
+    ;;
   esac
 done
 
@@ -61,4 +61,4 @@ if [ ! -z "$LOG_LEVEL" ]; then
 fi
 
 # Execute the command
-eval $CMD 
+eval $CMD
