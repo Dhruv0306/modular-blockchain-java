@@ -70,7 +70,7 @@ public class Blockchain<T extends Transaction> {
      * 
      * @return true if the blockchain is valid, false otherwise
      */
-    public boolean isValidChain() {
+    public boolean isChainValid() {
         logger.debug("Validating blockchain with {} blocks", chain.size());
 
         // A blockchain with only the genesis block is always valid
