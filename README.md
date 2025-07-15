@@ -19,6 +19,7 @@ This project is designed for developers, researchers, and educators who want to 
 - [Customizing the Blockchain](#️-customizing-the-blockchain)
   - [Define Your Own Transaction Type](#-1-define-your-own-transaction-type)
   - [Implement or Plug in a Consensus Algorithm](#-2-implement-or-plug-in-a-consensus-algorithm)
+  - [Customize Genesis Block](#-3-customize-genesis-block)
 - [Testing](#-testing)
 - [Planned Features](#-planned-features-future-phases)
 - [Technologies Used](#️-technologies-used)
@@ -49,6 +50,7 @@ This project is designed for developers, researchers, and educators who want to 
 | 🧪 In-Memory Blockchain     | Lightweight, runs without external dependencies                              |
 | 🔐 SHA-256 Hashing          | Secure hashing mechanism for PoW/validation                                  |
 | ⚙️ Environment-based Config | Customize difficulty and other parameters per environment                    |
+| 🧿 Customizable Genesis     | Define your own genesis block with custom transactions and metadata          |
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
 
 ---
@@ -59,12 +61,14 @@ This project is designed for developers, researchers, and educators who want to 
 Blockchain<T extends Transaction>
 ├── List<Block<T>> chain
 ├── List<T> pendingTransactions
-└── Consensus<T> consensusPlugin
+├── Consensus<T> consensusPlugin
+└── GenesisBlockFactory<T> genesisBlockFactory
 ```
 
 - `Block<T>` holds a list of user-defined transactions
 - `Transaction` is an interface that you implement
 - `Consensus<T>` defines how blocks are created and validated
+- `GenesisBlockFactory<T>` creates the initial block of the chain
 
 ---
 
@@ -74,8 +78,9 @@ Let's say you want to create a **financial ledger**. You would:
 
 1. Implement your own `FinancialTransaction` class.
 2. Use the built-in `ProofOfWork` consensus (or write your own).
-3. Add transactions and generate new blocks via the consensus plugin.
-4. Print or analyze your blockchain in memory.
+3. Optionally create a custom genesis block with initial balances.
+4. Add transactions and generate new blocks via the consensus plugin.
+5. Print or analyze your blockchain in memory.
 
 Here's an example from the `Main.java`:
 
@@ -230,6 +235,31 @@ public class ProofOfStake<T extends Transaction> implements Consensus<T> {
     }
 }
 ```
+
+---
+
+### 🧿 3. Customize Genesis Block
+
+The project allows customizing the genesis block (first block in the chain) through the `GenesisBlockFactory` interface:
+
+```java
+// Create a custom genesis block with initial transactions
+CustomGenesisBlockFactory<FinancialTransaction> factory = 
+    CustomGenesisBlockFactory.<FinancialTransaction>builder()
+        .withHash("CUSTOM_GENESIS_HASH")
+        .addTransaction(new FinancialTransaction("Genesis", "Alice", 1000))
+        .addTransaction(new FinancialTransaction("Genesis", "Bob", 1000))
+        .withMetadata("creator", "Satoshi")
+        .build();
+
+// Create blockchain with custom genesis block
+Blockchain<FinancialTransaction> blockchain = new Blockchain<>(factory);
+```
+
+This allows for scenarios like:
+- Pre-allocating tokens/assets in the genesis block
+- Setting custom metadata for the blockchain's creation
+- Creating different genesis blocks for different blockchain instances
 
 ---
 

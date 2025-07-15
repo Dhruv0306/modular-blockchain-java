@@ -20,6 +20,11 @@ This guide provides detailed instructions on how to customize the modular blockc
 - [Block Structure](#block-structure)
   - [The Block Class Structure](#the-block-class-structure)
   - [Extending the Block Class](#extending-the-block-class)
+- [Genesis Block Customization](#genesis-block-customization)
+  - [Understanding the GenesisBlockFactory Interface](#understanding-the-genesisblockfactory-interface)
+  - [Using the Default Genesis Block](#using-the-default-genesis-block)
+  - [Creating Custom Genesis Blocks](#creating-custom-genesis-blocks)
+  - [Practical Use Cases for Custom Genesis Blocks](#practical-use-cases-for-custom-genesis-blocks)
 - [Configuration System](#configuration-system)
   - [Understanding the BlockchainConfig Class](#understanding-the-blockchainconfig-class)
   - [Configuration Properties](#configuration-properties)
@@ -386,6 +391,138 @@ public class EnhancedBlock<T extends Transaction> extends Block<T> {
 ```
 
 To use this enhanced block, you would need to modify your consensus implementation to produce these enhanced blocks.
+
+---
+
+## Genesis Block Customization
+
+The genesis block is the first block in any blockchain and defines the initial state of the system. The framework provides a flexible way to customize the genesis block through the `GenesisBlockFactory` interface.
+
+### Understanding the GenesisBlockFactory Interface
+
+The `GenesisBlockFactory` interface defines a contract for creating genesis blocks:
+
+```java
+public interface GenesisBlockFactory<T extends Transaction> {
+    Block<T> createGenesisBlock();
+}
+```
+
+This simple interface allows for multiple implementations with different genesis block creation strategies.
+
+### Using the Default Genesis Block
+
+By default, the blockchain uses a `DefaultGenesisBlockFactory` that creates a basic genesis block:
+
+```java
+// Default constructor uses DefaultGenesisBlockFactory internally
+Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
+```
+
+The default genesis block has:
+- Index: 0
+- Previous hash: "0"
+- Timestamp: Current time
+- No transactions
+- Nonce: 0
+- Hash: From BlockchainConfig (see [Configuration System](#configuration-system))
+
+This means that you can change the genesis hash for all default blockchains by modifying the `genesis_hash` property in your configuration file or environment variables.
+
+### Creating Custom Genesis Blocks
+
+For more control over the genesis block, you can use the `CustomGenesisBlockFactory` with a builder pattern:
+
+```java
+// Create initial genesis transactions
+List<FinancialTransaction> genesisTransactions = new ArrayList<>();
+genesisTransactions.add(new FinancialTransaction("Genesis", "Alice", 1000));
+genesisTransactions.add(new FinancialTransaction("Genesis", "Bob", 1000));
+
+// Create custom genesis block factory
+CustomGenesisBlockFactory<FinancialTransaction> customFactory = 
+    CustomGenesisBlockFactory.<FinancialTransaction>builder()
+        .withHash("CUSTOM_GENESIS_HASH_WITH_INITIAL_FUNDS")
+        .withTransactions(genesisTransactions)
+        .withMetadata("creator", "Satoshi")
+        .withMetadata("version", "1.0")
+        .build();
+
+// Create blockchain with custom genesis
+Blockchain<FinancialTransaction> customBlockchain = new Blockchain<>(customFactory);
+```
+
+The `CustomGenesisBlockFactory.Builder` provides methods for:
+
+- `withHash(String)`: Sets a custom hash for the genesis block
+- `withTransactions(List<T>)`: Sets initial transactions
+- `addTransaction(T)`: Adds a single transaction
+- `withPreviousHash(String)`: Sets the previous hash (default is "0")
+- `withNonce(int)`: Sets the nonce value (default is 0)
+- `withMetadata(String, Object)`: Adds metadata (not stored in the block, but available for custom implementations)
+
+### Practical Use Cases for Custom Genesis Blocks
+
+1. **Token Pre-allocation**
+
+   When creating a cryptocurrency or token system, you often need to pre-allocate tokens:
+
+   ```java
+   CustomGenesisBlockFactory<FinancialTransaction> factory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .addTransaction(new FinancialTransaction("Genesis", "Foundation", 5000000))
+           .addTransaction(new FinancialTransaction("Genesis", "Development", 3000000))
+           .addTransaction(new FinancialTransaction("Genesis", "Marketing", 2000000))
+           .build();
+   ```
+
+2. **Blockchain Identity and Metadata**
+
+   Store information about the blockchain's purpose, creation date, or creator:
+
+   ```java
+   CustomGenesisBlockFactory<FinancialTransaction> factory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .withMetadata("name", "Educational Blockchain")
+           .withMetadata("created", LocalDateTime.now().toString())
+           .withMetadata("creator", "Blockchain University")
+           .withMetadata("purpose", "Teaching blockchain concepts")
+           .build();
+   ```
+
+3. **Testing Different Initial States**
+
+   For testing, you might want different initial blockchain states:
+
+   ```java
+   // Test factory for empty initial state
+   CustomGenesisBlockFactory<FinancialTransaction> emptyFactory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder().build();
+       
+   // Test factory for initial state with transactions
+   CustomGenesisBlockFactory<FinancialTransaction> populatedFactory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .addTransaction(new FinancialTransaction("Genesis", "TestAccount", 1000))
+           .build();
+   ```
+
+4. **Implementing Multiple Blockchain Instances**
+
+   Different blockchain instances might need different genesis configurations:
+
+   ```java
+   // Main network
+   CustomGenesisBlockFactory<FinancialTransaction> mainnetFactory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .withHash("MAINNET_GENESIS_HASH")
+           .build();
+           
+   // Test network
+   CustomGenesisBlockFactory<FinancialTransaction> testnetFactory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .withHash("TESTNET_GENESIS_HASH")
+           .build();
+   ```
 
 ---
 
