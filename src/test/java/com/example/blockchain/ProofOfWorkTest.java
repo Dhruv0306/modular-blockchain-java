@@ -3,6 +3,7 @@ package com.example.blockchain;
 import com.example.blockchain.blockchain.Block;
 import com.example.blockchain.blockchain.Transaction;
 import com.example.blockchain.consensus.ProofOfWork;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
@@ -91,6 +92,57 @@ public class ProofOfWorkTest {
         assertFalse(pow.validateBlock(tamperedBlock, genesisBlock));
     }
 
+    @Test
+    void testComputeHashError() {
+        ProofOfWork<Transaction> powGeneric = new ProofOfWork<>();
+        Block<Transaction> genesisBlockGeneric = new Block<>(0, "0", System.currentTimeMillis(), new ArrayList<>(), 0, "0000genesis");
+        
+        List<Transaction> txs = new ArrayList<>();
+        txs.add(new ThrowingMockTransaction());
+        
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powGeneric.generateBlock(txs, genesisBlockGeneric);
+        });
+        
+        assertNotNull(exception.getCause());
+    }
+
+    @Test
+    void testValidHashButInvalidDifficulty() throws Exception {
+        // Create block parameters
+        int index = 1;
+        String prevHash = genesisBlock.getHash();
+        long timestamp = System.currentTimeMillis();
+        List<MockTransaction> txs = new ArrayList<>();
+        int nonce = 123;
+        
+        // Use reflection to compute the correct hash
+        Method computeHashMethod = ProofOfWork.class.getDeclaredMethod("computeHash", int.class, String.class, long.class, List.class, int.class);
+        computeHashMethod.setAccessible(true);
+        String correctHash = (String) computeHashMethod.invoke(pow, index, prevHash, timestamp, txs, nonce);
+        
+        // Ensure the hash doesn't meet difficulty (doesn't start with 0000)
+        // If it accidentally does, modify the nonce until we get one that doesn't
+        while (correctHash.startsWith("0000")) {
+            nonce++;
+            correctHash = (String) computeHashMethod.invoke(pow, index, prevHash, timestamp, txs, nonce);
+        }
+        
+        // Create block with correct hash but insufficient difficulty
+        Block<MockTransaction> blockWithBadDifficulty = new Block<>(index, prevHash, timestamp, txs, nonce, correctHash);
+        
+        // This should fail validation due to difficulty, not hash mismatch
+        assertFalse(pow.validateBlock(blockWithBadDifficulty, genesisBlock));
+    }
+
+    @Test
+    void testComputeHashWithNullTransactions() throws Exception {
+        Method computeHashMethod = ProofOfWork.class.getDeclaredMethod("computeHash", int.class, String.class, long.class, List.class, int.class);
+        computeHashMethod.setAccessible(true);
+        String hash = (String) computeHashMethod.invoke(pow, 1, "prevHash", 123L, null, 0);
+        assertNotNull(hash);
+    }
+
     private static class MockTransaction implements Transaction {
         private final boolean valid;
 
@@ -125,6 +177,24 @@ public class ProofOfWorkTest {
         @Override
         public int hashCode() {
             return Objects.hash(valid);
+        }
+    }
+
+    private static class ThrowingMockTransaction implements Transaction {
+        public boolean isValid() {
+            throw new RuntimeException("Test exception");
+        }
+
+        public String getSender() {
+            return "sender";
+        }
+
+        public String getReceiver() {
+            return "receiver";
+        }
+
+        public String getSummary() {
+            return "throwing transaction";
         }
     }
 }

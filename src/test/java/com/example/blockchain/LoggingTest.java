@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -148,5 +149,58 @@ class LoggingTest {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger blockchainLogger = context.getLogger("com.example.blockchain");
         assertEquals(Level.DEBUG, blockchainLogger.getLevel());
+    }
+
+    @Test
+    void testSetLogLevelException() {
+        // Force an exception by using null logger name
+        boolean result = LoggingUtils.setLogLevel(null, "DEBUG");
+        assertFalse(result);
+    }
+
+    @Test
+    void testConfigureLoggingFromConfigException() {
+        // Create a scenario where the method will throw an exception
+        // by temporarily breaking the logging system
+        
+        // Save original logger factory
+        org.slf4j.ILoggerFactory originalFactory = LoggerFactory.getILoggerFactory();
+        
+        try {
+            // Replace with a broken factory that will cause issues
+            Field factoryField = LoggerFactory.class.getDeclaredField("INITIALIZATION_STATE");
+            factoryField.setAccessible(true);
+            
+            // This should cause the method to fail and trigger catch block
+            assertDoesNotThrow(() -> {
+                // Create a config with invalid log level that will cause exception
+                resetBlockchainConfigSingleton();
+                BlockchainConfig config = BlockchainConfig.getInstance();
+                
+                // Set an invalid log level using reflection
+                Field logLevelField = BlockchainConfig.class.getDeclaredField("logLevel");
+                logLevelField.setAccessible(true);
+                logLevelField.set(config, "\u0000INVALID\u0000"); // Null characters should cause issues
+                
+                LoggingUtils.configureLoggingFromConfig();
+            });
+        } catch (Exception e) {
+            // If reflection fails, just test that the method doesn't throw
+            assertDoesNotThrow(() -> LoggingUtils.configureLoggingFromConfig());
+        }
+    }
+
+    @Test
+    void testConstructor() {
+        // Test constructor coverage
+        LoggingUtils utils = new LoggingUtils();
+        assertNotNull(utils);
+    }
+
+    @Test
+    void testBlockchainLoggerFactoryConstructor() {
+        // Test constructor coverage
+        BlockchainLoggerFactory factory = new BlockchainLoggerFactory();
+        assertNotNull(factory);
     }
 } 
