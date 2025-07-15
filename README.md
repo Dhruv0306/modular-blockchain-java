@@ -48,6 +48,7 @@ This project is designed for developers, researchers, and educators who want to 
 | 🧠 Generic Blockchain Core  | Built using Java generics for flexibility and clean separation                |
 | 🧪 In-Memory Blockchain     | Lightweight, runs without external dependencies                              |
 | 🔐 SHA-256 Hashing          | Secure hashing mechanism for PoW/validation                                  |
+| ⚙️ Environment-based Config | Customize difficulty and other parameters per environment                    |
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
 
 ---
@@ -119,6 +120,23 @@ mvn clean install
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 ```
 
+3. Use environment-specific configurations:
+
+```bash
+# Run with default configuration
+mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
+
+# Run with development configuration
+mvn exec:java -Dexec.mainClass="com.example.blockchain.Main" -Dexec.args="blockchain-dev.properties"
+
+# Run with production configuration
+mvn exec:java -Dexec.mainClass="com.example.blockchain.Main" -Dexec.args="blockchain-prod.properties"
+
+# Or use environment variable
+set BLOCKCHAIN_ENV=dev
+mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
+```
+
 ---
 
 ## 📦 Key Packages
@@ -129,6 +147,37 @@ mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 | `com.example.blockchain.consensus`     | Interfaces and algorithms for consensus |
 | `com.example.blockchain.transactions`  | Your custom transaction types           |
 | `com.example.blockchain.Main`          | Demo runner showing how it all works    |
+
+## ⚙️ Configuration
+
+The blockchain uses a modular configuration system that allows for different settings per environment:
+
+- **Default Configuration**: `blockchain.properties` in the root directory
+- **Environment-specific**: `blockchain-dev.properties`, `blockchain-prod.properties`, etc.
+- **Environment Variables**: `BLOCKCHAIN_DIFFICULTY`, `BLOCKCHAIN_GENESIS_HASH`
+- **Runtime Selection**: Pass configuration file as command-line argument
+
+### Configuration Properties
+
+| Property       | Description                                      | Default     |
+|---------------|--------------------------------------------------|-------------|
+| `difficulty`   | Number of leading zeros required for PoW hashing | 4           |
+| `genesis_hash` | Hash value used for the genesis block            | GENESIS_HASH |
+
+### Usage in Code
+
+```java
+// Get the configuration singleton
+BlockchainConfig config = BlockchainConfig.getInstance();
+
+// Access configuration values
+int difficulty = config.getDifficulty();
+String genesisHash = config.getGenesisHash();
+
+// Load a different configuration at runtime
+config.setConfigFile("blockchain-dev.properties");
+config.reloadConfig();
+```
 
 ---
 

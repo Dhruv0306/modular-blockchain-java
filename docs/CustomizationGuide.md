@@ -20,6 +20,11 @@ This guide provides detailed instructions on how to customize the modular blockc
 - [Block Structure](#block-structure)
   - [The Block Class Structure](#the-block-class-structure)
   - [Extending the Block Class](#extending-the-block-class)
+- [Configuration System](#configuration-system)
+  - [Understanding the BlockchainConfig Class](#understanding-the-blockchainconfig-class)
+  - [Configuration Properties](#configuration-properties)
+  - [Environment-Specific Configurations](#environment-specific-configurations)
+  - [Runtime Configuration Changes](#runtime-configuration-changes)
 - [Advanced Customizations](#advanced-customizations)
   - [Implementing Merkle Trees](#implementing-merkle-trees)
   - [Adding Chain Persistence](#adding-chain-persistence)
@@ -175,7 +180,7 @@ public interface Consensus<T extends Transaction> {
 The framework includes a basic implementation of Proof of Work consensus, which:
 
 - Requires finding a block hash with a specified number of leading zeros
-- Adjusts difficulty through the `DIFFICULTY` constant
+- Adjusts difficulty through the configuration system (see [Configuration System](#configuration-system))
 - Uses SHA-256 for secure hashing
 
 ### Creating Custom Consensus Algorithms
@@ -383,6 +388,107 @@ public class EnhancedBlock<T extends Transaction> extends Block<T> {
 To use this enhanced block, you would need to modify your consensus implementation to produce these enhanced blocks.
 
 ---
+
+## Configuration System
+
+The blockchain framework provides a flexible configuration system that allows you to customize various parameters without changing code. This is particularly useful for running your blockchain in different environments (development, testing, production).
+
+### Understanding the BlockchainConfig Class
+
+The `BlockchainConfig` class is implemented as a singleton that manages configuration properties from multiple sources:
+
+```java
+// Get the default configuration
+BlockchainConfig config = BlockchainConfig.getInstance();
+
+// Get configuration with a specific file
+BlockchainConfig customConfig = BlockchainConfig.getInstance("custom-config.properties");
+
+// Access configuration values
+int difficulty = config.getDifficulty();
+String genesisHash = config.getGenesisHash();
+```
+
+### Configuration Properties
+
+The current implementation supports the following configuration properties:
+
+| Property       | Description                                      | Default     |
+|---------------|--------------------------------------------------|-------------|
+| `difficulty`   | Number of leading zeros required for PoW hashing | 4           |
+| `genesis_hash` | Hash value used for the genesis block            | GENESIS_HASH |
+
+### Environment-Specific Configurations
+
+You can create different configuration files for different environments:
+
+1. **Default Configuration**: `blockchain.properties`
+2. **Development Configuration**: `blockchain-dev.properties` 
+3. **Production Configuration**: `blockchain-prod.properties`
+
+Example of a development configuration file:
+
+```properties
+# Lower difficulty for faster development testing
+difficulty=2
+genesis_hash=DEV_GENESIS_HASH
+```
+
+Example of a production configuration file:
+
+```properties
+# Higher difficulty for production security
+difficulty=6
+genesis_hash=PROD_GENESIS_HASH
+```
+
+### Runtime Configuration Changes
+
+The configuration can be changed at runtime using the following methods:
+
+```java
+BlockchainConfig config = BlockchainConfig.getInstance();
+
+// Change configuration file
+config.setConfigFile("blockchain-dev.properties");
+config.reloadConfig();
+```
+
+### Adding Custom Configuration Properties
+
+To extend the configuration system with your own properties:
+
+1. Add private fields and getters to the `BlockchainConfig` class
+2. Update the `loadConfig` method to load your custom properties
+3. Add default values for your properties
+
+Example of extending the configuration:
+
+```java
+// In BlockchainConfig.java
+private static final int DEFAULT_MAX_BLOCK_SIZE = 1000000;
+private int maxBlockSize;
+
+private void loadConfig() {
+    // Existing code...
+    
+    // Load max block size
+    String maxBlockSizeEnv = System.getenv("BLOCKCHAIN_MAX_BLOCK_SIZE");
+    if (maxBlockSizeEnv != null && !maxBlockSizeEnv.isEmpty()) {
+        maxBlockSize = Integer.parseInt(maxBlockSizeEnv);
+    } else if (configLoaded) {
+        maxBlockSize = Integer.parseInt(
+            properties.getProperty("max_block_size", 
+            String.valueOf(DEFAULT_MAX_BLOCK_SIZE)));
+    } else {
+        maxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
+    }
+}
+
+public int getMaxBlockSize() {
+    return maxBlockSize;
+}
+```
 
 ## Advanced Customizations
 

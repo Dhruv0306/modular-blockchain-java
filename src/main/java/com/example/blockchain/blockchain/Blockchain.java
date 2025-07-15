@@ -12,7 +12,8 @@ public class Blockchain<T extends Transaction> {
     }
 
     private Block<T> createGenesisBlock() {
-        return new Block<>(0, "0", System.currentTimeMillis(), new ArrayList<>(), 0, "GENESIS_HASH");
+        String genesisHash = BlockchainConfig.getInstance().getGenesisHash();
+        return new Block<>(0, "0", System.currentTimeMillis(), new ArrayList<>(), 0, genesisHash);
     }
 
     public void addTransaction(T tx) {

@@ -3,21 +3,24 @@ package com.example.blockchain.consensus;
 import java.util.List;
 
 import com.example.blockchain.blockchain.Block;
+import com.example.blockchain.blockchain.BlockchainConfig;
 import java.security.MessageDigest;
 import com.example.blockchain.blockchain.Transaction;
 
 public class ProofOfWork<T extends Transaction> implements Consensus<T> {
-    private static final int DIFFICULTY = 4;
+    // Removed static DIFFICULTY constant and using BlockchainConfig instead
 
     @Override
     public boolean validateBlock(Block<T> newBlock, Block<T> previousBlock) {
+        int difficulty = BlockchainConfig.getInstance().getDifficulty();
         return newBlock.getPreviousHash().equals(previousBlock.getHash())
             && newBlock.getHash().equals(computeHash(newBlock))
-            && newBlock.getHash().startsWith("0".repeat(DIFFICULTY));
+            && newBlock.getHash().startsWith("0".repeat(difficulty));
     }
 
     @Override
     public Block<T> generateBlock(List<T> txs, Block<T> previousBlock) {
+        int difficulty = BlockchainConfig.getInstance().getDifficulty();
         int index = previousBlock.getIndex() + 1;
         long timestamp = System.currentTimeMillis();
         int nonce = 0;
@@ -25,7 +28,7 @@ public class ProofOfWork<T extends Transaction> implements Consensus<T> {
         do {
             hash = computeHash(index, previousBlock.getHash(), timestamp, txs, nonce);
             nonce++;
-        } while (!hash.startsWith("0".repeat(DIFFICULTY)));
+        } while (!hash.startsWith("0".repeat(difficulty)));
         return new Block<>(index, previousBlock.getHash(), timestamp, txs, nonce - 1, hash);
     }
 
