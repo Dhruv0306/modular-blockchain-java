@@ -18,26 +18,36 @@ public class FinancialTransaction implements Transaction {
         return sender != null && receiver != null && amount > 0;
     }
 
-    public String getSender() { return sender; }
-    public String getReceiver() { return receiver; }
+    public String getSender() {
+        return sender;
+    }
+
+    public String getReceiver() {
+        return receiver;
+    }
+
     public String getSummary() {
         return sender + " -> " + receiver + " : $" + amount;
     }
 
-    public String toString() { return getSummary(); }
-    
+    public String toString() {
+        return getSummary();
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
         FinancialTransaction that = (FinancialTransaction) o;
-        
+
         return Double.compare(that.amount, amount) == 0 &&
-               Objects.equals(sender, that.sender) &&
-               Objects.equals(receiver, that.receiver);
+                Objects.equals(sender, that.sender) &&
+                Objects.equals(receiver, that.receiver);
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(sender, receiver, amount);
