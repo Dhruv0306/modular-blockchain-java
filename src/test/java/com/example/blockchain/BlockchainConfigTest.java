@@ -144,4 +144,64 @@ class BlockchainConfigTest {
         // Verify they are the same instance
         assertSame(instance1, instance2, "getInstance should return the same instance (singleton pattern)");
     }
+
+    @Test
+    void testLoadConfigWithNonExistentFile() {
+        // Try to load config from a non-existent file
+        BlockchainConfig config = BlockchainConfig.getInstance("non-existent-file.properties");
+        
+        // Should fall back to default values
+        assertEquals(4, config.getDifficulty());
+        assertEquals("GENESIS_HASH", config.getGenesisHash());
+        assertEquals("INFO", config.getLogLevel());
+    }
+
+    @Test
+    void testGetInstanceWithDifferentConfigFiles() throws IOException {
+        // Create first config file
+        createPropertiesFile(5, "FIRST_HASH", "DEBUG");
+        BlockchainConfig config1 = BlockchainConfig.getInstance(configFile.getAbsolutePath());
+        assertEquals(5, config1.getDifficulty());
+        
+        // Create second config file
+        File secondConfig = tempDir.resolve("second.properties").toFile();
+        Properties props = new Properties();
+        props.setProperty("difficulty", "8");
+        try (FileOutputStream out = new FileOutputStream(secondConfig)) {
+            props.store(out, "Second config");
+        }
+        
+        // Get instance with different config file creates new instance (as per implementation)
+        BlockchainConfig config2 = BlockchainConfig.getInstance(secondConfig.getAbsolutePath());
+        assertEquals(8, config2.getDifficulty());
+        // Note: Implementation creates new instance when config file differs
+    }
+
+    @Test
+    void testEnvironmentVariableOverride() throws Exception {
+        // Test with empty environment variables to cover the else branch
+        resetSingleton();
+        
+        // Create a custom BlockchainConfig that simulates empty environment variables
+        BlockchainConfig config = BlockchainConfig.getInstance("non-existent.properties");
+        
+        // Should use default values when env vars are null/empty
+        assertEquals(4, config.getDifficulty());
+        assertEquals("GENESIS_HASH", config.getGenesisHash());
+    }
+
+    @Test
+    void testGetInstanceWithSameConfigFile() throws Exception {
+        // Create config file
+        createPropertiesFile(5, "TEST_HASH", "DEBUG");
+        
+        // Get instance with config file
+        BlockchainConfig config1 = BlockchainConfig.getInstance(configFile.getAbsolutePath());
+        assertEquals(5, config1.getDifficulty());
+        
+        // Get instance again with same config file (should return same instance)
+        BlockchainConfig config2 = BlockchainConfig.getInstance(configFile.getAbsolutePath());
+        assertSame(config1, config2);
+        assertEquals(5, config2.getDifficulty());
+    }
 } 

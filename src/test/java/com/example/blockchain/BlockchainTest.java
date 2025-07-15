@@ -2,7 +2,9 @@ package com.example.blockchain;
 
 import com.example.blockchain.blockchain.Block;
 import com.example.blockchain.blockchain.Blockchain;
+import com.example.blockchain.blockchain.DefaultGenesisBlockFactory;
 import com.example.blockchain.blockchain.Transaction;
+import com.example.blockchain.consensus.Consensus;
 import com.example.blockchain.consensus.ProofOfWork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,6 +94,22 @@ public class BlockchainTest {
     }
     
     @Test
+    void testDefaultConstructor() {
+        Blockchain<MockTransaction> defaultBlockchain = new Blockchain<>();
+        assertEquals(1, defaultBlockchain.getChain().size());
+        assertEquals("GENESIS_HASH", defaultBlockchain.getLastBlock().getHash());
+        assertEquals(0, defaultBlockchain.getPendingTransactions().size());
+    }
+    
+    @Test
+    void testSingleParameterConstructor() {
+        Blockchain<MockTransaction> blockchain = new Blockchain<>(new DefaultGenesisBlockFactory<>());
+        assertEquals(1, blockchain.getChain().size());
+        assertEquals("GENESIS_HASH", blockchain.getLastBlock().getHash());
+        assertEquals(0, blockchain.getPendingTransactions().size());
+    }
+    
+    @Test
     void testIsValidChainWithValidChain() {
         // A blockchain with just the genesis block should be valid
         assertTrue(blockchain.isValidChain());
@@ -142,22 +160,37 @@ public class BlockchainTest {
     
     @Test
     void testIsValidChainWithNonSequentialIndex() {
-        // Create a block with non-sequential index (should be 1, but we're setting it to 2)
-        List<MockTransaction> txs = new ArrayList<>();
-        Block<MockTransaction> genesisBlock = blockchain.getLastBlock();
+        // Create a blockchain with a mock consensus that always validates blocks
+        Consensus<MockTransaction> mockConsensus = new Consensus<MockTransaction>() {
+            @Override
+            public Block<MockTransaction> generateBlock(List<MockTransaction> transactions, Block<MockTransaction> previousBlock) {
+                return new Block<>(previousBlock.getIndex() + 1, previousBlock.getHash(), 
+                    System.currentTimeMillis(), transactions, 0, "valid_hash");
+            }
+            
+            @Override
+            public boolean validateBlock(Block<MockTransaction> newBlock, Block<MockTransaction> previousBlock) {
+                return true; // Always return true to bypass consensus validation
+            }
+        };
+        
+        // Create blockchain with mock consensus
+        Blockchain<MockTransaction> testBlockchain = new Blockchain<>(new DefaultGenesisBlockFactory<>(), mockConsensus);
+        
+        // Add a block with non-sequential index (should be 1, but we set it to 5)
         Block<MockTransaction> nonSequentialBlock = new Block<>(
-            2, // Should be 1
-            genesisBlock.getHash(),
+            5, // Should be 1, but we're setting it to 5
+            testBlockchain.getLastBlock().getHash(),
             System.currentTimeMillis(),
-            txs,
+            new ArrayList<>(),
             0,
-            "0000abcdef"  // This is just a dummy hash
+            "valid_hash"
         );
         
-        blockchain.addBlock(nonSequentialBlock);
+        testBlockchain.addBlock(nonSequentialBlock);
         
         // Chain should be invalid due to non-sequential index
-        assertFalse(blockchain.isValidChain());
+        assertFalse(testBlockchain.isValidChain());
     }
     
     @Test
