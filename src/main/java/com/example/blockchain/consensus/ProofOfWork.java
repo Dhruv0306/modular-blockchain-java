@@ -1,7 +1,6 @@
 package com.example.blockchain.consensus;
 
 import java.util.List;
-
 import com.example.blockchain.blockchain.Block;
 import com.example.blockchain.blockchain.BlockchainConfig;
 import com.example.blockchain.logging.BlockchainLoggerFactory;
@@ -71,7 +70,20 @@ public class ProofOfWork<T extends Transaction> implements Consensus<T> {
     private String computeHash(int index, String prevHash, long time, List<T> txs, int nonce) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            String input = index + prevHash + time + txs.hashCode() + nonce;
+            
+            // Create a deterministic string representation of all transaction details
+            StringBuilder txDetails = new StringBuilder();
+            if (txs != null) {
+                for (T tx : txs) {
+                    // Include complete details of each transaction in the hash calculation
+                    txDetails.append(tx.getSender())
+                           .append(tx.getReceiver())
+                           .append(tx.getSummary())
+                           .append(tx.isValid());
+                }
+            }
+            
+            String input = index + prevHash + time + txDetails.toString() + nonce;
             byte[] hash = digest.digest(input.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) sb.append(String.format("%02x", b));
