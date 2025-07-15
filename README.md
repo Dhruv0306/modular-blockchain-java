@@ -494,6 +494,10 @@ The project includes comprehensive unit tests built with JUnit 5:
 - `CryptoUtilsTest`: Verifies RSA key pair generation and digital signature functions.
 - `SignedFinancialTransactionTest`: Confirms signature-based transaction validity.
 - `BlockchainIntegrationTest`: Covers end-to-end scenarios including invalid chains.
+- `BlockValidationTest`: Tests tampered transaction detection in blocks.
+- `DynamicLoggingTest`: Verifies runtime log level changes.
+- `BlockchainEdgeCasesTest`: Tests empty transaction lists and duplicate transactions.
+- `ConfigErrorsTest`: Ensures robust handling of configuration errors.
 
 Run the tests with:
 

@@ -44,8 +44,8 @@ public class FinancialTransactionTest {
 
     @Test
     void testToString() {
-        FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 25.5);
-        assertEquals("Alice -> Bob : $25.5", tx.toString());
+        FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 25.5, "74c4f2fc-5c91-31ed-a105-471ca9c83bd1");
+        assertEquals("Alice -> Bob : $25.5 [ID: 74c4f2fc-5c91-31ed-a105-471ca9c83bd1]", tx.toString());
     }
 
     @Test

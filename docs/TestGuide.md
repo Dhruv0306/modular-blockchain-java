@@ -15,6 +15,10 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
 | `CryptoUtilsTest`                | `CryptoUtils`                      | Validates RSA key generation, message signing, and signature verification. |
 | `BlockUtilsTest`                 | `BlockUtils`                       | Ensures consistent hashing of blocks using utility methods.                |
 | `BlockchainIntegrationTest`      | `Blockchain + ProofOfWork`         | Tests end-to-end blockchain operations, tampering detection, and chain robustness. |
+| `BlockValidationTest`            | `Blockchain + SignedTransaction`   | Tests detection of tampered transactions within otherwise valid blocks.    |
+| `DynamicLoggingTest`             | `LoggingUtils`                     | Verifies dynamic log level changes at runtime for debugging flexibility.   |
+| `BlockchainEdgeCasesTest`        | `Blockchain`                       | Tests edge cases like empty transaction lists and duplicate transactions.  |
+| `ConfigErrorsTest`               | `BlockchainConfig`                 | Ensures robust handling of missing or invalid configuration files.         |
 
 ---
 
@@ -213,3 +217,56 @@ When tests fail, Maven provides:
 4. **Assertion Errors**
    - Use more specific assertions with descriptive messages
    - Consider using assertAll for multiple related assertions
+
+## Testing Edge Cases and Boundary Conditions
+
+The project includes dedicated tests for edge cases and boundary conditions to ensure the blockchain remains robust in unusual situations.
+
+### Key Edge Case Tests
+
+1. **Empty Transaction Lists**
+   - Tests creating blocks with no transactions
+   - Ensures the blockchain can handle empty blocks correctly
+
+2. **Duplicate Transactions**
+   - Tests adding identical transactions to the blockchain
+   - Verifies proper handling of transaction duplication
+
+3. **Transaction Tampering**
+   - Tests detection of tampered transactions in blocks
+   - Ensures the blockchain can identify invalid signatures
+
+4. **Configuration Errors**
+   - Tests missing configuration files
+   - Tests invalid configuration formats
+   - Tests partial configuration definitions
+
+### Writing Your Own Edge Case Tests
+
+When adding new features, consider testing these edge cases:
+
+```java
+// Test with null or empty inputs
+@Test
+void testWithEmptyInput() {
+    // Test with empty input
+    List<YourTransaction> emptyList = new ArrayList<>();
+    // Verify correct behavior with empty input
+}
+
+// Test with maximum values
+@Test
+void testWithMaxValues() {
+    // Test with maximum allowed values
+    YourTransaction tx = new YourTransaction(MAX_VALUE);
+    // Verify correct behavior with maximum values
+}
+
+// Test with invalid inputs
+@Test
+void testWithInvalidInput() {
+    // Test with invalid input
+    YourTransaction invalidTx = new YourTransaction(INVALID_VALUE);
+    // Verify correct handling of invalid input
+}
+```

@@ -1020,6 +1020,53 @@ void testEndToEndFlow() {
 }
 ```
 
+### Testing Edge Cases
+
+Always include tests for edge cases in your customizations:
+
+```java
+// Test with empty transaction list
+@Test
+void testEmptyTransactionList() {
+    List<YourTransaction> emptyList = new ArrayList<>();
+    Block<YourTransaction> block = consensus.generateBlock(emptyList, blockchain.getLastBlock());
+    assertTrue(consensus.validateBlock(block, blockchain.getLastBlock()));
+    blockchain.addBlock(block);
+    assertEquals(2, blockchain.getChain().size());
+}
+
+// Test with tampered transactions
+@Test
+void testTamperedTransaction() {
+    // Create a valid transaction
+    YourSignedTransaction validTx = createValidSignedTransaction();
+    
+    // Create a tampered version with invalid signature
+    YourSignedTransaction tamperedTx = createTamperedTransaction();
+    
+    // Create a block with the tampered transaction but valid hash
+    Block<YourSignedTransaction> tamperedBlock = createBlockWithTransaction(tamperedTx);
+    
+    // Verify the blockchain detects the tampering
+    assertFalse(blockchain.isChainValid());
+}
+```
+
+### Testing Configuration Handling
+
+Test how your customizations handle configuration errors:
+
+```java
+@Test
+void testMissingConfiguration() {
+    // Test with non-existent configuration file
+    YourCustomComponent component = new YourCustomComponent("non-existent-config.properties");
+    
+    // Verify it falls back to default values
+    assertEquals(DEFAULT_VALUE, component.getSomeProperty());
+}
+```
+
 ---
 
 ## Best Practices

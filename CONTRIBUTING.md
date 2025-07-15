@@ -100,6 +100,10 @@ chmod +x run-blockchain.sh
 | `CryptoUtilsTest`                | `CryptoUtils`                      | Validates RSA key generation, message signing, and signature verification. |
 | `BlockUtilsTest`                 | `BlockUtils`                       | Ensures consistent hashing of blocks using utility methods.                |
 | `BlockchainIntegrationTest`      | `Blockchain + ProofOfWork`         | Tests end-to-end blockchain operations, tampering detection, and chain robustness. |
+| `BlockValidationTest`            | `Blockchain + SignedTransaction`   | Tests detection of tampered transactions within otherwise valid blocks.    |
+| `DynamicLoggingTest`             | `LoggingUtils`                     | Verifies dynamic log level changes at runtime for debugging flexibility.   |
+| `BlockchainEdgeCasesTest`        | `Blockchain`                       | Tests edge cases like empty transaction lists and duplicate transactions.  |
+| `ConfigErrorsTest`               | `BlockchainConfig`                 | Ensures robust handling of missing or invalid configuration files.         |
 
 
 ### Running Tests
@@ -148,6 +152,48 @@ target/site/jacoco/index.html
 ```
 
 Aim for at least 80% test coverage for new code.
+
+### Testing Best Practices
+
+#### 1. Test Edge Cases
+
+Always include tests for edge cases and boundary conditions:
+
+- Empty collections
+- Null values
+- Maximum/minimum values
+- Invalid inputs
+- Duplicate entries
+
+#### 2. Test Security Boundaries
+
+For security-critical components:
+
+- Test with tampered data
+- Verify signature validation
+- Test with malformed inputs
+- Ensure proper error handling
+
+#### 3. Test Logging and Configuration
+
+Include tests for:
+
+- Dynamic log level changes
+- Missing configuration files
+- Invalid configuration formats
+- Configuration reloading
+
+#### 4. Use Descriptive Assertion Messages
+
+Provide clear messages with assertions to make test failures easier to understand:
+
+```java
+// Instead of this:
+true(blockchain.isChainValid());
+
+// Do this:
+true(blockchain.isChainValid(), "Chain should be valid after adding a properly signed block");
+```
 
 ## Code Style and Formatting
 

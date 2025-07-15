@@ -154,6 +154,54 @@ int difficulty = config.getDifficulty();
 String genesisHash = config.getGenesisHash();
 ```
 
+## Running Tests
+
+### Running All Tests
+
+To run all tests in the project:
+
+```bash
+mvn test
+```
+
+### Running Specific Tests
+
+To run a specific test class:
+
+```bash
+mvn test -Dtest=BlockchainTest
+```
+
+To run multiple test classes:
+
+```bash
+mvn test -Dtest=BlockchainTest,BlockValidationTest
+```
+
+To run a specific test method:
+
+```bash
+mvn test -Dtest=BlockchainTest#testAddBlock
+```
+
+### Running Tests with Different Configurations
+
+To run tests with a specific environment configuration:
+
+```bash
+BLOCKCHAIN_ENV=dev mvn test
+```
+
+### Generating Test Coverage Reports
+
+To generate test coverage reports:
+
+```bash
+mvn verify
+```
+
+The HTML coverage report will be available at `target/site/jacoco/index.html`.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -184,10 +232,29 @@ String genesisHash = config.getGenesisHash();
    chmod +x run-blockchain.sh
    ```
 
+4. **Test Failures**
+
+   If tests are failing, check the detailed reports:
+
+   ```bash
+   # View test reports
+   cat target/surefire-reports/TEST-com.example.blockchain.BlockchainTest.txt
+   ```
+
+   Enable debug logging in tests for more information:
+
+   ```java
+   @BeforeEach
+   void setupLogging() {
+       LoggingUtils.setBlockchainLogLevel("DEBUG");
+   }
+   ```
+
 ### Getting Help
 
 If you encounter issues not covered in this guide, please:
 
 1. Check the project logs in the `logs/` directory
 2. Review the [README.md](../README.md) for general information
-3. Submit an issue on the project repository
+3. Review the [Test Guide](TestGuide.md) for testing-specific issues
+4. Submit an issue on the project repository
