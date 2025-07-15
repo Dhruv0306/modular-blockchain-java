@@ -2,6 +2,22 @@
 
 This guide explains how to effectively run, analyze, and debug tests for the Modular Blockchain Java project.
 
+---
+
+## ✅ Test Class Overview
+
+| **Test Class**                     | **Target Class/Module**            | **Purpose**                                                                 |
+|-----------------------------------|------------------------------------|-----------------------------------------------------------------------------|
+| `BlockchainTest`                  | `Blockchain`                       | Unit tests for adding transactions, adding blocks, and validating chain integrity. |
+| `FinancialTransactionTest`       | `FinancialTransaction`             | Tests transaction validation rules and summary string formatting.          |
+| `ProofOfWorkTest`                | `ProofOfWork`                      | Verifies block mining and block validation using proof-of-work consensus.  |
+| `SignedFinancialTransactionTest` | `SignedFinancialTransaction`       | Tests digital signature verification, key binding, and validity enforcement. |
+| `CryptoUtilsTest`                | `CryptoUtils`                      | Validates RSA key generation, message signing, and signature verification. |
+| `BlockUtilsTest`                 | `BlockUtils`                       | Ensures consistent hashing of blocks using utility methods.                |
+| `BlockchainIntegrationTest`      | `Blockchain + ProofOfWork`         | Tests end-to-end blockchain operations, tampering detection, and chain robustness. |
+
+---
+
 ## Running Tests
 
 ### Running All Tests

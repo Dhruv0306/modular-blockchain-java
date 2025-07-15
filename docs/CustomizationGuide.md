@@ -162,6 +162,30 @@ public class VotingTransaction implements Transaction {
 4. **Data Minimization**: Only store essential data that needs to be on the blockchain.
 5. **Privacy Considerations**: Be careful about storing personally identifiable information.
 
+### Digitally Signed Transactions
+
+You can define secure, signed transactions by implementing the `SignedTransaction` interface, which extends `Transaction` and adds:
+
+```java
+public interface SignedTransaction extends Transaction {
+    String getSignature();
+    PublicKey getSenderPublicKey();
+    boolean verifySignature();
+}
+```
+
+Use `CryptoUtils` to handle signing and verification:
+
+```java
+KeyPair keyPair = CryptoUtils.generateKeyPair();
+String summary = tx.getSummary();
+String signature = CryptoUtils.signData(summary, keyPair.getPrivate());
+
+boolean isVerified = CryptoUtils.verifySignature(summary, signature, keyPair.getPublic());
+```
+
+Include digital signature checks inside your isValid() method for secure validation.
+
 ---
 
 ## Consensus Algorithms

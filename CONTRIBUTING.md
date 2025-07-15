@@ -45,6 +45,7 @@ The project follows a standard Maven structure:
   - `blockchain/` - Core blockchain components
   - `consensus/` - Consensus algorithm implementations
   - `transactions/` - Transaction type implementations
+  - `crypto/` - Utilities for digital signatures and cryptographic operations
   - `logging/` - Logging utilities
 - `src/test/java/com/example/blockchain/` - Test code
 - `docs/` - Documentation
@@ -87,6 +88,19 @@ chmod +x run-blockchain.sh
 ```
 
 ## Testing
+
+### ✅ Test Class Overview
+
+| **Test Class**                     | **Target Class/Module**            | **Purpose**                                                                 |
+|-----------------------------------|------------------------------------|-----------------------------------------------------------------------------|
+| `BlockchainTest`                  | `Blockchain`                       | Unit tests for adding transactions, adding blocks, and validating chain integrity. |
+| `FinancialTransactionTest`       | `FinancialTransaction`             | Tests transaction validation rules and summary string formatting.          |
+| `ProofOfWorkTest`                | `ProofOfWork`                      | Verifies block mining and block validation using proof-of-work consensus.  |
+| `SignedFinancialTransactionTest` | `SignedFinancialTransaction`       | Tests digital signature verification, key binding, and validity enforcement. |
+| `CryptoUtilsTest`                | `CryptoUtils`                      | Validates RSA key generation, message signing, and signature verification. |
+| `BlockUtilsTest`                 | `BlockUtils`                       | Ensures consistent hashing of blocks using utility methods.                |
+| `BlockchainIntegrationTest`      | `Blockchain + ProofOfWork`         | Tests end-to-end blockchain operations, tampering detection, and chain robustness. |
+
 
 ### Running Tests
 
