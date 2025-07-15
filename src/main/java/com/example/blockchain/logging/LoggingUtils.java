@@ -13,7 +13,7 @@ public class LoggingUtils {
     /**
      * Sets the log level for a specific package or class.
      *
-     * @param loggerName The logger name (typically a package name or class name)
+     * @param loggerName  The logger name (typically a package name or class name)
      * @param levelString The log level (TRACE, DEBUG, INFO, WARN, ERROR)
      * @return true if successful, false otherwise
      */
@@ -21,10 +21,10 @@ public class LoggingUtils {
         try {
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
             Logger logger = loggerContext.getLogger(loggerName);
-            
+
             Level level = Level.toLevel(levelString, Level.INFO);
             logger.setLevel(level);
-            
+
             return true;
         } catch (Exception e) {
             org.slf4j.Logger rootLogger = BlockchainLoggerFactory.getLogger(LoggingUtils.class);
@@ -32,7 +32,7 @@ public class LoggingUtils {
             return false;
         }
     }
-    
+
     /**
      * Sets the log level for the root logger.
      *
@@ -42,7 +42,7 @@ public class LoggingUtils {
     public static boolean setRootLogLevel(String levelString) {
         return setLogLevel(org.slf4j.Logger.ROOT_LOGGER_NAME, levelString);
     }
-    
+
     /**
      * Sets the log level for the blockchain package.
      *
@@ -52,7 +52,7 @@ public class LoggingUtils {
     public static boolean setBlockchainLogLevel(String levelString) {
         return setLogLevel("com.example.blockchain", levelString);
     }
-    
+
     /**
      * Configures logging based on blockchain configuration.
      * This should be called at application startup to ensure
@@ -60,12 +60,12 @@ public class LoggingUtils {
      */
     public static void configureLoggingFromConfig() {
         try {
-            com.example.blockchain.blockchain.BlockchainConfig config = 
-                com.example.blockchain.blockchain.BlockchainConfig.getInstance();
-                
+            com.example.blockchain.blockchain.BlockchainConfig config = com.example.blockchain.blockchain.BlockchainConfig
+                    .getInstance();
+
             String logLevel = config.getLogLevel();
             setBlockchainLogLevel(logLevel);
-            
+
             org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(LoggingUtils.class);
             logger.info("Blockchain log level set to: {}", logLevel);
         } catch (Exception e) {
@@ -74,4 +74,4 @@ public class LoggingUtils {
             logger.warn("Failed to configure logging from blockchain config: {}", e.getMessage());
         }
     }
-} 
+}

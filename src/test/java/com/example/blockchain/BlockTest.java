@@ -96,12 +96,23 @@ class BlockTest {
 
     private static class MockTransaction implements Transaction {
         @Override
-        public boolean isValid() { return true; }
+        public boolean isValid() {
+            return true;
+        }
+
         @Override
-        public String getSender() { return "sender"; }
+        public String getSender() {
+            return "sender";
+        }
+
         @Override
-        public String getReceiver() { return "receiver"; }
+        public String getReceiver() {
+            return "receiver";
+        }
+
         @Override
-        public String getSummary() { return "mock"; }
+        public String getSummary() {
+            return "mock";
+        }
     }
 }

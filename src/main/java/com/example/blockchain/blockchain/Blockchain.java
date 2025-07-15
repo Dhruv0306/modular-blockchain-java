@@ -14,14 +14,16 @@ public class Blockchain<T extends Transaction> {
     private final Consensus<T> consensus;
 
     /**
-     * Creates a new blockchain with a default genesis block and proof of work consensus.
+     * Creates a new blockchain with a default genesis block and proof of work
+     * consensus.
      */
     public Blockchain() {
         this(new DefaultGenesisBlockFactory<>(), new ProofOfWork<>());
     }
 
     /**
-     * Creates a new blockchain with a custom genesis block factory and default consensus.
+     * Creates a new blockchain with a custom genesis block factory and default
+     * consensus.
      *
      * @param genesisBlockFactory The factory to create the genesis block
      */
@@ -30,10 +32,11 @@ public class Blockchain<T extends Transaction> {
     }
 
     /**
-     * Creates a new blockchain with a custom genesis block factory and consensus mechanism.
+     * Creates a new blockchain with a custom genesis block factory and consensus
+     * mechanism.
      *
      * @param genesisBlockFactory The factory to create the genesis block
-     * @param consensus The consensus mechanism to use
+     * @param consensus           The consensus mechanism to use
      */
     public Blockchain(GenesisBlockFactory<T> genesisBlockFactory, Consensus<T> consensus) {
         this.consensus = consensus;
@@ -61,7 +64,7 @@ public class Blockchain<T extends Transaction> {
     public List<Block<T>> getChain() {
         return chain;
     }
-    
+
     /**
      * Validates the entire blockchain.
      * 
@@ -69,30 +72,30 @@ public class Blockchain<T extends Transaction> {
      */
     public boolean isValidChain() {
         logger.debug("Validating blockchain with {} blocks", chain.size());
-        
+
         // A blockchain with only the genesis block is always valid
         if (chain.size() == 1) {
             return true;
         }
-        
+
         // Check each block in the chain
         for (int i = 1; i < chain.size(); i++) {
             Block<T> currentBlock = chain.get(i);
             Block<T> previousBlock = chain.get(i - 1);
-            
+
             // Validate current block using consensus mechanism
             if (!consensus.validateBlock(currentBlock, previousBlock)) {
                 logger.warn("Invalid block at index {}: {}", i, currentBlock.getHash());
                 return false;
             }
-            
+
             // Check that block index is sequential
             if (currentBlock.getIndex() != previousBlock.getIndex() + 1) {
                 logger.warn("Non-sequential block index at block {}", i);
                 return false;
             }
         }
-        
+
         return true;
     }
 }

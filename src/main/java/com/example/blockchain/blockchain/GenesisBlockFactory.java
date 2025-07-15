@@ -8,11 +8,11 @@ package com.example.blockchain.blockchain;
  * @param <T> The transaction type stored in the blockchain
  */
 public interface GenesisBlockFactory<T extends Transaction> {
-    
+
     /**
      * Creates a genesis block for a new blockchain.
      *
      * @return The genesis block
      */
     Block<T> createGenesisBlock();
-} 
+}

@@ -9,7 +9,7 @@
             <level>WARN</level>
         </filter>
     </appender>
-    
+
     <!-- Main log file with daily rotation and compression -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/blockchain-prod.log</file>
@@ -22,7 +22,7 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    
+
     <!-- Error-specific log file -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/blockchain-error.log</file>
@@ -37,13 +37,13 @@
             <level>ERROR</level>
         </filter>
     </appender>
-    
+
     <!-- Production environment uses INFO level -->
     <logger name="com.example.blockchain" level="INFO" />
-    
+
     <!-- Third-party libraries -->
     <logger name="ch.qos.logback" level="WARN" />
-    
+
     <!-- Set root logger level and appenders -->
     <root level="WARN">
         <appender-ref ref="CONSOLE" />

@@ -43,23 +43,26 @@ public class Block<T extends Transaction> {
     public String getHash() {
         return hash;
     }
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
         Block<?> block = (Block<?>) o;
-        
+
         return index == block.index &&
-               timestamp == block.timestamp &&
-               nonce == block.nonce &&
-               Objects.equals(previousHash, block.previousHash) &&
-               Objects.equals(hash, block.hash);
+                timestamp == block.timestamp &&
+                nonce == block.nonce &&
+                Objects.equals(previousHash, block.previousHash) &&
+                Objects.equals(hash, block.hash);
         // Note: We intentionally don't compare transactions directly
-        // since their object identity might differ but content should be validated by hash
+        // since their object identity might differ but content should be validated by
+        // hash
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(index, previousHash, timestamp, nonce, hash);
