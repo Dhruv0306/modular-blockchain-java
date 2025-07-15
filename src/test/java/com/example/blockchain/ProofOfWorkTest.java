@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ProofOfWorkTest {
@@ -50,6 +51,45 @@ public class ProofOfWorkTest {
         assertTrue(newBlock.getHash().startsWith("0000"));
         assertEquals(txs, newBlock.getTransactions());
     }
+    
+    @Test
+    void testInvalidDifficulty() {
+        // Create a block with insufficient difficulty (only 3 leading zeros instead of 4)
+        // The default difficulty is 4, so a hash with only 3 leading zeros should be invalid
+        Block<MockTransaction> invalidBlock = new Block<>(
+            1, 
+            genesisBlock.getHash(), 
+            System.currentTimeMillis(), 
+            new ArrayList<>(), 
+            123, 
+            "000abcdefghijklmnopqrstuvwxyz"  // Only 3 leading zeros, not 4
+        );
+        
+        // Validation should fail due to insufficient difficulty
+        assertFalse(pow.validateBlock(invalidBlock, genesisBlock));
+    }
+
+    @Test
+    void testTamperedBlock() {
+        List<MockTransaction> txs = new ArrayList<>();
+        txs.add(new MockTransaction(true));
+        Block<MockTransaction> newBlock = pow.generateBlock(txs, genesisBlock);
+        
+        // Create a tampered copy of the block with modified transaction but same hash
+        List<MockTransaction> tamperedTxs = new ArrayList<>();
+        tamperedTxs.add(new MockTransaction(false)); // Different transaction
+        Block<MockTransaction> tamperedBlock = new Block<>(
+            newBlock.getIndex(),
+            newBlock.getPreviousHash(),
+            newBlock.getTimestamp(),
+            tamperedTxs, // Modified transaction list
+            newBlock.getNonce(),
+            newBlock.getHash() // Same hash as original, but should be different due to transaction change
+        );
+        
+        // Validation should fail because the hash doesn't match the block contents
+        assertFalse(pow.validateBlock(tamperedBlock, genesisBlock));
+    }
 
     private static class MockTransaction implements Transaction {
         private final boolean valid;
@@ -72,6 +112,19 @@ public class ProofOfWorkTest {
 
         public String getSummary() {
             return "mock transaction";
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MockTransaction that = (MockTransaction) o;
+            return valid == that.valid;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(valid);
         }
     }
 }

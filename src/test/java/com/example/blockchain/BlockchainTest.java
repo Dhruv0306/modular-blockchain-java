@@ -3,17 +3,22 @@ package com.example.blockchain;
 import com.example.blockchain.blockchain.Block;
 import com.example.blockchain.blockchain.Blockchain;
 import com.example.blockchain.blockchain.Transaction;
+import com.example.blockchain.consensus.ProofOfWork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BlockchainTest {
 
     private Blockchain<MockTransaction> blockchain;
+    private ProofOfWork<MockTransaction> pow;
 
     @BeforeEach
     void setUp() {
+        pow = new ProofOfWork<>();
         blockchain = new Blockchain<>();
     }
 
@@ -85,6 +90,94 @@ public class BlockchainTest {
         assertEquals(1, blockchain.getChain().size());
         assertEquals("GENESIS_HASH", blockchain.getChain().get(0).getHash());
     }
+    
+    @Test
+    void testIsValidChainWithValidChain() {
+        // A blockchain with just the genesis block should be valid
+        assertTrue(blockchain.isValidChain());
+        
+        // Add a new valid block
+        List<MockTransaction> txs = new ArrayList<>();
+        txs.add(new MockTransaction(true));
+        Block<MockTransaction> validBlock = pow.generateBlock(txs, blockchain.getLastBlock());
+        blockchain.addBlock(validBlock);
+        
+        // Chain should still be valid
+        assertTrue(blockchain.isValidChain());
+    }
+    
+    @Test
+    void testIsValidChainWithTamperedBlock() {
+        // Create a valid chain with two blocks
+        List<MockTransaction> txs = new ArrayList<>();
+        txs.add(new MockTransaction(true));
+        Block<MockTransaction> validBlock = pow.generateBlock(txs, blockchain.getLastBlock());
+        blockchain.addBlock(validBlock);
+        
+        // Chain should be valid
+        assertTrue(blockchain.isValidChain());
+        
+        // Now tamper with the transaction in the second block
+        List<Block<MockTransaction>> chain = blockchain.getChain();
+        Block<MockTransaction> originalBlock = chain.get(1);
+        
+        // Create a tampered block with modified transactions but the same hash
+        List<MockTransaction> tamperedTxs = new ArrayList<>();
+        tamperedTxs.add(new MockTransaction(false)); // Different transaction
+        Block<MockTransaction> tamperedBlock = new Block<>(
+            originalBlock.getIndex(),
+            originalBlock.getPreviousHash(),
+            originalBlock.getTimestamp(),
+            tamperedTxs,
+            originalBlock.getNonce(),
+            originalBlock.getHash() // Same hash, but should be different due to transaction change
+        );
+        
+        // Replace the original block with the tampered block
+        chain.set(1, tamperedBlock);
+        
+        // Chain should now be invalid
+        assertFalse(blockchain.isValidChain());
+    }
+    
+    @Test
+    void testIsValidChainWithNonSequentialIndex() {
+        // Create a block with non-sequential index (should be 1, but we're setting it to 2)
+        List<MockTransaction> txs = new ArrayList<>();
+        Block<MockTransaction> genesisBlock = blockchain.getLastBlock();
+        Block<MockTransaction> nonSequentialBlock = new Block<>(
+            2, // Should be 1
+            genesisBlock.getHash(),
+            System.currentTimeMillis(),
+            txs,
+            0,
+            "0000abcdef"  // This is just a dummy hash
+        );
+        
+        blockchain.addBlock(nonSequentialBlock);
+        
+        // Chain should be invalid due to non-sequential index
+        assertFalse(blockchain.isValidChain());
+    }
+    
+    @Test
+    void testIsValidChainWithInvalidPreviousHash() {
+        // Create a block with invalid previous hash
+        List<MockTransaction> txs = new ArrayList<>();
+        Block<MockTransaction> invalidBlock = new Block<>(
+            1,
+            "INVALID_PREVIOUS_HASH", // Should be the hash of the genesis block
+            System.currentTimeMillis(),
+            txs,
+            0,
+            "0000abcdef"  // This is just a dummy hash
+        );
+        
+        blockchain.addBlock(invalidBlock);
+        
+        // Chain should be invalid due to incorrect previous hash
+        assertFalse(blockchain.isValidChain());
+    }
 
     private static class MockTransaction implements Transaction {
         private final boolean valid;
@@ -107,6 +200,19 @@ public class BlockchainTest {
 
         public String getSummary() {
             return "mock transaction";
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MockTransaction that = (MockTransaction) o;
+            return valid == that.valid;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(valid);
         }
     }
 }
