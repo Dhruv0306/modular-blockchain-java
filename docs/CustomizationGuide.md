@@ -20,6 +20,16 @@ This guide provides detailed instructions on how to customize the modular blockc
 - [Block Structure](#block-structure)
   - [The Block Class Structure](#the-block-class-structure)
   - [Extending the Block Class](#extending-the-block-class)
+- [Genesis Block Customization](#genesis-block-customization)
+  - [Understanding the GenesisBlockFactory Interface](#understanding-the-genesisblockfactory-interface)
+  - [Using the Default Genesis Block](#using-the-default-genesis-block)
+  - [Creating Custom Genesis Blocks](#creating-custom-genesis-blocks)
+  - [Practical Use Cases for Custom Genesis Blocks](#practical-use-cases-for-custom-genesis-blocks)
+- [Configuration System](#configuration-system)
+  - [Understanding the BlockchainConfig Class](#understanding-the-blockchainconfig-class)
+  - [Configuration Properties](#configuration-properties)
+  - [Environment-Specific Configurations](#environment-specific-configurations)
+  - [Runtime Configuration Changes](#runtime-configuration-changes)
 - [Advanced Customizations](#advanced-customizations)
   - [Implementing Merkle Trees](#implementing-merkle-trees)
   - [Adding Chain Persistence](#adding-chain-persistence)
@@ -175,7 +185,7 @@ public interface Consensus<T extends Transaction> {
 The framework includes a basic implementation of Proof of Work consensus, which:
 
 - Requires finding a block hash with a specified number of leading zeros
-- Adjusts difficulty through the `DIFFICULTY` constant
+- Adjusts difficulty through the configuration system (see [Configuration System](#configuration-system))
 - Uses SHA-256 for secure hashing
 
 ### Creating Custom Consensus Algorithms
@@ -383,6 +393,239 @@ public class EnhancedBlock<T extends Transaction> extends Block<T> {
 To use this enhanced block, you would need to modify your consensus implementation to produce these enhanced blocks.
 
 ---
+
+## Genesis Block Customization
+
+The genesis block is the first block in any blockchain and defines the initial state of the system. The framework provides a flexible way to customize the genesis block through the `GenesisBlockFactory` interface.
+
+### Understanding the GenesisBlockFactory Interface
+
+The `GenesisBlockFactory` interface defines a contract for creating genesis blocks:
+
+```java
+public interface GenesisBlockFactory<T extends Transaction> {
+    Block<T> createGenesisBlock();
+}
+```
+
+This simple interface allows for multiple implementations with different genesis block creation strategies.
+
+### Using the Default Genesis Block
+
+By default, the blockchain uses a `DefaultGenesisBlockFactory` that creates a basic genesis block:
+
+```java
+// Default constructor uses DefaultGenesisBlockFactory internally
+Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
+```
+
+The default genesis block has:
+- Index: 0
+- Previous hash: "0"
+- Timestamp: Current time
+- No transactions
+- Nonce: 0
+- Hash: From BlockchainConfig (see [Configuration System](#configuration-system))
+
+This means that you can change the genesis hash for all default blockchains by modifying the `genesis_hash` property in your configuration file or environment variables.
+
+### Creating Custom Genesis Blocks
+
+For more control over the genesis block, you can use the `CustomGenesisBlockFactory` with a builder pattern:
+
+```java
+// Create initial genesis transactions
+List<FinancialTransaction> genesisTransactions = new ArrayList<>();
+genesisTransactions.add(new FinancialTransaction("Genesis", "Alice", 1000));
+genesisTransactions.add(new FinancialTransaction("Genesis", "Bob", 1000));
+
+// Create custom genesis block factory
+CustomGenesisBlockFactory<FinancialTransaction> customFactory = 
+    CustomGenesisBlockFactory.<FinancialTransaction>builder()
+        .withHash("CUSTOM_GENESIS_HASH_WITH_INITIAL_FUNDS")
+        .withTransactions(genesisTransactions)
+        .withMetadata("creator", "Satoshi")
+        .withMetadata("version", "1.0")
+        .build();
+
+// Create blockchain with custom genesis
+Blockchain<FinancialTransaction> customBlockchain = new Blockchain<>(customFactory);
+```
+
+The `CustomGenesisBlockFactory.Builder` provides methods for:
+
+- `withHash(String)`: Sets a custom hash for the genesis block
+- `withTransactions(List<T>)`: Sets initial transactions
+- `addTransaction(T)`: Adds a single transaction
+- `withPreviousHash(String)`: Sets the previous hash (default is "0")
+- `withNonce(int)`: Sets the nonce value (default is 0)
+- `withMetadata(String, Object)`: Adds metadata (not stored in the block, but available for custom implementations)
+
+### Practical Use Cases for Custom Genesis Blocks
+
+1. **Token Pre-allocation**
+
+   When creating a cryptocurrency or token system, you often need to pre-allocate tokens:
+
+   ```java
+   CustomGenesisBlockFactory<FinancialTransaction> factory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .addTransaction(new FinancialTransaction("Genesis", "Foundation", 5000000))
+           .addTransaction(new FinancialTransaction("Genesis", "Development", 3000000))
+           .addTransaction(new FinancialTransaction("Genesis", "Marketing", 2000000))
+           .build();
+   ```
+
+2. **Blockchain Identity and Metadata**
+
+   Store information about the blockchain's purpose, creation date, or creator:
+
+   ```java
+   CustomGenesisBlockFactory<FinancialTransaction> factory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .withMetadata("name", "Educational Blockchain")
+           .withMetadata("created", LocalDateTime.now().toString())
+           .withMetadata("creator", "Blockchain University")
+           .withMetadata("purpose", "Teaching blockchain concepts")
+           .build();
+   ```
+
+3. **Testing Different Initial States**
+
+   For testing, you might want different initial blockchain states:
+
+   ```java
+   // Test factory for empty initial state
+   CustomGenesisBlockFactory<FinancialTransaction> emptyFactory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder().build();
+       
+   // Test factory for initial state with transactions
+   CustomGenesisBlockFactory<FinancialTransaction> populatedFactory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .addTransaction(new FinancialTransaction("Genesis", "TestAccount", 1000))
+           .build();
+   ```
+
+4. **Implementing Multiple Blockchain Instances**
+
+   Different blockchain instances might need different genesis configurations:
+
+   ```java
+   // Main network
+   CustomGenesisBlockFactory<FinancialTransaction> mainnetFactory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .withHash("MAINNET_GENESIS_HASH")
+           .build();
+           
+   // Test network
+   CustomGenesisBlockFactory<FinancialTransaction> testnetFactory = 
+       CustomGenesisBlockFactory.<FinancialTransaction>builder()
+           .withHash("TESTNET_GENESIS_HASH")
+           .build();
+   ```
+
+---
+
+## Configuration System
+
+The blockchain framework provides a flexible configuration system that allows you to customize various parameters without changing code. This is particularly useful for running your blockchain in different environments (development, testing, production).
+
+### Understanding the BlockchainConfig Class
+
+The `BlockchainConfig` class is implemented as a singleton that manages configuration properties from multiple sources:
+
+```java
+// Get the default configuration
+BlockchainConfig config = BlockchainConfig.getInstance();
+
+// Get configuration with a specific file
+BlockchainConfig customConfig = BlockchainConfig.getInstance("custom-config.properties");
+
+// Access configuration values
+int difficulty = config.getDifficulty();
+String genesisHash = config.getGenesisHash();
+```
+
+### Configuration Properties
+
+The current implementation supports the following configuration properties:
+
+| Property       | Description                                      | Default     |
+|---------------|--------------------------------------------------|-------------|
+| `difficulty`   | Number of leading zeros required for PoW hashing | 4           |
+| `genesis_hash` | Hash value used for the genesis block            | GENESIS_HASH |
+
+### Environment-Specific Configurations
+
+You can create different configuration files for different environments:
+
+1. **Default Configuration**: `blockchain.properties`
+2. **Development Configuration**: `blockchain-dev.properties` 
+3. **Production Configuration**: `blockchain-prod.properties`
+
+Example of a development configuration file:
+
+```properties
+# Lower difficulty for faster development testing
+difficulty=2
+genesis_hash=DEV_GENESIS_HASH
+```
+
+Example of a production configuration file:
+
+```properties
+# Higher difficulty for production security
+difficulty=6
+genesis_hash=PROD_GENESIS_HASH
+```
+
+### Runtime Configuration Changes
+
+The configuration can be changed at runtime using the following methods:
+
+```java
+BlockchainConfig config = BlockchainConfig.getInstance();
+
+// Change configuration file
+config.setConfigFile("blockchain-dev.properties");
+config.reloadConfig();
+```
+
+### Adding Custom Configuration Properties
+
+To extend the configuration system with your own properties:
+
+1. Add private fields and getters to the `BlockchainConfig` class
+2. Update the `loadConfig` method to load your custom properties
+3. Add default values for your properties
+
+Example of extending the configuration:
+
+```java
+// In BlockchainConfig.java
+private static final int DEFAULT_MAX_BLOCK_SIZE = 1000000;
+private int maxBlockSize;
+
+private void loadConfig() {
+    // Existing code...
+    
+    // Load max block size
+    String maxBlockSizeEnv = System.getenv("BLOCKCHAIN_MAX_BLOCK_SIZE");
+    if (maxBlockSizeEnv != null && !maxBlockSizeEnv.isEmpty()) {
+        maxBlockSize = Integer.parseInt(maxBlockSizeEnv);
+    } else if (configLoaded) {
+        maxBlockSize = Integer.parseInt(
+            properties.getProperty("max_block_size", 
+            String.valueOf(DEFAULT_MAX_BLOCK_SIZE)));
+    } else {
+        maxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
+    }
+}
+
+public int getMaxBlockSize() {
+    return maxBlockSize;
+}
+```
 
 ## Advanced Customizations
 

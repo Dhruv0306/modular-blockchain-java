@@ -7,12 +7,20 @@ public class Blockchain<T extends Transaction> {
     private final List<Block<T>> chain = new ArrayList<>();
     private final List<T> pendingTransactions = new ArrayList<>();
 
+    /**
+     * Creates a new blockchain with a default genesis block.
+     */
     public Blockchain() {
-        chain.add(createGenesisBlock());
+        this(new DefaultGenesisBlockFactory<>());
     }
 
-    private Block<T> createGenesisBlock() {
-        return new Block<>(0, "0", System.currentTimeMillis(), new ArrayList<>(), 0, "GENESIS_HASH");
+    /**
+     * Creates a new blockchain with a custom genesis block factory.
+     *
+     * @param genesisBlockFactory The factory to create the genesis block
+     */
+    public Blockchain(GenesisBlockFactory<T> genesisBlockFactory) {
+        chain.add(genesisBlockFactory.createGenesisBlock());
     }
 
     public void addTransaction(T tx) {
