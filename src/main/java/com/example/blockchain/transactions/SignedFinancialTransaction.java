@@ -61,4 +61,8 @@ public class SignedFinancialTransaction implements SignedTransaction {
         }
     }
 
+    @Override
+    public String toString() {
+        return getSummary();
+    }
 }
