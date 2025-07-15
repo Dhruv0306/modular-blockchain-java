@@ -204,4 +204,20 @@ class BlockchainConfigTest {
         assertSame(config1, config2);
         assertEquals(5, config2.getDifficulty());
     }
+
+    @Test
+    void testLoadConfigWithFileButNoProperties() throws IOException {
+        // Create empty properties file
+        Properties props = new Properties();
+        try (FileOutputStream outputStream = new FileOutputStream(configFile)) {
+            props.store(outputStream, "Empty configuration");
+        }
+        
+        BlockchainConfig config = BlockchainConfig.getInstance(configFile.getAbsolutePath());
+        
+        // Should use default values when properties are missing
+        assertEquals(4, config.getDifficulty());
+        assertEquals("GENESIS_HASH", config.getGenesisHash());
+        assertEquals("INFO", config.getLogLevel());
+    }
 } 
