@@ -162,6 +162,111 @@ public class VotingTransaction implements Transaction {
 4. **Data Minimization**: Only store essential data that needs to be on the blockchain.
 5. **Privacy Considerations**: Be careful about storing personally identifiable information.
 
+### Implementing Digital Signatures for Transactions
+
+#### Step 1: Understand the SignedTransaction Interface
+
+The `SignedTransaction` interface extends the base `Transaction` interface with methods for digital signature verification:
+
+```java
+public interface SignedTransaction extends Transaction {
+    String getSignature();
+    PublicKey getSenderPublicKey();
+    boolean verifySignature();
+}
+```
+
+#### Step 2: Generate Key Pairs for Transaction Signing
+
+Use the `CryptoUtils` class to generate RSA key pairs for transaction signing:
+
+```java
+// Generate a new key pair for a user
+KeyPair aliceKeyPair = CryptoUtils.generateKeyPair();
+KeyPair bobKeyPair = CryptoUtils.generateKeyPair();
+
+// Store these securely in a real application
+```
+
+#### Step 3: Create a Signed Transaction Implementation
+
+```java
+public class CustomSignedTransaction implements SignedTransaction {
+    private final String sender;
+    private final String receiver;
+    private final String data;
+    private final PublicKey senderPublicKey;
+    private final String signature;
+    
+    public CustomSignedTransaction(String sender, String receiver, 
+                                  String data, KeyPair senderKeyPair) {
+        this.sender = sender;
+        this.receiver = receiver;
+        this.data = data;
+        this.senderPublicKey = senderKeyPair.getPublic();
+        
+        // Sign the transaction data
+        this.signature = CryptoUtils.signData(this.getSummary(), 
+                                            senderKeyPair.getPrivate());
+    }
+    
+    @Override
+    public boolean isValid() {
+        // Transaction is valid only if signature verification passes
+        return sender != null && receiver != null && verifySignature();
+    }
+    
+    @Override
+    public String getSender() { return sender; }
+    
+    @Override
+    public String getReceiver() { return receiver; }
+    
+    @Override
+    public String getSummary() {
+        return sender + ":" + receiver + ":" + data;
+    }
+    
+    @Override
+    public String getSignature() { return signature; }
+    
+    @Override
+    public PublicKey getSenderPublicKey() { return senderPublicKey; }
+    
+    @Override
+    public boolean verifySignature() {
+        return CryptoUtils.verifySignature(getSummary(), signature, senderPublicKey);
+    }
+}
+```
+
+#### Step 4: Use Signed Transactions in Your Blockchain
+
+```java
+// Create a blockchain that works with signed transactions
+Blockchain<SignedTransaction> blockchain = new Blockchain<>();
+
+// Generate key pairs for users
+KeyPair aliceKeyPair = CryptoUtils.generateKeyPair();
+KeyPair bobKeyPair = CryptoUtils.generateKeyPair();
+
+// Create and add signed transactions
+SignedTransaction tx1 = new CustomSignedTransaction(
+    "Alice", "Bob", "Transfer 100 coins", aliceKeyPair);
+blockchain.addTransaction(tx1);
+
+// The blockchain will automatically verify signatures during validation
+```
+
+#### Step 5: Verify Transaction Integrity
+
+When validating the blockchain, each signed transaction's signature will be verified:
+
+```java
+// This will check all transaction signatures as part of validation
+boolean isValid = blockchain.isChainValid();
+```
+
 ### Digitally Signed Transactions
 
 You can define secure, signed transactions by implementing the `SignedTransaction` interface, which extends `Transaction` and adds:

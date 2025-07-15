@@ -90,6 +90,64 @@ The project aims for:
 - Branch coverage: 70%
 - Method coverage: 80%
 
+## Mock Transactions for Testing
+
+### Purpose of MockTransaction
+
+The project includes a `MockTransaction` class specifically designed for unit testing. This class:
+
+- Provides a simplified transaction implementation that focuses on testability
+- Allows controlling validity through constructor parameters
+- Eliminates external dependencies that might complicate testing
+- Enables predictable behavior in test scenarios
+
+```java
+public class MockTransaction implements Transaction {
+    private final boolean valid;
+    private final String sender;
+    private final String receiver;
+    
+    public MockTransaction(boolean valid) {
+        this.valid = valid;
+        this.sender = "MockSender";
+        this.receiver = "MockReceiver";
+    }
+    
+    public MockTransaction(boolean valid, String sender, String receiver) {
+        this.valid = valid;
+        this.sender = sender;
+        this.receiver = receiver;
+    }
+    
+    @Override
+    public boolean isValid() {
+        return valid;
+    }
+    
+    @Override
+    public String getSender() {
+        return sender;
+    }
+    
+    @Override
+    public String getReceiver() {
+        return receiver;
+    }
+    
+    @Override
+    public String getSummary() {
+        return "Mock transaction from " + sender + " to " + receiver;
+    }
+}
+```
+
+### When to Use MockTransaction
+
+- Testing the blockchain core functionality without domain-specific logic
+- Isolating consensus algorithm testing from transaction implementation details
+- Creating test scenarios with predictable transaction validity
+- Simulating various transaction states without complex setup
+
 ## Debugging Test Failures
 
 ### Understanding Test Output

@@ -8,6 +8,13 @@ classDiagram
         +getSummary() String
     }
     
+    class SignedTransaction {
+        <<interface>>
+        +getSignature() String
+        +getSenderPublicKey() PublicKey
+        +verifySignature() boolean
+    }
+    
     class Block~T~ {
         -index int
         -timestamp long
@@ -28,6 +35,13 @@ classDiagram
         +createGenesisBlock() Block~T~
     }
     
+    class CustomGenesisBlockFactory~T~ {
+        -hash String
+        -transactions List~T~
+        -metadata Map~String,String~
+        +createGenesisBlock() Block~T~
+    }
+    
     class Blockchain~T~ {
         -chain List~Block~T~~
         -pendingTransactions List~T~
@@ -44,23 +58,54 @@ classDiagram
         -amount double
     }
     
+    class SignedFinancialTransaction {
+        -sender String
+        -receiver String
+        -amount double
+        -senderPublicKey PublicKey
+        -signature String
+    }
+    
     class ProofOfWork {
         -difficulty int
         +mineBlock(Block~T~) void
     }
     
+    class CryptoUtils {
+        <<utility>>
+        +generateKeyPair() KeyPair
+        +signData(String, PrivateKey) String
+        +verifySignature(String, String, PublicKey) boolean
+    }
+    
+    class BlockUtils {
+        <<utility>>
+        +calculateHash(Block) String
+        +calculateHashForBlock(int, String, long, List, long) String
+    }
+    
+    Transaction <|-- SignedTransaction
     Transaction <|.. FinancialTransaction
+    SignedTransaction <|.. SignedFinancialTransaction
     Consensus~T~ <|.. ProofOfWork
+    GenesisBlockFactory~T~ <|.. CustomGenesisBlockFactory~T~
     Blockchain~T~ *-- Block~T~ : contains
     Blockchain~T~ --> Consensus~T~ : uses
     Blockchain~T~ --> GenesisBlockFactory~T~ : uses
     Block~T~ *-- Transaction : contains
+    SignedFinancialTransaction --> CryptoUtils : uses
+    Block~T~ --> BlockUtils : uses
     
     %% Individual styling with colors at 60% opacity and bold text
     style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
     style Block fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
     style Transaction fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
+    style SignedTransaction fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
     style Consensus fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
     style GenesisBlockFactory fill:#F39C1299,stroke:#D68910,stroke-width:2px,color:#000,font-weight:bold
+    style CustomGenesisBlockFactory fill:#F39C1299,stroke:#D68910,stroke-width:2px,color:#000,font-weight:bold
     style FinancialTransaction fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
+    style SignedFinancialTransaction fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
     style ProofOfWork fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
+    style CryptoUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
+    style BlockUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold

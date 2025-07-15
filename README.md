@@ -92,6 +92,13 @@ classDiagram
         +getSummary() String
     }
     
+    class SignedTransaction {
+        <<interface>>
+        +getSignature() String
+        +getSenderPublicKey() PublicKey
+        +verifySignature() boolean
+    }
+    
     class Block~T~ {
         -index int
         -timestamp long
@@ -112,6 +119,13 @@ classDiagram
         +createGenesisBlock() Block~T~
     }
     
+    class CustomGenesisBlockFactory~T~ {
+        -hash String
+        -transactions List~T~
+        -metadata Map~String,String~
+        +createGenesisBlock() Block~T~
+    }
+    
     class Blockchain~T~ {
         -chain List~Block~T~~
         -pendingTransactions List~T~
@@ -128,26 +142,57 @@ classDiagram
         -amount double
     }
     
+    class SignedFinancialTransaction {
+        -sender String
+        -receiver String
+        -amount double
+        -senderPublicKey PublicKey
+        -signature String
+    }
+    
     class ProofOfWork {
         -difficulty int
         +mineBlock(Block~T~) void
     }
     
+    class CryptoUtils {
+        <<utility>>
+        +generateKeyPair() KeyPair
+        +signData(String, PrivateKey) String
+        +verifySignature(String, String, PublicKey) boolean
+    }
+    
+    class BlockUtils {
+        <<utility>>
+        +calculateHash(Block) String
+        +calculateHashForBlock(int, String, long, List, long) String
+    }
+    
+    Transaction <|-- SignedTransaction
     Transaction <|.. FinancialTransaction
+    SignedTransaction <|.. SignedFinancialTransaction
     Consensus~T~ <|.. ProofOfWork
+    GenesisBlockFactory~T~ <|.. CustomGenesisBlockFactory~T~
     Blockchain~T~ *-- Block~T~ : contains
     Blockchain~T~ --> Consensus~T~ : uses
     Blockchain~T~ --> GenesisBlockFactory~T~ : uses
     Block~T~ *-- Transaction : contains
+    SignedFinancialTransaction --> CryptoUtils : uses
+    Block~T~ --> BlockUtils : uses
     
     %% Individual styling with colors at 60% opacity and bold text
     style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
     style Block fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
     style Transaction fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
+    style SignedTransaction fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
     style Consensus fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
     style GenesisBlockFactory fill:#F39C1299,stroke:#D68910,stroke-width:2px,color:#000,font-weight:bold
+    style CustomGenesisBlockFactory fill:#F39C1299,stroke:#D68910,stroke-width:2px,color:#000,font-weight:bold
     style FinancialTransaction fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
+    style SignedFinancialTransaction fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
     style ProofOfWork fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
+    style CryptoUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
+    style BlockUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
 ```
 
 **Key Relationships:**
@@ -155,7 +200,11 @@ classDiagram
 - `Block<T>` contains transactions and links to previous blocks
 - `Consensus<T>` defines block creation and validation rules
 - `Transaction` interface allows custom transaction types
+- `SignedTransaction` extends Transaction to add digital signature verification
 - `GenesisBlockFactory<T>` creates the initial block
+- `CustomGenesisBlockFactory<T>` provides customizable genesis block creation
+- `BlockUtils` handles hash computation for blocks
+- `CryptoUtils` manages cryptographic operations for digital signatures
 
 ---
 
@@ -215,51 +264,15 @@ mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 3. Use environment-specific configurations:
 
 ```bash
-# Run with default configuration
-mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
-
 # Run with development configuration
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main" -Dexec.args="blockchain-dev.properties"
-
-# Run with production configuration
-mvn exec:java -Dexec.mainClass="com.example.blockchain.Main" -Dexec.args="blockchain-prod.properties"
 
 # Or use environment variable
 set BLOCKCHAIN_ENV=dev
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 ```
 
-4. Or use the convenience script:
-
-**For Linux/Mac**
-```bash
-# Make the script executable
-chmod +x run-blockchain.sh
-
-# Run with default settings
-./run-blockchain.sh
-
-# Run with development environment
-./run-blockchain.sh --env dev
-
-# Run with production environment but debug logging
-./run-blockchain.sh --env prod --log DEBUG
-```
-
-**For Windows**
-```bash
-#Run with default settings
-run-blockchain.bat # CMD
-.\run-blockchain.bat # PowerShell
-
-# Run with development environment
-run-blockchain.bat --env dev
-.\run-blockchain.bat --env dev # PowerShell
-
-# Run with production environment but debug logging
-run-blockchain.bat --env prod --log DEBUG
-.\run-blockchain.bat --env prod --log DEBUG # PowerShell
-```
+> 📘 For detailed run instructions including all CLI options, environment configurations, and troubleshooting tips, see the [Run Guide](docs/RunGuide.md)
 
 ---
 
@@ -379,6 +392,54 @@ public class CertificateTransaction implements Transaction {
 }
 ```
 
+#### Creating Secure Signed Transactions
+
+For enhanced security, implement the `SignedTransaction` interface to add digital signature verification:
+
+```java
+public class MySignedTransaction implements SignedTransaction {
+    private final String sender;
+    private final String receiver;
+    private final String data;
+    private final PublicKey senderPublicKey;
+    private final String signature;
+    
+    // Constructor with signature generation
+    public MySignedTransaction(String sender, String receiver, String data, 
+                              KeyPair keyPair) throws Exception {
+        this.sender = sender;
+        this.receiver = receiver;
+        this.data = data;
+        this.senderPublicKey = keyPair.getPublic();
+        this.signature = CryptoUtils.signData(this.getSummary(), keyPair.getPrivate());
+    }
+    
+    @Override
+    public boolean isValid() {
+        return sender != null && receiver != null && verifySignature();
+    }
+    
+    @Override
+    public String getSender() { return sender; }
+    
+    @Override
+    public String getReceiver() { return receiver; }
+    
+    @Override
+    public String getSummary() { return sender + ":" + receiver + ":" + data; }
+    
+    @Override
+    public String getSignature() { return signature; }
+    
+    @Override
+    public PublicKey getSenderPublicKey() { return senderPublicKey; }
+    
+    @Override
+    public boolean verifySignature() {
+        return CryptoUtils.verifySignature(getSummary(), signature, senderPublicKey);
+    }
+}
+
 ---
 
 ### 🔁 2. Implement or Plug in a Consensus Algorithm
@@ -457,6 +518,8 @@ Or target a specific method:
 ```bash
 mvn test -Dtest=SignedFinancialTransactionTest#testValidSignedTransaction
 ```
+
+> 📘 For detailed instructions on running tests, debugging failures, and understanding mock transactions, see the [Test Guide](docs/TestGuide.md)
 
 
 ---
