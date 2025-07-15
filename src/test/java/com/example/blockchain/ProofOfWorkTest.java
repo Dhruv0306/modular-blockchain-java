@@ -189,6 +189,11 @@ public class ProofOfWorkTest {
         public int hashCode() {
             return Objects.hash(valid);
         }
+
+        @Override
+        public String getTransactionId() {
+            return "mock-" + (valid ? "valid" : "invalid") + "-" + hashCode();
+        }
     }
 
     private static class ThrowingMockTransaction implements Transaction {
@@ -206,6 +211,11 @@ public class ProofOfWorkTest {
 
         public String getSummary() {
             return "throwing transaction";
+        }
+
+        @Override
+        public String getTransactionId() {
+            return "throwing-mock-transaction";
         }
     }
 }

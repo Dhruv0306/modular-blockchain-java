@@ -236,6 +236,11 @@ public class BlockchainTest {
         public String getSummary() {
             return "mock transaction";
         }
+        
+        @Override
+        public String getTransactionId() {
+            return "mock-" + (valid ? "valid" : "invalid") + "-" + hashCode();
+        }
 
         @Override
         public boolean equals(Object o) {

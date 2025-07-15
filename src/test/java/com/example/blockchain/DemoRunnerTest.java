@@ -1,23 +1,22 @@
 package com.example.blockchain;
 
+import com.example.blockchain.blockchain.BlockchainConfig;
 import com.example.blockchain.examples.DemoRunner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
-import org.mockito.Mockito;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-class MainTest {
+class DemoRunnerTest {
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
-    private DemoRunner mockDemoRunner;
+    private BlockchainConfig config;
 
     @BeforeEach
-    void setUpStreams() {
+    void setUp() {
         System.setOut(new PrintStream(outContent));
-        mockDemoRunner = Mockito.mock(DemoRunner.class);
+        config = BlockchainConfig.getInstance("blockchain.properties");
     }
 
     @AfterEach
@@ -26,24 +25,16 @@ class MainTest {
     }
 
     @Test
-    void testMainWithDefaultConfig() {
-        Main.main(new String[] {});
+    void testRunDefaultBlockchainExample() {
+        DemoRunner demoRunner = new DemoRunner();
+        demoRunner.runDefaultBlockchainExample(config);
         // Just verify it runs without exception
     }
 
     @Test
-    void testMainWithConfigFile() {
-        Main.main(new String[] { "blockchain.properties" });
+    void testRunCustomGenesisBlockchainExample() {
+        DemoRunner demoRunner = new DemoRunner();
+        demoRunner.runCustomGenesisBlockchainExample(config);
         // Just verify it runs without exception
-    }
-
-    @Test
-    void testMainWithEnvironmentVariable() {
-        System.setProperty("BLOCKCHAIN_ENV", "test");
-        try {
-            Main.main(new String[] {});
-        } finally {
-            System.clearProperty("BLOCKCHAIN_ENV");
-        }
     }
 }

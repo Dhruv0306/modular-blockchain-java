@@ -72,5 +72,10 @@ class BlockUtilsTest {
         public int hashCode() {
             return Objects.hash(valid);
         }
+
+        @Override
+        public String getTransactionId() {
+            return "mock-utils-" + (valid ? "valid" : "invalid") + "-" + hashCode();
+        }
     }
 }

@@ -184,5 +184,10 @@ class GenesisBlockFactoryTest {
         public String getSummary() {
             return sender + " -> " + receiver + ": " + amount;
         }
+
+        @Override
+        public String getTransactionId() {
+            return "test-" + sender + "-" + receiver + "-" + amount;
+        }
     }
 }

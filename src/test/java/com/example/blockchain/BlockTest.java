@@ -114,5 +114,10 @@ class BlockTest {
         public String getSummary() {
             return "mock";
         }
+
+        @Override
+        public String getTransactionId() {
+            return "mock-test-" + hashCode();
+        }
     }
 }

@@ -14,11 +14,13 @@ class SignedFinancialTransactionTest {
     @Test
     void testValidSignedTransaction() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
-        String summary = "Alice -> Bob : $100.0";
+        // Create transaction with fixed timestamp for testing
+        long timestamp = 1234567890L;
+        String summary = "Alice -> Bob : $100.0 (time: " + timestamp + ")";
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 100.0, pair.getPublic(), signature);
+                "Alice", "Bob", 100.0, pair.getPublic(), signature, null, timestamp);
 
         assertTrue(tx.isValid());
     }
@@ -27,9 +29,10 @@ class SignedFinancialTransactionTest {
     void testInvalidSignatureFailsValidation() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
         String signature = CryptoUtils.signData("invalid data", pair.getPrivate());
+        long timestamp = 1234567890L;
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 100.0, pair.getPublic(), signature);
+                "Alice", "Bob", 100.0, pair.getPublic(), signature, null, timestamp);
 
         assertFalse(tx.isValid());
     }
@@ -37,11 +40,12 @@ class SignedFinancialTransactionTest {
     @Test
     void testInvalidAmountFailsValidation() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
-        String summary = "Alice -> Bob : $0.0";
+        long timestamp = 1234567890L;
+        String summary = "Alice -> Bob : $0.0 (time: " + timestamp + ")";
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 0.0, pair.getPublic(), signature);
+                "Alice", "Bob", 0.0, pair.getPublic(), signature, null, timestamp);
 
         assertFalse(tx.isValid());
     }
@@ -49,24 +53,46 @@ class SignedFinancialTransactionTest {
     @Test
     void testNullReceiverFailsValidation() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
-        String summary = "Alice -> null : $100.0";
+        long timestamp = 1234567890L;
+        String summary = "Alice -> null : $100.0 (time: " + timestamp + ")";
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", null, 100.0, pair.getPublic(), signature);
+                "Alice", null, 100.0, pair.getPublic(), signature, null, timestamp);
 
         assertFalse(tx.isValid());
     }
 
     @Test
-    void testToStringMatchesSummary() throws Exception {
+    void testToStringIncludesTransactionId() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
-        String summary = "Alice -> Bob : $50.0";
+        long timestamp = 1234567890L;
+        String summary = "Alice -> Bob : $50.0 (time: " + timestamp + ")";
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 50.0, pair.getPublic(), signature);
+                "Alice", "Bob", 50.0, pair.getPublic(), signature, null, timestamp);
 
-        assertEquals(summary, tx.toString());
+        String expectedPrefix = summary;
+        String actualString = tx.toString();
+        
+        assertTrue(actualString.startsWith(expectedPrefix), 
+                "Transaction toString should start with the summary");
+        assertTrue(actualString.contains("[ID: "), 
+                "Transaction toString should include the ID");
+    }
+    
+    @Test
+    void testTimestampGetter() throws Exception {
+        KeyPair pair = CryptoUtils.generateKeyPair();
+        long expectedTimestamp = 1234567890L;
+        String summary = "Alice -> Bob : $50.0 (time: " + expectedTimestamp + ")";
+        String signature = CryptoUtils.signData(summary, pair.getPrivate());
+
+        SignedFinancialTransaction tx = new SignedFinancialTransaction(
+                "Alice", "Bob", 50.0, pair.getPublic(), signature, null, expectedTimestamp);
+
+        assertEquals(expectedTimestamp, tx.getTimestamp(), 
+                "getTimestamp should return the timestamp used during construction");
     }
 }

@@ -29,7 +29,8 @@ public class BlockUtils {
             if (txs != null) {
                 for (T tx : txs) {
                     // Include complete details of each transaction in the hash calculation
-                    txDetails.append(tx.getSender())
+                    txDetails.append(tx.getTransactionId())
+                            .append(tx.getSender())
                             .append(tx.getReceiver())
                             .append(tx.getSummary())
                             .append(tx.isValid());
@@ -42,9 +43,15 @@ public class BlockUtils {
             for (byte b : hash)
                 sb.append(String.format("%02x", b));
             return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            logger.error("SHA-256 algorithm not available for hash computation", e);
+            throw new RuntimeException("Failed to compute block hash: SHA-256 algorithm not available", e);
+        } catch (java.io.UnsupportedEncodingException e) {
+            logger.error("UTF-8 encoding not supported for hash computation", e);
+            throw new RuntimeException("Failed to compute block hash: UTF-8 encoding not supported", e);
         } catch (Exception e) {
-            logger.error("Error computing hash", e);
-            throw new RuntimeException(e);
+            logger.error("Unexpected error computing block hash for block with index " + index, e);
+            throw new RuntimeException("Failed to compute block hash: " + e.getMessage(), e);
         }
     }
 }
