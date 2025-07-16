@@ -214,12 +214,26 @@ classDiagram
         +getInstance() ChainConfig
         +getDifficulty() int
         +getGenesisHash() String
+        +isPersistenceEnabled() boolean
+        +getPersistenceFile() String
     }
     
     class JsonUtils {
         <<utility>>
         +writeToFile(Object, File) void
         +readFromFile(File, Class) Object
+        +toJson(Object) String
+        +fromJson(String, Class) Object
+    }
+    
+    class PersistenceManager~T~ {
+        <<utility>>
+        -persistenceFile File
+        -transactionType Class~T~
+        +PersistenceManager(File, Class~T~)
+        +saveBlockchain(Blockchain~T~) boolean
+        +loadBlockchain() Blockchain~T~
+        +isPersistenceEnabled() boolean
     }
     
     Transaction <|-- SignedTransaction
@@ -231,11 +245,14 @@ classDiagram
     Blockchain~T~ *-- Block~T~ : contains
     Blockchain~T~ --> Consensus~T~ : uses
     Blockchain~T~ --> JsonUtils : uses
+    Blockchain~T~ --> PersistenceManager~T~ : uses
     Block~T~ *-- Transaction : contains
     SignedFinancialTransaction --> CryptoUtils : uses
     Block~T~ --> HashUtils : uses
     ProofOfWork~T~ --> HashUtils : uses
     ProofOfWork~T~ --> ChainConfig : uses
+    PersistenceManager~T~ --> JsonUtils : uses
+    PersistenceManager~T~ --> ChainConfig : uses
     
     %% Individual styling with colors at 60% opacity and bold text
     style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
@@ -253,6 +270,7 @@ classDiagram
     style HashUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
     style ChainConfig fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
     style JsonUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
+    style PersistenceManager fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
 ```
 
 **Key Relationships:**
