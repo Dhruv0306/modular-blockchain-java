@@ -69,10 +69,14 @@ public class Blockchain<T extends Transaction> {
      * Adds a new transaction to the pending transactions pool if it's valid.
      * 
      * @param tx The transaction to add
+     * @return 
      */
-    public void addTransaction(T tx) {
-        if (tx.isValid())
+    public boolean addTransaction(T tx) {
+        if (tx.isValid()){
             pendingTransactions.add(tx);
+            return true;
+        }
+        return false;
     }
 
     /**
