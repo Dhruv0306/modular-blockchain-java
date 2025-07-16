@@ -1,17 +1,19 @@
-<!-- Maven Project Configuration File -->
+<!-- Maven Project Configuration File 
+     This is the main build configuration file for a modular blockchain core project.
+     It defines all dependencies, build settings, and plugins required for the project. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <!-- Maven Version -->
+  <!-- Maven Version - Using Maven 4.0.0 schema -->
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- Project Coordinates -->
+  <!-- Project Coordinates - Uniquely identifies this project -->
   <groupId>com.example.blockchain</groupId>
   <artifactId>modular-blockchain-core</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
 
-  <!-- Java Version Configuration -->
+  <!-- Java Version Configuration - Using Java 21 -->
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
@@ -20,16 +22,16 @@
   <name>modular-blockchain-core</name>
   <url>http://maven.apache.org</url>
 
-  <!-- Project Dependencies -->
+  <!-- Project Dependencies - All external libraries required by the project -->
   <dependencies>
-    <!-- Testing Dependencies -->
+    <!-- Testing Dependencies - For unit and integration testing -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <version>5.10.0</version>
       <scope>test</scope>
     </dependency>
-    <!-- Mockito for testing -->
+    <!-- Mockito for testing - Mocking framework for unit tests -->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -43,22 +45,22 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Logging Dependencies -->
-    <!-- SLF4J API -->
+    <!-- Logging Dependencies - For application logging -->
+    <!-- SLF4J API - Logging Facade -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>2.0.9</version>
     </dependency>
 
-    <!-- Default implementation: Logback -->
+    <!-- Default implementation: Logback - Actual logging implementation -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>1.4.11</version>
     </dependency>
 
-    <!-- JSON Processing Dependencies -->
+    <!-- JSON Processing Dependencies - For handling JSON data -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
@@ -71,21 +73,21 @@
       <version>2.17.1</version>
     </dependency>
 
-    <!-- Spring Boot Starter -->
+    <!-- Spring Boot Dependencies - For web application framework -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
       <version>3.2.0</version>
     </dependency>
 
-    <!-- Spring Boot Plugin -->
+    <!-- Spring Boot Core - For core Spring Boot functionality -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
       <version>3.2.0</version>
     </dependency>
 
-    <!-- Faster JSON Processing -->
+    <!-- Additional JSON Processing - Note: Possible duplicate dependency -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
@@ -93,10 +95,10 @@
     </dependency>
   </dependencies>
 
-  <!-- Build Configuration -->
+  <!-- Build Configuration - Defines how the project should be built -->
   <build>
     <plugins>
-      <!-- Plugin to add additional source directories -->
+      <!-- Plugin to add additional source directories - For example code -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -117,21 +119,21 @@
         </executions>
       </plugin>
 
-      <!-- Plugin for executing Java programs -->
+      <!-- Plugin for executing Java programs - For running the application -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
       </plugin>
 
-      <!-- Plugin for running tests -->
+      <!-- Plugin for running tests - Configures test execution -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.1.2</version>
       </plugin>
 
-      <!-- Code coverage reporting plugin -->
+      <!-- Code coverage reporting plugin - For test coverage analysis -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -151,6 +153,7 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Spring Boot Maven Plugin - For building Spring Boot applications -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
