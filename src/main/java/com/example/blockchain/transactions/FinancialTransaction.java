@@ -4,13 +4,18 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.example.blockchain.core.model.Transaction;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FinancialTransaction implements Transaction {
-    private final String sender;
-    private final String receiver;
-    private final double amount;
-    private final String transactionId;
+    private String sender;
+    private String receiver;
+    private double amount;
+    private String transactionId;
 
+    // Default constructor for deserialization
+    // Required for Jackson to create instances from JSON
+    public FinancialTransaction() {}
     public FinancialTransaction(String sender, String receiver, double amount) {
         this.sender = sender;
         this.receiver = receiver;

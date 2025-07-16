@@ -1,5 +1,6 @@
 package com.example.blockchain.core.chain;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import com.example.blockchain.consensus.Consensus;
@@ -8,9 +9,13 @@ import com.example.blockchain.core.config.DefaultGenesisBlockFactory;
 import com.example.blockchain.core.config.GenesisBlockFactory;
 import com.example.blockchain.core.model.Block;
 import com.example.blockchain.core.model.Transaction;
+import com.example.blockchain.core.utils.JsonUtils;
 import com.example.blockchain.logging.BlockchainLoggerFactory;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import org.slf4j.Logger;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Blockchain<T extends Transaction> {
     private static final Logger logger = BlockchainLoggerFactory.getLogger(Blockchain.class);
     private final List<Block<T>> chain = new ArrayList<>();
@@ -101,5 +106,14 @@ public class Blockchain<T extends Transaction> {
         }
 
         return true;
+    }
+
+    public void exportToJson(File file) throws Exception {
+        JsonUtils.writeToFile(this, file);
+    }
+
+    public static <T extends Transaction> Blockchain<T> importFromJson(File file, Class<T> transactionClass)
+            throws Exception {
+        return JsonUtils.readFromFile(file, JsonUtils.getBlockchainType(transactionClass));
     }
 }

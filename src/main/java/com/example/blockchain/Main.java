@@ -48,6 +48,10 @@ public class Main {
 
         // Create and run the demo examples
         DemoRunner demoRunner = new DemoRunner();
+
+        logger.info("\n" + "=".repeat(100) + "\n" + 
+                    "Running default blockchain example...\n" + 
+                    "=".repeat(100) + "\n");
         
         // Run the default blockchain example
         demoRunner.runDefaultBlockchainExample(config);

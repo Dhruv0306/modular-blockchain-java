@@ -10,6 +10,10 @@ Thank you for your interest in contributing to the Modular Blockchain Java proje
 - [Testing](#testing)
 - [Code Style and Formatting](#code-style-and-formatting)
 - [Creating New Modules](#creating-new-modules)
+  - [Working with JSON Serialization](#working-with-json-serialization)
+  - [Adding a New Transaction Type](#adding-a-new-transaction-type)
+  - [Implementing a New Consensus Algorithm](#implementing-a-new-consensus-algorithm)
+  - [Adding a New Feature Module](#adding-a-new-feature-module)
 - [Pull Request Process](#pull-request-process)
 
 ## Development Setup
@@ -42,11 +46,12 @@ Thank you for your interest in contributing to the Modular Blockchain Java proje
 The project follows a standard Maven structure:
 
 - `src/main/java/com/example/blockchain/` - Main source code
-  - `blockchain/` - Core blockchain components
+  - `core/` - Core blockchain components (blocks, chain, etc.)
+    - `utils/` - Core utilities including JSON serialization
   - `consensus/` - Consensus algorithm implementations
   - `transactions/` - Transaction type implementations
   - `crypto/` - Utilities for digital signatures and cryptographic operations
-  - `logging/` - Logging utilities
+  - `logging/` - Logging configuration and utilities
 - `src/test/java/com/example/blockchain/` - Test code
 - `docs/` - Documentation
 - `logs/` - Log files (generated at runtime)
@@ -215,6 +220,22 @@ true(blockchain.isChainValid(), "Chain should be valid after adding a properly s
 - Example: `Add ProofOfStake consensus algorithm (#42)`
 
 ## Creating New Modules
+
+### Working with JSON Serialization
+
+When working with the JSON serialization feature:
+
+1. Ensure all transaction classes have:
+   - A no-argument constructor (required by Jackson)
+   - The `@JsonIgnoreProperties(ignoreUnknown = true)` annotation
+   - Proper getters and setters for all fields
+
+2. For polymorphic types (like transactions), ensure the base interface has:
+   - The `@JsonTypeInfo` annotation to handle type information during serialization
+
+3. When adding new serializable classes:
+   - Add appropriate unit tests in `JsonUtilsTest`
+   - Test both individual object serialization and full blockchain round-trip serialization
 
 ### Adding a New Transaction Type
 

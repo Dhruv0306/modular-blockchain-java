@@ -2,6 +2,31 @@
 
 This guide explains how to effectively run, analyze, and debug tests for the Modular Blockchain Java project.
 
+## Table of Contents
+
+- [Test Class Overview](#-test-class-overview)
+- [Running Tests](#running-tests)
+  - [Running All Tests](#running-all-tests)
+  - [Running Individual Tests](#running-individual-tests)
+  - [Running Tests with Different Configurations](#running-tests-with-different-configurations)
+- [Viewing Test Coverage](#viewing-test-coverage)
+  - [Generating Coverage Reports](#generating-coverage-reports)
+  - [Viewing Coverage Reports](#viewing-coverage-reports)
+  - [Coverage Thresholds](#coverage-thresholds)
+- [Mock Transactions for Testing](#mock-transactions-for-testing)
+  - [Purpose of MockTransaction](#purpose-of-mocktransaction)
+  - [When to Use MockTransaction](#when-to-use-mocktransaction)
+- [Debugging Test Failures](#debugging-test-failures)
+  - [Understanding Test Output](#understanding-test-output)
+  - [Common Debugging Techniques](#common-debugging-techniques)
+  - [Troubleshooting Common Issues](#troubleshooting-common-issues)
+- [Testing JSON Serialization](#testing-json-serialization)
+  - [Key JSON Serialization Tests](#key-json-serialization-tests)
+  - [Example JSON Serialization Test](#example-json-serialization-test)
+- [Testing Edge Cases and Boundary Conditions](#testing-edge-cases-and-boundary-conditions)
+  - [Key Edge Case Tests](#key-edge-case-tests)
+  - [Writing Your Own Edge Case Tests](#writing-your-own-edge-case-tests)
+
 ---
 
 ## ✅ Test Class Overview
@@ -19,6 +44,8 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
 | `DynamicLoggingTest`             | `LoggingUtils`                     | Verifies dynamic log level changes at runtime for debugging flexibility.   |
 | `BlockchainEdgeCasesTest`        | `Blockchain`                       | Tests edge cases like empty transaction lists and duplicate transactions.  |
 | `ConfigErrorsTest`               | `BlockchainConfig`                 | Ensures robust handling of missing or invalid configuration files.         |
+| `JsonUtilsTest`                 | `JsonUtils`                       | Tests JSON serialization and deserialization of blockchain components.    |
+| `BlockchainSerializationTest`   | `Blockchain`                      | Tests exporting and importing blockchain data to/from JSON files.        |
 
 ---
 
@@ -217,6 +244,57 @@ When tests fail, Maven provides:
 4. **Assertion Errors**
    - Use more specific assertions with descriptive messages
    - Consider using assertAll for multiple related assertions
+
+## Testing JSON Serialization
+
+The project includes tests for JSON serialization and deserialization to ensure blockchain data can be properly saved and loaded.
+
+### Key JSON Serialization Tests
+
+1. **Block Serialization**
+   - Tests serializing and deserializing individual blocks
+   - Verifies all block properties are preserved
+
+2. **Transaction Serialization**
+   - Tests serializing and deserializing different transaction types
+   - Ensures transaction validity is maintained after deserialization
+
+3. **Blockchain Serialization**
+   - Tests exporting and importing entire blockchain
+   - Verifies chain integrity after round-trip serialization
+
+### Example JSON Serialization Test
+
+```java
+@Test
+void testBlockchainJsonRoundTrip() throws Exception {
+    // Create a blockchain with some transactions and blocks
+    Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
+    blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
+    
+    // Add a block
+    ProofOfWork<FinancialTransaction> consensus = new ProofOfWork<>();
+    Block<FinancialTransaction> block = consensus.generateBlock(
+        blockchain.getPendingTransactions(), blockchain.getLastBlock());
+    blockchain.addBlock(block);
+    
+    // Export to JSON file
+    File tempFile = File.createTempFile("blockchain", ".json");
+    blockchain.exportToJson(tempFile);
+    
+    // Import from JSON file
+    Blockchain<FinancialTransaction> imported = 
+        Blockchain.importFromJson(tempFile, FinancialTransaction.class);
+    
+    // Verify the imported blockchain
+    assertEquals(blockchain.getChain().size(), imported.getChain().size());
+    assertEquals(blockchain.getChain().get(1).getHash(), 
+                imported.getChain().get(1).getHash());
+    
+    // Clean up
+    tempFile.delete();
+}
+```
 
 ## Testing Edge Cases and Boundary Conditions
 
