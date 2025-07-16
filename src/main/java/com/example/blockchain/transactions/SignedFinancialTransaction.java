@@ -4,7 +4,7 @@ import java.security.PublicKey;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.example.blockchain.blockchain.SignedTransaction;
+import com.example.blockchain.core.model.SignedTransaction;
 import com.example.blockchain.crypto.CryptoUtils;
 
 public class SignedFinancialTransaction implements SignedTransaction {

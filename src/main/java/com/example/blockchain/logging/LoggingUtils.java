@@ -60,7 +60,7 @@ public class LoggingUtils {
      */
     public static void configureLoggingFromConfig() {
         try {
-            com.example.blockchain.blockchain.BlockchainConfig config = com.example.blockchain.blockchain.BlockchainConfig
+            com.example.blockchain.core.config.ChainConfig config = com.example.blockchain.core.config.ChainConfig
                     .getInstance();
 
             String logLevel = config.getLogLevel();

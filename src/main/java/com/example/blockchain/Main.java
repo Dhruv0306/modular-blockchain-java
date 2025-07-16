@@ -1,6 +1,6 @@
 package com.example.blockchain;
 
-import com.example.blockchain.blockchain.BlockchainConfig;
+import com.example.blockchain.core.config.ChainConfig;
 import com.example.blockchain.examples.DemoRunner;
 import com.example.blockchain.logging.BlockchainLoggerFactory;
 import com.example.blockchain.logging.LoggingUtils;
@@ -20,7 +20,7 @@ public class Main {
 
     public static void main(String[] args) {
         // Load the appropriate config based on environment or command line argument
-        String configFile = "blockchain.properties"; // default
+        String configFile = "config/blockchain.properties"; // default
 
         // If args provided, use first arg as config file
         if (args.length > 0) {
@@ -30,11 +30,11 @@ public class Main {
         // Check for BLOCKCHAIN_ENV environment variable
         String env = System.getenv("BLOCKCHAIN_ENV");
         if (env != null && !env.isEmpty()) {
-            configFile = "blockchain-" + env + ".properties";
+            configFile = "config/blockchain-" + env + ".properties";
         }
 
         // Initialize config with the appropriate file
-        BlockchainConfig config = BlockchainConfig.getInstance(configFile);
+        ChainConfig config = ChainConfig.getInstance(configFile);
 
         // Configure logging based on blockchain configuration
         LoggingUtils.configureLoggingFromConfig();

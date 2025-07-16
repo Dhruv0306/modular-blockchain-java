@@ -1,8 +1,9 @@
 package com.example.blockchain.transactions;
 
-import com.example.blockchain.blockchain.Transaction;
 import java.util.Objects;
 import java.util.UUID;
+
+import com.example.blockchain.core.model.Transaction;
 
 public class FinancialTransaction implements Transaction {
     private final String sender;

@@ -1,11 +1,13 @@
 package com.example.blockchain.consensus;
 
 import java.util.List;
-import com.example.blockchain.blockchain.Block;
-import com.example.blockchain.blockchain.BlockchainConfig;
+
+import com.example.blockchain.core.chain.HashUtils;
+import com.example.blockchain.core.config.ChainConfig;
+import com.example.blockchain.core.model.Block;
+import com.example.blockchain.core.model.Transaction;
 import com.example.blockchain.logging.BlockchainLoggerFactory;
-import com.example.blockchain.blockchain.BlockUtils;
-import com.example.blockchain.blockchain.Transaction;
+
 import org.slf4j.Logger;
 
 public class ProofOfWork<T extends Transaction> implements Consensus<T> {
@@ -13,11 +15,11 @@ public class ProofOfWork<T extends Transaction> implements Consensus<T> {
 
     @Override
     public boolean validateBlock(Block<T> newBlock, Block<T> previousBlock) {
-        int difficulty = BlockchainConfig.getInstance().getDifficulty();
+        int difficulty = ChainConfig.getInstance().getDifficulty();
         logger.debug("Validating block with difficulty {}", difficulty);
 
         boolean validPreviousHash = newBlock.getPreviousHash().equals(previousBlock.getHash());
-        boolean validHash = newBlock.getHash().equals(BlockUtils.computeHash(newBlock));
+        boolean validHash = newBlock.getHash().equals(HashUtils.computeHash(newBlock));
         boolean validDifficulty = newBlock.getHash().startsWith("0".repeat(difficulty));
 
         if (!validPreviousHash) {
@@ -25,7 +27,7 @@ public class ProofOfWork<T extends Transaction> implements Consensus<T> {
         }
 
         if (!validHash) {
-            logger.warn("Invalid block hash. Expected: {}, Actual: {}", BlockUtils.computeHash(newBlock), newBlock.getHash());
+            logger.warn("Invalid block hash. Expected: {}, Actual: {}", HashUtils.computeHash(newBlock), newBlock.getHash());
         }
 
         if (!validDifficulty) {
@@ -37,7 +39,7 @@ public class ProofOfWork<T extends Transaction> implements Consensus<T> {
 
     @Override
     public Block<T> generateBlock(List<T> txs, Block<T> previousBlock) {
-        int difficulty = BlockchainConfig.getInstance().getDifficulty();
+        int difficulty = ChainConfig.getInstance().getDifficulty();
         int index = previousBlock.getIndex() + 1;
         long timestamp = System.currentTimeMillis();
         int nonce = 0;
@@ -48,7 +50,7 @@ public class ProofOfWork<T extends Transaction> implements Consensus<T> {
 
         long startTime = System.currentTimeMillis();
         do {
-            hash = BlockUtils.computeHash(index, previousBlock.getHash(), timestamp, txs, nonce);
+            hash = HashUtils.computeHash(index, previousBlock.getHash(), timestamp, txs, nonce);
             nonce++;
 
             // Log progress every 100,000 attempts
