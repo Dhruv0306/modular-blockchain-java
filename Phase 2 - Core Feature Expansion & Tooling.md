@@ -3,8 +3,8 @@
 | #  | Task                                                 | Description                                                                 | Suggested Branch Name                 |Is Done        |
 |----|------------------------------------------------------|-----------------------------------------------------------------------------|----------------------------------------|---------------|
 | 1  | 🧩 **JSON Serialization for Blocks and Transactions** | Add methods to serialize/deserialize blocks and transactions to/from JSON   | `feature/json-serialization`          |✅              |
-| 2  | 💾 **Persistent Storage**                             | Store blockchain data to disk (e.g., as JSON or custom flat files)          | `feature/file-storage-persistence`    |☑️              |
-| 3  | 🌐 **REST API Interface (Spring Boot)**               | Expose endpoints for adding transactions, viewing chain, mining, etc.       | `feature/spring-api-controller`       |⬜              |
+| 2  | 💾 **Persistent Storage**                             | Store blockchain data to disk (e.g., as JSON or custom flat files)          | `feature/file-storage-persistence`    |✅              |
+| 3  | 🌐 **REST API Interface (Spring Boot)**               | Expose endpoints for adding transactions, viewing chain, mining, etc.       | `feature/spring-api-controller`       |☑️              |
 | 4  | 🔐 **Wallet System & Key Management**                 | Generate/manage public/private keys, sign transactions securely             | `feature/wallet-support`              |⬜              |
 | 5  | 🕒 **Transaction Pool / Mempool**                     | Manage unconfirmed transactions waiting to be mined                         | `feature/txpool-mempool-sim`          |⬜              |
 | 6  | 🌍 **Multi-Node Simulation**                          | Simulate syncing between blockchain nodes (mock networking)                 | `feature/multi-node-sync`             |⬜              |
@@ -20,4 +20,4 @@
 - Include **unit tests and integration tests** in each feature branch.
 - Integrate with your existing logging and configuration system.
 
-> **💾 Starting: Persistent Storage (Task 2)**
+> **🌐 Starting: REST API Interface (Spring Boot) (Task 3)**
