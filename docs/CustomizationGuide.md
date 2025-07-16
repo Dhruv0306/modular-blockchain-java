@@ -37,9 +37,10 @@ This guide provides detailed instructions on how to customize the modular blockc
   - [JSON Serialization and Persistence](#json-serialization-and-persistence)
     - [Using JsonUtils](#using-jsonutils)
     - [Exporting and Importing Blockchain](#exporting-and-importing-blockchain)
+    - [Using Automatic Persistence](#using-automatic-persistence)
     - [Creating JSON-Compatible Transaction Types](#creating-json-compatible-transaction-types)
   - [Implementing Merkle Trees](#implementing-merkle-trees)
-  - [Adding Chain Persistence](#adding-chain-persistence)
+  - [Customizing Chain Persistence](#customizing-chain-persistence)
   - [Adding Network Communication](#adding-network-communication)
 - [Testing Your Customizations](#testing-your-customizations)
   - [Testing Transaction Types](#testing-transaction-types)
@@ -688,10 +689,12 @@ String genesisHash = config.getGenesisHash();
 
 The current implementation supports the following configuration properties:
 
-| Property       | Description                                      | Default     |
-|---------------|--------------------------------------------------|-------------|
-| `difficulty`   | Number of leading zeros required for PoW hashing | 4           |
-| `genesis_hash` | Hash value used for the genesis block            | GENESIS_HASH |
+| Property             | Description                                      | Default            |
+|---------------------|--------------------------------------------------|--------------------|
+| `difficulty`         | Number of leading zeros required for PoW hashing | 4                  |
+| `genesis_hash`       | Hash value used for the genesis block            | GENESIS_HASH       |
+| `persistence.enabled`| Enable automatic blockchain persistence          | true               |
+| `persistence.file`   | File path for blockchain persistence storage     | data/chain-data.json |
 
 ### Environment-Specific Configurations
 
@@ -769,7 +772,7 @@ public int getMaxBlockSize() {
 
 ### JSON Serialization and Persistence
 
-The framework provides built-in support for JSON serialization of blockchain data, allowing you to save and load your blockchain state.
+The framework provides built-in support for JSON serialization of blockchain data, allowing you to save and load your blockchain state. Additionally, it now includes automatic persistence to save the blockchain state between application runs.
 
 #### Using JsonUtils
 
@@ -800,6 +803,54 @@ blockchain.exportToJson(new File("blockchain.json"));
 // Import blockchain from JSON file
 Blockchain<FinancialTransaction> importedChain = 
     Blockchain.importFromJson(new File("blockchain.json"), FinancialTransaction.class);
+```
+
+#### Using Automatic Persistence
+
+The framework now includes a `PersistenceManager` utility class that handles automatic persistence:
+
+```java
+// Create a persistence manager for a specific transaction type
+PersistenceManager<FinancialTransaction> persistenceManager = 
+    new PersistenceManager<>(new File("data/chain-data.json"), FinancialTransaction.class);
+
+// Save blockchain state
+boolean success = persistenceManager.saveBlockchain(blockchain);
+
+// Load blockchain state
+Blockchain<FinancialTransaction> loadedChain = persistenceManager.loadBlockchain();
+```
+
+In the main application, persistence is handled automatically:
+
+```java
+// At application startup
+Blockchain<FinancialTransaction> blockchain;
+PersistenceManager<FinancialTransaction> persistenceManager = 
+    new PersistenceManager<>(new File(config.getPersistenceFile()), FinancialTransaction.class);
+
+// Try to load existing blockchain
+if (config.isPersistenceEnabled()) {
+    try {
+        blockchain = persistenceManager.loadBlockchain();
+        logger.info("Loaded existing blockchain with {} blocks", blockchain.getChain().size());
+    } catch (Exception e) {
+        logger.warn("Could not load blockchain, creating new one: {}", e.getMessage());
+        blockchain = new Blockchain<>();
+    }
+} else {
+    blockchain = new Blockchain<>();
+}
+
+// At application shutdown
+if (config.isPersistenceEnabled() && blockchain.isChainValid()) {
+    boolean saved = persistenceManager.saveBlockchain(blockchain);
+    if (saved) {
+        logger.info("Blockchain state saved successfully");
+    } else {
+        logger.error("Failed to save blockchain state");
+    }
+}
 ```
 
 #### Creating JSON-Compatible Transaction Types
@@ -924,9 +975,9 @@ public class MerkleTree<T extends Transaction> {
 }
 ```
 
-### Adding Chain Persistence
+### Customizing Chain Persistence
 
-To store your blockchain, implement a persistence layer:
+The framework now includes automatic persistence through the `PersistenceManager` utility class, which saves and loads the blockchain state to/from a JSON file. If you need more advanced persistence options, you can implement a custom persistence layer:
 
 ```java
 public interface BlockchainStorage<T extends Transaction> {
@@ -1184,7 +1235,7 @@ void testMissingConfiguration() {
 
 After customizing your blockchain, consider:
 
-1. **Persistence**: Implement storage to save your blockchain state.
+1. **Advanced Persistence**: Implement database storage (like LevelDB or H2) for better performance and scalability.
 2. **Networking**: Add peer-to-peer communication for a distributed network.
 3. **Monitoring**: Create tools to monitor the health and performance of your blockchain.
 4. **User Interface**: Build a dashboard or API to interact with your blockchain.

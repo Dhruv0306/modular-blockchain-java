@@ -10,7 +10,7 @@ Thank you for your interest in contributing to the Modular Blockchain Java proje
 - [Testing](#testing)
 - [Code Style and Formatting](#code-style-and-formatting)
 - [Creating New Modules](#creating-new-modules)
-  - [Working with JSON Serialization](#working-with-json-serialization)
+  - [Working with JSON Serialization and Persistence](#working-with-json-serialization)
   - [Adding a New Transaction Type](#adding-a-new-transaction-type)
   - [Implementing a New Consensus Algorithm](#implementing-a-new-consensus-algorithm)
   - [Adding a New Feature Module](#adding-a-new-feature-module)
@@ -48,6 +48,7 @@ The project follows a standard Maven structure:
 - `src/main/java/com/example/blockchain/` - Main source code
   - `core/` - Core blockchain components (blocks, chain, etc.)
     - `utils/` - Core utilities including JSON serialization
+    - `persistence/` - Blockchain state persistence utilities
   - `consensus/` - Consensus algorithm implementations
   - `transactions/` - Transaction type implementations
   - `crypto/` - Utilities for digital signatures and cryptographic operations
@@ -109,6 +110,9 @@ chmod +x run-blockchain.sh
 | `DynamicLoggingTest`             | `LoggingUtils`                     | Verifies dynamic log level changes at runtime for debugging flexibility.   |
 | `BlockchainEdgeCasesTest`        | `Blockchain`                       | Tests edge cases like empty transaction lists and duplicate transactions.  |
 | `ConfigErrorsTest`               | `BlockchainConfig`                 | Ensures robust handling of missing or invalid configuration files.         |
+| `JsonUtilsTest`                 | `JsonUtils`                       | Tests JSON serialization and deserialization of blockchain components.    |
+| `BlockchainSerializationTest`   | `Blockchain`                      | Tests exporting and importing blockchain data to/from JSON files.        |
+| `PersistenceManagerTest`        | `PersistenceManager`              | Tests automatic saving and loading of blockchain state between runs.      |
 
 
 ### Running Tests
@@ -221,9 +225,9 @@ true(blockchain.isChainValid(), "Chain should be valid after adding a properly s
 
 ## Creating New Modules
 
-### Working with JSON Serialization
+### Working with JSON Serialization and Persistence
 
-When working with the JSON serialization feature:
+When working with the JSON serialization and persistence features:
 
 1. Ensure all transaction classes have:
    - A no-argument constructor (required by Jackson)
@@ -234,8 +238,14 @@ When working with the JSON serialization feature:
    - The `@JsonTypeInfo` annotation to handle type information during serialization
 
 3. When adding new serializable classes:
-   - Add appropriate unit tests in `JsonUtilsTest`
+   - Add appropriate unit tests in `JsonUtilsTest` and `PersistenceManagerTest`
    - Test both individual object serialization and full blockchain round-trip serialization
+   - Test automatic persistence with your new transaction types
+
+4. When working with persistence:
+   - Ensure your transaction types are properly serializable
+   - Test persistence with both valid and invalid blockchain states
+   - Verify error handling for missing or corrupted persistence files
 
 ### Adding a New Transaction Type
 

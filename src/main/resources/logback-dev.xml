@@ -1,29 +1,45 @@
+<!-- Logback Configuration File -->
+<!-- This configuration sets up logging for both console and file output -->
 <configuration>
+    <!-- Console Appender Configuration -->
+    <!-- Outputs logs to system console with colored output -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
+            <!-- Pattern includes timestamp, thread name, colored log level, cyan logger name, and message -->
             <pattern>%d{HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- Rolling File Appender Configuration -->
+    <!-- Writes logs to files that rotate daily and are kept for 7 days -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Base log file location -->
         <file>logs/blockchain-dev.log</file>
+        <!-- Rolling policy - creates new file daily -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Pattern for archived log files -->
             <fileNamePattern>logs/blockchain-dev.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- Keep 7 days worth of history -->
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <encoder>
+            <!-- Pattern includes full date, thread name, log level, logger name, and message -->
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
     <!-- Development environment uses DEBUG level for more detailed logs -->
+    <!-- Application-specific logger configuration -->
     <logger name="com.example.blockchain" level="DEBUG" />
 
     <!-- Third-party libraries -->
+    <!-- Configure external libraries to log at INFO level -->
     <logger name="ch.qos.logback" level="INFO" />
 
     <!-- Set root logger level and appenders -->
+    <!-- Root logger configuration affects all unconfigured loggers -->
     <root level="INFO">
+        <!-- Attach both console and file appenders -->
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
     </root>

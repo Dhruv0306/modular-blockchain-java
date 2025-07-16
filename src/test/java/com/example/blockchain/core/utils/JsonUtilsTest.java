@@ -14,12 +14,19 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for JsonUtils functionality
+ * Tests JSON serialization and deserialization of blockchain objects
+ */
 class JsonUtilsTest {
 
     @TempDir
     Path tempDir;
 
-    // Test class for serialization/deserialization
+    /**
+     * Test class used for basic serialization/deserialization tests
+     * Contains simple string and integer fields
+     */
     static class TestObject {
         private String name;
         private int value;
@@ -33,6 +40,7 @@ class JsonUtilsTest {
             this.value = value;
         }
 
+        // Getters and setters
         public String getName() {
             return name;
         }
@@ -59,7 +67,10 @@ class JsonUtilsTest {
         }
     }
 
-    // Simple Transaction implementation for testing
+    /**
+     * Mock Transaction implementation for testing JSON serialization
+     * Implements the Transaction interface with basic transaction properties
+     */
     static class TestTransaction implements Transaction {
         private String sender;
         private String receiver;
@@ -80,6 +91,7 @@ class JsonUtilsTest {
             this.transactionId = sender + receiver + amount;
         }
 
+        // Transaction interface implementations
         @Override
         public boolean isValid() {
             return valid;
@@ -100,6 +112,7 @@ class JsonUtilsTest {
             return summary != null ? summary : (sender + " sent " + amount + " to " + receiver);
         }
 
+        // Getters and setters for JSON serialization
         public void setSender(String sender) {
             this.sender = sender;
         }
@@ -146,6 +159,9 @@ class JsonUtilsTest {
         }
     }
 
+    /**
+     * Tests writing an object to a file and reading it back
+     */
     @Test
     void testWriteAndReadFromFile() throws Exception {
         // Create test object
@@ -160,10 +176,13 @@ class JsonUtilsTest {
         // Read from file
         TestObject readObject = JsonUtils.readFromFile(tempFile, TestObject.class);
         
-        // Verify
+        // Verify object was correctly serialized and deserialized
         assertEquals(testObject, readObject);
     }
 
+    /**
+     * Tests direct JSON string serialization and deserialization
+     */
     @Test
     void testToJsonAndFromJson() throws Exception {
         // Create test object
@@ -175,16 +194,22 @@ class JsonUtilsTest {
         // Convert back from JSON
         TestObject fromJson = JsonUtils.fromJson(json, TestObject.class);
         
-        // Verify
+        // Verify JSON conversion preserved object data
         assertEquals(testObject, fromJson);
     }
 
+    /**
+     * Placeholder for complex type handling tests
+     */
     @Test
     void testReadFromFileWithJavaType() throws Exception {
         // Skip this test - we'll test the functionality in a different way
         // that doesn't require complex type handling
     }
     
+    /**
+     * Tests reading a specific type from a JSON file
+     */
     @Test
     void testReadFromFileWithSpecificType() throws Exception {
         // Create a test object
@@ -199,23 +224,29 @@ class JsonUtilsTest {
         // Read from file with specific type
         TestObject readObject = JsonUtils.readFromFile(tempFile, TestObject.class);
         
-        // Verify
+        // Verify object properties were preserved
         assertNotNull(readObject);
         assertEquals("test", readObject.getName());
         assertEquals(123, readObject.getValue());
     }
 
+    /**
+     * Tests creation of JavaType for Blockchain generic type
+     */
     @Test
     void testGetBlockchainType() {
         // Get JavaType for Blockchain<TestTransaction>
         JavaType type = JsonUtils.getBlockchainType(TestTransaction.class);
         
-        // Verify
+        // Verify correct type information
         assertNotNull(type);
         assertEquals(Blockchain.class, type.getRawClass());
         assertEquals(TestTransaction.class, type.getBindings().getBoundType(0).getRawClass());
     }
     
+    /**
+     * Tests JSON serialization of Transaction objects
+     */
     @Test
     void testFromJson() throws Exception {
         // Create test object
@@ -227,12 +258,15 @@ class JsonUtilsTest {
         // Convert back from JSON
         TestTransaction fromJson = JsonUtils.fromJson(json, TestTransaction.class);
         
-        // Verify
+        // Verify transaction details were preserved
         assertEquals("Alice", fromJson.getSender());
         assertEquals("Bob", fromJson.getReceiver());
         assertEquals(100, fromJson.getAmount());
     }
     
+    /**
+     * Tests full serialization cycle of a Block containing FinancialTransactions
+     */
     @Test
     void testBlockSerializationRoundTrip() throws Exception {
         // Create a block with a financial transaction
@@ -248,11 +282,11 @@ class JsonUtilsTest {
         // Write to file
         JsonUtils.writeToFile(block, file);
         
-        // Read from file
+        // Read from file using correct generic type information
         JavaType blockType = JsonUtils.mapper.getTypeFactory().constructParametricType(Block.class, FinancialTransaction.class);
         Block<FinancialTransaction> loaded = JsonUtils.readFromFile(file, blockType);
         
-        // Verify
+        // Verify block and transaction details were preserved
         assertEquals(block.getIndex(), loaded.getIndex());
         assertEquals(block.getTransactions().size(), loaded.getTransactions().size());
         assertEquals("Alice", loaded.getTransactions().get(0).getSender());

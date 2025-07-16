@@ -1,9 +1,13 @@
+/**
+ * Test class for ProofOfWork consensus algorithm implementation.
+ * Tests block validation, generation, and various edge cases.
+ */
 package com.example.blockchain.consensus;
 
 import com.example.blockchain.consensus.ProofOfWork;
-import com.example.blockchain.core.chain.HashUtils;
 import com.example.blockchain.core.model.Block;
 import com.example.blockchain.core.model.Transaction;
+import com.example.blockchain.core.utils.HashUtils;
 
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,12 +22,19 @@ public class ProofOfWorkTest {
     private ProofOfWork<MockTransaction> pow;
     private Block<MockTransaction> genesisBlock;
 
+    /**
+     * Sets up test environment before each test case.
+     * Initializes ProofOfWork instance and genesis block.
+     */
     @BeforeEach
     void setUp() {
         pow = new ProofOfWork<>();
         genesisBlock = new Block<>(0, "0", System.currentTimeMillis(), new ArrayList<>(), 0, "0000genesis");
     }
 
+    /**
+     * Tests that a valid block passes validation.
+     */
     @Test
     void testValidateBlockValid() {
         List<MockTransaction> txs = new ArrayList<>();
@@ -31,6 +42,9 @@ public class ProofOfWorkTest {
         assertTrue(pow.validateBlock(validBlock, genesisBlock));
     }
 
+    /**
+     * Tests that a block with invalid previous hash fails validation.
+     */
     @Test
     void testValidateBlockInvalidPreviousHash() {
         Block<MockTransaction> invalidBlock = new Block<>(1, "wrong", System.currentTimeMillis(), new ArrayList<>(), 0,
@@ -38,6 +52,9 @@ public class ProofOfWorkTest {
         assertFalse(pow.validateBlock(invalidBlock, genesisBlock));
     }
 
+    /**
+     * Tests that a block with invalid hash fails validation.
+     */
     @Test
     void testValidateBlockInvalidHash() {
         Block<MockTransaction> invalidBlock = new Block<>(1, genesisBlock.getHash(), System.currentTimeMillis(),
@@ -45,6 +62,10 @@ public class ProofOfWorkTest {
         assertFalse(pow.validateBlock(invalidBlock, genesisBlock));
     }
 
+    /**
+     * Tests block generation with valid transactions.
+     * Verifies block properties including index, previous hash, and difficulty.
+     */
     @Test
     void testGenerateBlock() {
         List<MockTransaction> txs = new ArrayList<>();
@@ -53,16 +74,18 @@ public class ProofOfWorkTest {
 
         assertEquals(1, newBlock.getIndex());
         assertEquals(genesisBlock.getHash(), newBlock.getPreviousHash());
-        assertTrue(newBlock.getHash().startsWith("0000"));
+        assertTrue(newBlock.getHash().startsWith("0000")); // Verify difficulty requirement
         assertEquals(txs, newBlock.getTransactions());
     }
 
+    /**
+     * Tests that a block with insufficient difficulty fails validation.
+     * Default difficulty requires 4 leading zeros.
+     */
     @Test
     void testInvalidDifficulty() {
-        // Create a block with insufficient difficulty (only 3 leading zeros instead of
-        // 4)
-        // The default difficulty is 4, so a hash with only 3 leading zeros should be
-        // invalid
+        // Create a block with insufficient difficulty (only 3 leading zeros instead of 4)
+        // The default difficulty is 4, so a hash with only 3 leading zeros should be invalid
         Block<MockTransaction> invalidBlock = new Block<>(
                 1,
                 genesisBlock.getHash(),
@@ -76,6 +99,10 @@ public class ProofOfWorkTest {
         assertFalse(pow.validateBlock(invalidBlock, genesisBlock));
     }
 
+    /**
+     * Tests detection of tampered blocks.
+     * Creates a block with modified transactions but same hash.
+     */
     @Test
     void testTamperedBlock() {
         List<MockTransaction> txs = new ArrayList<>();
@@ -98,6 +125,9 @@ public class ProofOfWorkTest {
         assertFalse(pow.validateBlock(tamperedBlock, genesisBlock));
     }
 
+    /**
+     * Tests error handling when computing hash fails.
+     */
     @Test
     void testComputeHashError() {
         ProofOfWork<Transaction> powGeneric = new ProofOfWork<>();
@@ -114,6 +144,9 @@ public class ProofOfWorkTest {
         assertNotNull(exception.getCause());
     }
 
+    /**
+     * Tests that a block with valid hash but insufficient difficulty fails validation.
+     */
     @Test
     void testValidHashButInvalidDifficulty() throws Exception {
         // Create block parameters
@@ -130,20 +163,20 @@ public class ProofOfWorkTest {
         String correctHash = (String) computeHashMethod.invoke(pow, index, prevHash, timestamp, txs, nonce);
 
         // Ensure the hash doesn't meet difficulty (doesn't start with 0000)
-        // If it accidentally does, modify the nonce until we get one that doesn't
         while (correctHash.startsWith("0000")) {
             nonce++;
             correctHash = (String) computeHashMethod.invoke(pow, index, prevHash, timestamp, txs, nonce);
         }
 
-        // Create block with correct hash but insufficient difficulty
         Block<MockTransaction> blockWithBadDifficulty = new Block<>(index, prevHash, timestamp, txs, nonce,
                 correctHash);
 
-        // This should fail validation due to difficulty, not hash mismatch
         assertFalse(pow.validateBlock(blockWithBadDifficulty, genesisBlock));
     }
 
+    /**
+     * Tests hash computation with null transactions list.
+     */
     @Test
     void testComputeHashWithNullTransactions() throws Exception {
         Method computeHashMethod = HashUtils.class.getDeclaredMethod("computeHash", int.class, String.class,
@@ -153,6 +186,10 @@ public class ProofOfWorkTest {
         assertNotNull(hash);
     }
 
+    /**
+     * Mock transaction implementation for testing.
+     * Can be configured as valid or invalid.
+     */
     private static class MockTransaction implements Transaction {
         private final boolean valid;
 
@@ -197,6 +234,10 @@ public class ProofOfWorkTest {
         }
     }
 
+    /**
+     * Mock transaction that throws exception during validation.
+     * Used for testing error handling.
+     */
     private static class ThrowingMockTransaction implements Transaction {
         public boolean isValid() {
             throw new RuntimeException("Test exception");

@@ -1,3 +1,7 @@
+/**
+ * Test class for verifying error handling in ChainConfig class.
+ * Tests various error scenarios when loading configuration properties.
+ */
 package com.example.blockchain.core.config;
 
 import org.junit.jupiter.api.AfterEach;
@@ -18,10 +22,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigErrorsTest {
 
+    // Temporary directory for test files
     @TempDir
     Path tempDir;
     private File configFile;
 
+    /**
+     * Set up test environment before each test.
+     * Resets the ChainConfig singleton and creates a new temporary config file.
+     */
     @BeforeEach
     void setUp() throws Exception {
         // Reset the singleton instance before each test
@@ -29,6 +38,10 @@ public class ConfigErrorsTest {
         configFile = tempDir.resolve("test-config.properties").toFile();
     }
 
+    /**
+     * Clean up test environment after each test.
+     * Resets the ChainConfig singleton to prevent test interference.
+     */
     @AfterEach
     void tearDown() throws Exception {
         // Reset the singleton instance after each test
@@ -36,7 +49,8 @@ public class ConfigErrorsTest {
     }
 
     /**
-     * Helper method to reset the singleton instance using reflection
+     * Helper method to reset the singleton instance using reflection.
+     * This ensures each test starts with a fresh ChainConfig instance.
      */
     private void resetSingleton() throws Exception {
         Field instance = ChainConfig.class.getDeclaredField("instance");
@@ -44,6 +58,10 @@ public class ConfigErrorsTest {
         instance.set(null, null);
     }
 
+    /**
+     * Test behavior when attempting to load from a non-existent properties file.
+     * Should fall back to default configuration values.
+     */
     @Test
     void testMissingPropertiesFile() {
         // Try to load config from a non-existent file
@@ -56,6 +74,10 @@ public class ConfigErrorsTest {
         assertEquals("INFO", config.getLogLevel());
     }
     
+    /**
+     * Test behavior when loading an improperly formatted properties file.
+     * Should fall back to default configuration values.
+     */
     @Test
     void testInvalidPropertiesFormat() throws IOException {
         // Create a file with invalid properties format
@@ -72,6 +94,10 @@ public class ConfigErrorsTest {
         assertEquals("INFO", config.getLogLevel());
     }
     
+    /**
+     * Test behavior when difficulty value in properties file is not a valid number.
+     * Should fall back to default difficulty value while keeping other valid properties.
+     */
     @Test
     void testInvalidDifficultyValue() throws IOException {
         // Create a properties file with invalid difficulty value
@@ -92,6 +118,10 @@ public class ConfigErrorsTest {
         assertEquals("INFO", config.getLogLevel());
     }
     
+    /**
+     * Test behavior when loading an empty properties file.
+     * Should use all default configuration values.
+     */
     @Test
     void testEmptyPropertiesFile() throws IOException {
         // Create an empty properties file
@@ -109,6 +139,10 @@ public class ConfigErrorsTest {
         assertEquals("INFO", config.getLogLevel());
     }
     
+    /**
+     * Test behavior when loading a properties file with only some properties defined.
+     * Should use default values for undefined properties.
+     */
     @Test
     void testPartiallyDefinedProperties() throws IOException {
         // Create a properties file with only some properties defined

@@ -16,13 +16,26 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for ChainConfig.
+ * Tests configuration loading, reloading and singleton pattern implementation.
+ */
 class ChainConfigTest {
 
+    // Temporary directory for test files
     @TempDir
     Path tempDir;
+    
+    // Configuration file used for testing
     private File configFile;
+    
+    // Name of the test configuration file
     private static final String TEST_CONFIG_FILENAME = "test-blockchain.properties";
 
+    /**
+     * Set up test environment before each test.
+     * Resets singleton instance and creates temporary config file.
+     */
     @BeforeEach
     void setUp() throws Exception {
         // Reset the singleton instance before each test
@@ -32,6 +45,9 @@ class ChainConfigTest {
         configFile = tempDir.resolve(TEST_CONFIG_FILENAME).toFile();
     }
 
+    /**
+     * Clean up after each test by resetting the singleton instance.
+     */
     @AfterEach
     void tearDown() throws Exception {
         // Reset the singleton instance after each test
@@ -39,7 +55,8 @@ class ChainConfigTest {
     }
 
     /**
-     * Helper method to reset the singleton instance using reflection
+     * Helper method to reset the singleton instance using reflection.
+     * This allows testing different configurations in isolation.
      */
     private void resetSingleton() throws Exception {
         Field instance = ChainConfig.class.getDeclaredField("instance");
@@ -48,7 +65,10 @@ class ChainConfigTest {
     }
 
     /**
-     * Helper method to create a properties file with custom settings
+     * Helper method to create a properties file with custom settings.
+     * @param difficulty Mining difficulty level
+     * @param genesisHash Hash of genesis block
+     * @param logLevel Logging level
      */
     private void createPropertiesFile(int difficulty, String genesisHash, String logLevel) throws IOException {
         Properties props = new Properties();
@@ -61,6 +81,9 @@ class ChainConfigTest {
         }
     }
 
+    /**
+     * Test that default values are correctly set when no configuration file is provided.
+     */
     @Test
     void testDefaultValues() {
         ChainConfig config = ChainConfig.getInstance();
@@ -69,6 +92,9 @@ class ChainConfigTest {
         assertEquals("INFO", config.getLogLevel(), "Default log level should be INFO");
     }
 
+    /**
+     * Test loading configuration from a file.
+     */
     @Test
     void testLoadFromFile() throws IOException {
         // Create a custom properties file
@@ -84,6 +110,9 @@ class ChainConfigTest {
         assertEquals("INFO", config.getLogLevel(), "Log level should be default value");
     }
 
+    /**
+     * Test reloading configuration at runtime.
+     */
     @Test
     void testReloadConfig() throws IOException {
         // Create initial properties file
@@ -105,6 +134,9 @@ class ChainConfigTest {
         assertEquals("INFO", config.getLogLevel(), "Log level should be default value");
     }
 
+    /**
+     * Test changing configuration file at runtime.
+     */
     @Test
     void testChangeConfigFile() throws IOException {
         // Create initial properties file
@@ -134,6 +166,9 @@ class ChainConfigTest {
         assertEquals("INFO", config.getLogLevel(), "Log level should be default value");
     }
 
+    /**
+     * Test that singleton pattern is correctly implemented.
+     */
     @Test
     void testSingletonPattern() throws IOException {
         // Create a custom properties file
@@ -147,6 +182,9 @@ class ChainConfigTest {
         assertSame(instance1, instance2, "getInstance should return the same instance (singleton pattern)");
     }
 
+    /**
+     * Test behavior when loading configuration from non-existent file.
+     */
     @Test
     void testLoadConfigWithNonExistentFile() {
         // Try to load config from a non-existent file
@@ -158,6 +196,9 @@ class ChainConfigTest {
         assertEquals("INFO", config.getLogLevel());
     }
 
+    /**
+     * Test behavior when getting instances with different config files.
+     */
     @Test
     void testGetInstanceWithDifferentConfigFiles() throws IOException {
         // Create first config file
@@ -180,6 +221,9 @@ class ChainConfigTest {
         // Note: Implementation creates new instance when config file differs, but uses default values
     }
 
+    /**
+     * Test environment variable override functionality.
+     */
     @Test
     void testEnvironmentVariableOverride() throws Exception {
         // Test with empty environment variables to cover the else branch
@@ -193,6 +237,9 @@ class ChainConfigTest {
         assertEquals("GENESIS_HASH", config.getGenesisHash());
     }
 
+    /**
+     * Test getting instance with same config file multiple times.
+     */
     @Test
     void testGetInstanceWithSameConfigFile() throws Exception {
         // Create config file
@@ -208,6 +255,9 @@ class ChainConfigTest {
         assertEquals(4, config2.getDifficulty());
     }
 
+    /**
+     * Test loading configuration from file with no properties.
+     */
     @Test
     void testLoadConfigWithFileButNoProperties() throws IOException {
         // Create empty properties file

@@ -12,54 +12,64 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration test simulating end-to-end blockchain usage as demonstrated in
- * Main.java
+ * Integration test class that simulates end-to-end blockchain usage scenarios.
+ * Tests various blockchain operations including block creation, transaction handling,
+ * and validation of the blockchain state.
  */
 class BlockchainIntegrationTest {
 
     /**
-     * Test a valid blockchain workflow with the default genesis block
+     * Tests a basic blockchain workflow using the default genesis block.
+     * Verifies:
+     * - Genesis block creation
+     * - Transaction addition
+     * - Block generation and validation
+     * - Chain state after block addition
      */
     @Test
     void testDefaultBlockchainWorkflow() {
-        // Create blockchain with default genesis
+        // Initialize blockchain with proof of work consensus
         ProofOfWork<FinancialTransaction> consensus = new ProofOfWork<>();
         Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
 
-        // Verify genesis block exists
+        // Verify genesis block exists and has correct initial state
         assertEquals(1, blockchain.getChain().size());
         assertEquals(0, blockchain.getChain().get(0).getIndex());
 
-        // Chain with just genesis block should be valid
+        // Validate initial chain state
         assertTrue(blockchain.isChainValid(), "Genesis block chain should be valid");
 
-        // Add transactions
+        // Add sample transactions to pending pool
         blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
         blockchain.addTransaction(new FinancialTransaction("Charlie", "Dave", 75));
 
-        // Create a new block
+        // Generate new block with pending transactions
         Block<FinancialTransaction> newBlock = consensus.generateBlock(
                 blockchain.getPendingTransactions(),
                 blockchain.getLastBlock());
 
-        // Verify the new block is valid according to the consensus rules
+        // Validate the newly generated block
         assertTrue(consensus.validateBlock(newBlock, blockchain.getLastBlock()));
 
-        // Add the block to the chain
+        // Add validated block to chain
         blockchain.addBlock(newBlock);
 
-        // Verify final state
+        // Verify final blockchain state
         assertEquals(2, blockchain.getChain().size());
         assertEquals(1, newBlock.getIndex());
         assertTrue(blockchain.getPendingTransactions().isEmpty());
     }
 
     /**
-     * Test with a custom genesis block
+     * Tests blockchain workflow with a custom genesis block configuration.
+     * Verifies:
+     * - Custom genesis block creation with initial transactions
+     * - Chain validation with custom genesis
+     * - New block addition after custom genesis
      */
     @Test
     void testCustomGenesisBlockchainWorkflow() {
-        // Create custom genesis with initial transactions
+        // Initialize custom genesis block with predefined transactions
         CustomGenesisBlockFactory<FinancialTransaction> factory = CustomGenesisBlockFactory
                 .<FinancialTransaction>builder()
                 .withHash("CUSTOM_GENESIS")
@@ -67,18 +77,19 @@ class BlockchainIntegrationTest {
                 .addTransaction(new FinancialTransaction("Genesis", "Bob", 1000))
                 .build();
 
+        // Create blockchain with custom genesis configuration
         ProofOfWork<FinancialTransaction> consensus = new ProofOfWork<>();
         Blockchain<FinancialTransaction> blockchain = new Blockchain<>(factory, consensus);
 
-        // Verify custom genesis block
+        // Verify custom genesis block properties
         Block<FinancialTransaction> genesis = blockchain.getChain().get(0);
         assertEquals(2, genesis.getTransactions().size());
         assertEquals("0", genesis.getPreviousHash());
 
-        // Chain with just custom genesis block should be valid
+        // Validate chain with custom genesis
         assertTrue(blockchain.isChainValid(), "Custom genesis blockchain should be valid");
 
-        // Add and mine new transactions
+        // Test block addition after custom genesis
         blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
         Block<FinancialTransaction> newBlock = consensus.generateBlock(
                 blockchain.getPendingTransactions(),
@@ -87,126 +98,118 @@ class BlockchainIntegrationTest {
         assertTrue(consensus.validateBlock(newBlock, blockchain.getLastBlock()));
         blockchain.addBlock(newBlock);
 
+        // Verify final state
         assertEquals(2, blockchain.getChain().size());
         assertEquals(1, newBlock.getIndex());
     }
 
     /**
-     * Test detection of transaction tampering after block creation
+     * Tests the blockchain's ability to detect transaction tampering after block creation.
+     * Creates a valid block, then attempts to tamper with its transactions while keeping
+     * other block properties unchanged.
      */
     @Test
     void testDetectTransactionTampering() {
-        // Create blockchain with direct consensus access
+        // Initialize blockchain for tampering detection test
         ProofOfWork<FinancialTransaction> consensus = new ProofOfWork<>();
         Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
 
-        // Create a transaction and a valid block
+        // Create and validate initial legitimate transaction
         FinancialTransaction validTx = new FinancialTransaction("Alice", "Bob", 100);
-
-        // Get the genesis block
         Block<FinancialTransaction> genesisBlock = blockchain.getLastBlock();
 
-        // Create a list with the valid transaction
+        // Create and validate legitimate block
         List<FinancialTransaction> validTxs = new ArrayList<>();
         validTxs.add(validTx);
-
-        // Generate a valid block with our transaction
         Block<FinancialTransaction> validBlock = consensus.generateBlock(validTxs, genesisBlock);
-
-        // Verify it's valid
         assertTrue(consensus.validateBlock(validBlock, genesisBlock));
 
-        // Now create a tampered transaction with a different amount
-        FinancialTransaction tamperedTx = new FinancialTransaction("Alice", "Bob", 1000); // 1000 instead of 100
-
-        // Create a new block with the tampered transaction but keep all other block
-        // properties the same
+        // Create tampered transaction with modified amount
+        FinancialTransaction tamperedTx = new FinancialTransaction("Alice", "Bob", 1000);
         List<FinancialTransaction> tamperedTxs = new ArrayList<>();
         tamperedTxs.add(tamperedTx);
 
+        // Create block with tampered transaction but original block properties
         Block<FinancialTransaction> tamperedBlock = new Block<>(
                 validBlock.getIndex(),
                 validBlock.getPreviousHash(),
                 validBlock.getTimestamp(),
                 tamperedTxs,
                 validBlock.getNonce(),
-                validBlock.getHash() // Using the valid block's hash, which is incorrect for the tampered content
+                validBlock.getHash()
         );
 
-        // This should be detected as invalid
+        // Verify tampering detection
         assertFalse(consensus.validateBlock(tamperedBlock, genesisBlock),
                 "Block with tampered transactions should be detected");
     }
 
     /**
-     * Test detection of non-sequential block indices
+     * Tests detection of blocks with non-sequential indices.
+     * Attempts to add a block with an index that skips a number in the sequence.
      */
     @Test
     void testDetectNonSequentialBlockIndex() {
         Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
 
-        // Chain with just genesis block should be valid
+        // Verify initial chain validity
         assertTrue(blockchain.isChainValid(), "Genesis blockchain should be valid");
 
-        // Create an invalid block with a non-sequential index (skip from 0 to 2)
+        // Create block with non-sequential index
         List<FinancialTransaction> txs = new ArrayList<>();
         txs.add(new FinancialTransaction("Eve", "Frank", 300));
 
-        // Calculate a valid hash but with wrong index
-        String validHash = "0000" + System.currentTimeMillis(); // Just ensure it starts with enough zeros
+        // Generate hash for invalid block
+        String validHash = "0000" + System.currentTimeMillis();
 
-        // Create a block with index 2 (should be 1 after genesis)
+        // Create block with invalid index sequence
         Block<FinancialTransaction> nonSequentialBlock = new Block<>(
-                2, // Should be 1 after genesis block
+                2, // Invalid index - skips 1
                 blockchain.getLastBlock().getHash(),
                 System.currentTimeMillis(),
                 txs,
                 0,
                 validHash);
 
-        // Add the invalid block
+        // Add invalid block and verify detection
         blockchain.addBlock(nonSequentialBlock);
-
-        // Chain validation should fail due to non-sequential index
         assertFalse(blockchain.isChainValid(), "Chain should be invalid with non-sequential indices");
     }
 
     /**
-     * Test detection of invalid previous hash references
+     * Tests detection of blocks with invalid previous hash references.
+     * Creates a valid block chain then attempts to add a block with an incorrect
+     * previous hash reference.
      */
     @Test
     void testDetectInvalidPreviousHashReference() {
-        // Create blockchain
+        // Initialize blockchain for hash reference test
         ProofOfWork<FinancialTransaction> consensus = new ProofOfWork<>();
         Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
 
-        // Add a valid block first to establish the chain
+        // Add initial valid block to chain
         blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
         Block<FinancialTransaction> validBlock = consensus.generateBlock(
                 blockchain.getPendingTransactions(),
                 blockchain.getLastBlock());
         blockchain.addBlock(validBlock);
 
-        // Create a block with an invalid previous hash reference
+        // Create block with invalid previous hash
         List<FinancialTransaction> txs = new ArrayList<>();
         txs.add(new FinancialTransaction("Eve", "Frank", 200));
+        String validHash = "0000" + System.currentTimeMillis();
 
-        // Calculate a valid hash but with wrong previous hash
-        String validHash = "0000" + System.currentTimeMillis(); // Just ensure it starts with enough zeros
-
-        // Create a block with an invalid previous hash
+        // Construct block with incorrect previous hash reference
         Block<FinancialTransaction> invalidPrevHashBlock = new Block<>(
-                2, // Correct sequential index
-                "FAKE_PREVIOUS_HASH", // Invalid previous hash
+                2,
+                "FAKE_PREVIOUS_HASH", // Invalid previous hash reference
                 System.currentTimeMillis(),
                 txs,
                 0,
                 validHash);
 
-        // Add the invalid block
+        // Add invalid block and verify detection
         blockchain.addBlock(invalidPrevHashBlock);
-
-        // Chain validation should fail due to incorrect previous hash
         assertFalse(blockchain.isChainValid(), "Chain should be invalid with incorrect previous hash");
     }
 }

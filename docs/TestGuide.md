@@ -20,7 +20,7 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
   - [Understanding Test Output](#understanding-test-output)
   - [Common Debugging Techniques](#common-debugging-techniques)
   - [Troubleshooting Common Issues](#troubleshooting-common-issues)
-- [Testing JSON Serialization](#testing-json-serialization)
+- [Testing JSON Serialization and Persistence](#testing-json-serialization)
   - [Key JSON Serialization Tests](#key-json-serialization-tests)
   - [Example JSON Serialization Test](#example-json-serialization-test)
 - [Testing Edge Cases and Boundary Conditions](#testing-edge-cases-and-boundary-conditions)
@@ -46,6 +46,7 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
 | `ConfigErrorsTest`               | `BlockchainConfig`                 | Ensures robust handling of missing or invalid configuration files.         |
 | `JsonUtilsTest`                 | `JsonUtils`                       | Tests JSON serialization and deserialization of blockchain components.    |
 | `BlockchainSerializationTest`   | `Blockchain`                      | Tests exporting and importing blockchain data to/from JSON files.        |
+| `PersistenceManagerTest`        | `PersistenceManager`              | Tests automatic saving and loading of blockchain state between runs.      |
 
 ---
 
@@ -245,7 +246,7 @@ When tests fail, Maven provides:
    - Use more specific assertions with descriptive messages
    - Consider using assertAll for multiple related assertions
 
-## Testing JSON Serialization
+## Testing JSON Serialization and Persistence
 
 The project includes tests for JSON serialization and deserialization to ensure blockchain data can be properly saved and loaded.
 
@@ -262,6 +263,11 @@ The project includes tests for JSON serialization and deserialization to ensure 
 3. **Blockchain Serialization**
    - Tests exporting and importing entire blockchain
    - Verifies chain integrity after round-trip serialization
+   
+4. **Persistence Manager**
+   - Tests automatic saving of blockchain state on shutdown
+   - Tests automatic loading of blockchain state on startup
+   - Verifies error handling for corrupted or missing persistence files
 
 ### Example JSON Serialization Test
 

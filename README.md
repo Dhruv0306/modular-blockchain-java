@@ -12,6 +12,8 @@ This project is designed for developers, researchers, and educators who want to 
 
 - [Overview](#-overview)
 - [Core Features](#-core-features)
+- [Digital Signatures & Chain Validation](#-digital-signatures--chain-validation)
+- [Automatic Persistence](#-automatic-persistence)
 - [Architecture Overview](#️-architecture-overview)
 - [Example Use Case](#-example-use-case)
 - [How to Run](#-how-to-run)
@@ -55,6 +57,7 @@ This project is designed for developers, researchers, and educators who want to 
 | ⚙️ Environment-based Config | Customize difficulty and other parameters per environment                    |
 | 🧿 Customizable Genesis     | Define your own genesis block with custom transactions and metadata          |
 | 💾 JSON Serialization       | Export and import blockchain data to/from JSON files                          |
+| 💿 Automatic Persistence    | Blockchain state is saved on shutdown and restored on startup                |
 | 📝 Structured Logging       | SLF4J logging with environment-specific configurations                       |
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
 
@@ -80,6 +83,27 @@ The blockchain now supports **transaction-level digital signatures** using RSA.
   - All blocks are sequential
   - All hashes match computed ones
   - All signed transactions are verified
+
+## 💾 Automatic Persistence
+
+The blockchain now includes **automatic state persistence** between application runs.
+
+### Key Features
+
+- **PersistenceManager**  
+  Utility class that handles saving and loading blockchain state.
+
+- **Configurable Persistence**  
+  Enable/disable persistence and specify storage location via configuration.
+
+- **Automatic Lifecycle Integration**  
+  Blockchain state is automatically saved on shutdown and loaded on startup.
+
+- **Error Handling**  
+  Graceful handling of missing, corrupted, or invalid persistence files.
+
+- **Validation Before Persistence**  
+  Only valid blockchains are persisted to prevent corruption.
 
 ---
 
@@ -354,11 +378,13 @@ The blockchain uses a modular configuration system that allows for different set
 
 ### Configuration Properties
 
-| Property       | Description                                      | Default     |
-|---------------|--------------------------------------------------|-------------|
-| `difficulty`   | Number of leading zeros required for PoW hashing | 4           |
-| `genesis_hash` | Hash value used for the genesis block            | GENESIS_HASH |
-| `log_level`    | Logging level (TRACE, DEBUG, INFO, WARN, ERROR)  | INFO        |
+| Property             | Description                                      | Default            |
+|---------------------|--------------------------------------------------|--------------------|
+| `difficulty`         | Number of leading zeros required for PoW hashing | 4                  |
+| `genesis_hash`       | Hash value used for the genesis block            | GENESIS_HASH       |
+| `log_level`          | Logging level (TRACE, DEBUG, INFO, WARN, ERROR)  | INFO               |
+| `persistence.enabled`| Enable automatic blockchain persistence          | true               |
+| `persistence.file`   | File path for blockchain persistence storage     | data/chain-data.json |
 
 ### Usage in Code
 
@@ -583,10 +609,10 @@ mvn test -Dtest=SignedFinancialTransactionTest#testValidSignedTransaction
 
 ## 📚 Planned Features (Future Phases)
 
-- 🔄 DB-based persistent storage (LevelDB, H2)
 - 🌐 P2P networking using sockets or WebSocket
 - 🧪 CLI-based or GUI simulation for testnets
 - 📊 Web dashboard for monitoring the chain
+- 🔄 Advanced DB-based storage (LevelDB, H2) beyond current JSON persistence
 
 ---
 

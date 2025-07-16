@@ -2,6 +2,26 @@
 
 This guide provides detailed instructions for running the Modular Blockchain Java framework in different environments and with various configuration options.
 
+## Table of Contents
+
+- [Basic Run Commands](#basic-run-commands)
+  - [Using Maven](#using-maven)
+  - [Using Convenience Scripts](#using-convenience-scripts)
+- [Environment-Specific Configurations](#environment-specific-configurations)
+  - [Using Configuration Files](#using-configuration-files)
+  - [Using Environment Variables](#using-environment-variables)
+  - [Using Convenience Scripts with Environment Options](#using-convenience-scripts-with-environment-options)
+- [Logging Options](#logging-options)
+- [Advanced Configuration](#advanced-configuration)
+  - [Custom Configuration Files](#custom-configuration-files)
+  - [Runtime Configuration Changes](#runtime-configuration-changes)
+- [Persistence Options](#persistence-options)
+  - [Default Persistence](#default-persistence)
+  - [Disabling Persistence](#disabling-persistence)
+  - [Custom Persistence Location](#custom-persistence-location)
+- [Running Tests](#running-tests)
+- [Troubleshooting](#troubleshooting)
+
 ## Basic Run Commands
 
 ### Using Maven
@@ -132,6 +152,8 @@ You can create your own configuration files with custom settings:
 # Create a custom configuration file
 echo "difficulty=3" > my-custom-config.properties
 echo "genesis_hash=CUSTOM_HASH" >> my-custom-config.properties
+echo "persistence.enabled=true" >> my-custom-config.properties
+echo "persistence.file=data/my-custom-chain.json" >> my-custom-config.properties
 
 # Run with custom configuration
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main" -Dexec.args="my-custom-config.properties"
@@ -152,6 +174,48 @@ config.reloadConfig();
 // Access configuration values
 int difficulty = config.getDifficulty();
 String genesisHash = config.getGenesisHash();
+boolean persistenceEnabled = config.isPersistenceEnabled();
+String persistenceFile = config.getPersistenceFile();
+```
+
+## Persistence Options
+
+The blockchain now supports automatic persistence of the blockchain state between application runs.
+
+### Default Persistence
+
+By default, persistence is enabled and the blockchain state is saved to `data/chain-data.json` when the application shuts down and loaded from the same file when it starts up.
+
+### Disabling Persistence
+
+You can disable persistence by setting the `persistence.enabled` property to `false` in your configuration file:
+
+```properties
+# Disable persistence
+persistence.enabled=false
+```
+
+Or by using environment variables:
+
+```bash
+set BLOCKCHAIN_PERSISTENCE_ENABLED=false
+mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
+```
+
+### Custom Persistence Location
+
+You can specify a custom location for the persistence file using the `persistence.file` property:
+
+```properties
+# Custom persistence file location
+persistence.file=C:/blockchain/my-blockchain-data.json
+```
+
+Or by using environment variables:
+
+```bash
+set BLOCKCHAIN_PERSISTENCE_FILE=C:/blockchain/my-blockchain-data.json
+mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 ```
 
 ## Running Tests

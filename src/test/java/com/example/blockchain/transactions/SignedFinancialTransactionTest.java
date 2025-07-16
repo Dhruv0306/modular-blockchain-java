@@ -9,8 +9,15 @@ import org.junit.jupiter.api.Test;
 import com.example.blockchain.crypto.CryptoUtils;
 import com.example.blockchain.transactions.SignedFinancialTransaction;
 
+/**
+ * Test class for SignedFinancialTransaction
+ * Verifies the validation, creation and functionality of signed financial transactions
+ */
 class SignedFinancialTransactionTest {
 
+    /**
+     * Tests that a properly constructed transaction with valid signature passes validation
+     */
     @Test
     void testValidSignedTransaction() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
@@ -25,9 +32,13 @@ class SignedFinancialTransactionTest {
         assertTrue(tx.isValid());
     }
 
+    /**
+     * Tests that a transaction with invalid signature fails validation
+     */
     @Test
     void testInvalidSignatureFailsValidation() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
+        // Create signature with incorrect data
         String signature = CryptoUtils.signData("invalid data", pair.getPrivate());
         long timestamp = 1234567890L;
 
@@ -37,6 +48,9 @@ class SignedFinancialTransactionTest {
         assertFalse(tx.isValid());
     }
 
+    /**
+     * Tests that a transaction with zero amount fails validation
+     */
     @Test
     void testInvalidAmountFailsValidation() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
@@ -50,6 +64,9 @@ class SignedFinancialTransactionTest {
         assertFalse(tx.isValid());
     }
 
+    /**
+     * Tests that a transaction with null receiver fails validation
+     */
     @Test
     void testNullReceiverFailsValidation() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
@@ -63,6 +80,9 @@ class SignedFinancialTransactionTest {
         assertFalse(tx.isValid());
     }
 
+    /**
+     * Tests that toString() includes both the transaction summary and ID
+     */
     @Test
     void testToStringIncludesTransactionId() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
@@ -76,12 +96,16 @@ class SignedFinancialTransactionTest {
         String expectedPrefix = summary;
         String actualString = tx.toString();
         
+        // Verify the string contains both summary and ID
         assertTrue(actualString.startsWith(expectedPrefix), 
                 "Transaction toString should start with the summary");
         assertTrue(actualString.contains("[ID: "), 
                 "Transaction toString should include the ID");
     }
     
+    /**
+     * Tests that getTimestamp() returns the correct timestamp value
+     */
     @Test
     void testTimestampGetter() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();

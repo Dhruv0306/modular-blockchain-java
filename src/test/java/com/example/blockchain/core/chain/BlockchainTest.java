@@ -1,3 +1,8 @@
+/**
+ * Test class for the Blockchain implementation.
+ * Tests various blockchain operations including transaction handling, block validation,
+ * and chain integrity verification.
+ */
 package com.example.blockchain.core.chain;
 
 import com.example.blockchain.consensus.Consensus;
@@ -19,12 +24,18 @@ public class BlockchainTest {
     private Blockchain<MockTransaction> blockchain;
     private ProofOfWork<MockTransaction> pow;
 
+    /**
+     * Sets up a new blockchain and proof of work instance before each test
+     */
     @BeforeEach
     void setUp() {
         pow = new ProofOfWork<>();
         blockchain = new Blockchain<>();
     }
 
+    /**
+     * Tests adding a valid transaction to the blockchain
+     */
     @Test
     void testAddValidTransaction() {
         MockTransaction validTx = new MockTransaction(true);
@@ -33,6 +44,9 @@ public class BlockchainTest {
         assertTrue(blockchain.getPendingTransactions().contains(validTx));
     }
 
+    /**
+     * Tests that invalid transactions are rejected
+     */
     @Test
     void testAddInvalidTransaction() {
         MockTransaction invalidTx = new MockTransaction(false);
@@ -40,6 +54,9 @@ public class BlockchainTest {
         assertEquals(0, blockchain.getPendingTransactions().size());
     }
 
+    /**
+     * Tests adding multiple valid transactions
+     */
     @Test
     void testAddMultipleValidTransactions() {
         MockTransaction tx1 = new MockTransaction(true);
@@ -49,6 +66,9 @@ public class BlockchainTest {
         assertEquals(2, blockchain.getPendingTransactions().size());
     }
 
+    /**
+     * Tests handling of both valid and invalid transactions
+     */
     @Test
     void testAddMixedTransactions() {
         MockTransaction validTx = new MockTransaction(true);
@@ -59,6 +79,9 @@ public class BlockchainTest {
         assertTrue(blockchain.getPendingTransactions().contains(validTx));
     }
 
+    /**
+     * Tests retrieval of pending transactions
+     */
     @Test
     void testGetPendingTransactions() {
         MockTransaction tx = new MockTransaction(true);
@@ -67,6 +90,9 @@ public class BlockchainTest {
         assertEquals(tx, blockchain.getPendingTransactions().get(0));
     }
 
+    /**
+     * Tests retrieval of the last block in the chain
+     */
     @Test
     void testGetLastBlock() {
         Block<MockTransaction> lastBlock = blockchain.getLastBlock();
@@ -74,6 +100,9 @@ public class BlockchainTest {
         assertEquals(0, lastBlock.getIndex());
     }
 
+    /**
+     * Tests adding a new block to the chain
+     */
     @Test
     void testAddBlock() {
         MockTransaction tx = new MockTransaction(true);
@@ -89,12 +118,18 @@ public class BlockchainTest {
         assertEquals(newBlock, blockchain.getLastBlock());
     }
 
+    /**
+     * Tests retrieval of the entire blockchain
+     */
     @Test
     void testGetChain() {
         assertEquals(1, blockchain.getChain().size());
         assertEquals("GENESIS_HASH", blockchain.getChain().get(0).getHash());
     }
 
+    /**
+     * Tests blockchain initialization with default constructor
+     */
     @Test
     void testDefaultConstructor() {
         Blockchain<MockTransaction> defaultBlockchain = new Blockchain<>();
@@ -103,6 +138,9 @@ public class BlockchainTest {
         assertEquals(0, defaultBlockchain.getPendingTransactions().size());
     }
 
+    /**
+     * Tests blockchain initialization with genesis block factory
+     */
     @Test
     void testSingleParameterConstructor() {
         Blockchain<MockTransaction> blockchain = new Blockchain<>(new DefaultGenesisBlockFactory<>());
@@ -111,6 +149,9 @@ public class BlockchainTest {
         assertEquals(0, blockchain.getPendingTransactions().size());
     }
 
+    /**
+     * Tests validation of a legitimate blockchain
+     */
     @Test
     void testisChainValidWithValidChain() {
         // A blockchain with just the genesis block should be valid
@@ -126,6 +167,9 @@ public class BlockchainTest {
         assertTrue(blockchain.isChainValid());
     }
 
+    /**
+     * Tests detection of tampered blocks in the chain
+     */
     @Test
     void testisChainValidWithTamperedBlock() {
         // Create a valid chain with two blocks
@@ -160,6 +204,9 @@ public class BlockchainTest {
         assertFalse(blockchain.isChainValid());
     }
 
+    /**
+     * Tests detection of non-sequential block indices
+     */
     @Test
     void testisChainValidWithNonSequentialIndex() {
         // Create a blockchain with a mock consensus that always validates blocks
@@ -196,6 +243,9 @@ public class BlockchainTest {
         assertFalse(testBlockchain.isChainValid());
     }
 
+    /**
+     * Tests detection of invalid previous hash references
+     */
     @Test
     void testisChainValidWithInvalidPreviousHash() {
         // Create a block with invalid previous hash
@@ -215,6 +265,9 @@ public class BlockchainTest {
         assertFalse(blockchain.isChainValid());
     }
 
+    /**
+     * Mock Transaction class for testing purposes
+     */
     private static class MockTransaction implements Transaction {
         private final boolean valid;
 
