@@ -16,6 +16,9 @@ This project is designed for developers, researchers, and educators who want to 
 - [Example Use Case](#-example-use-case)
 - [How to Run](#-how-to-run)
 - [Key Packages](#-key-packages)
+- [Utility Classes](#-utility-classes)
+- [Configuration](#️-configuration)
+- [Logging](#-logging)
 - [Customizing the Blockchain](#️-customizing-the-blockchain)
   - [Define Your Own Transaction Type](#-1-define-your-own-transaction-type)
   - [Implement or Plug in a Consensus Algorithm](#-2-implement-or-plug-in-a-consensus-algorithm)
@@ -51,6 +54,7 @@ This project is designed for developers, researchers, and educators who want to 
 | 🔐 SHA-256 Hashing          | Secure hashing mechanism for PoW/validation                                  |
 | ⚙️ Environment-based Config | Customize difficulty and other parameters per environment                    |
 | 🧿 Customizable Genesis     | Define your own genesis block with custom transactions and metadata          |
+| 💾 JSON Serialization       | Export and import blockchain data to/from JSON files                          |
 | 📝 Structured Logging       | SLF4J logging with environment-specific configurations                       |
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
 
@@ -86,6 +90,7 @@ The blockchain now supports **transaction-level digital signatures** using RSA.
 classDiagram
     class Transaction {
         <<interface>>
+        +getTransactionId() String
         +isValid() boolean
         +getSender() String
         +getReceiver() String
@@ -105,7 +110,7 @@ classDiagram
         -transactions List~T~
         -previousHash String
         -hash String
-        -nonce long
+        -nonce int
     }
     
     class Consensus~T~ {
@@ -119,6 +124,10 @@ classDiagram
         +createGenesisBlock() Block~T~
     }
     
+    class DefaultGenesisBlockFactory~T~ {
+        +createGenesisBlock() Block~T~
+    }
+    
     class CustomGenesisBlockFactory~T~ {
         -hash String
         -transactions List~T~
@@ -129,17 +138,20 @@ classDiagram
     class Blockchain~T~ {
         -chain List~Block~T~~
         -pendingTransactions List~T~
-        -consensusPlugin Consensus~T~
-        -genesisBlockFactory GenesisBlockFactory~T~
+        -consensus Consensus~T~
         +addTransaction(T) void
         +addBlock(Block~T~) void
         +isChainValid() boolean
+        +exportToJson(File) void
+        +importFromJson(File, Class) Blockchain~T~
     }
     
     class FinancialTransaction {
         -sender String
         -receiver String
         -amount double
+        -transactionId String
+        +getAmount() double
     }
     
     class SignedFinancialTransaction {
@@ -148,11 +160,15 @@ classDiagram
         -amount double
         -senderPublicKey PublicKey
         -signature String
+        -transactionId String
+        -timestamp long
+        +getAmount() double
+        +getTimestamp() long
     }
     
-    class ProofOfWork {
-        -difficulty int
-        +mineBlock(Block~T~) void
+    class ProofOfWork~T~ {
+        +validateBlock(Block~T~, Block~T~) boolean
+        +generateBlock(List~T~, Block~T~) Block~T~
     }
     
     class CryptoUtils {
@@ -162,23 +178,40 @@ classDiagram
         +verifySignature(String, String, PublicKey) boolean
     }
     
-    class BlockUtils {
+    class HashUtils {
         <<utility>>
-        +calculateHash(Block) String
-        +calculateHashForBlock(int, String, long, List, long) String
+        +computeHash(Block) String
+        +computeHash(int, String, long, List, int) String
+    }
+    
+    class ChainConfig {
+        <<singleton>>
+        -instance ChainConfig
+        +getInstance() ChainConfig
+        +getDifficulty() int
+        +getGenesisHash() String
+    }
+    
+    class JsonUtils {
+        <<utility>>
+        +writeToFile(Object, File) void
+        +readFromFile(File, Class) Object
     }
     
     Transaction <|-- SignedTransaction
     Transaction <|.. FinancialTransaction
     SignedTransaction <|.. SignedFinancialTransaction
-    Consensus~T~ <|.. ProofOfWork
+    Consensus~T~ <|.. ProofOfWork~T~
+    GenesisBlockFactory~T~ <|.. DefaultGenesisBlockFactory~T~
     GenesisBlockFactory~T~ <|.. CustomGenesisBlockFactory~T~
     Blockchain~T~ *-- Block~T~ : contains
     Blockchain~T~ --> Consensus~T~ : uses
-    Blockchain~T~ --> GenesisBlockFactory~T~ : uses
+    Blockchain~T~ --> JsonUtils : uses
     Block~T~ *-- Transaction : contains
     SignedFinancialTransaction --> CryptoUtils : uses
-    Block~T~ --> BlockUtils : uses
+    Block~T~ --> HashUtils : uses
+    ProofOfWork~T~ --> HashUtils : uses
+    ProofOfWork~T~ --> ChainConfig : uses
     
     %% Individual styling with colors at 60% opacity and bold text
     style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
@@ -187,12 +220,15 @@ classDiagram
     style SignedTransaction fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
     style Consensus fill:#E74C3C99,stroke:#C0392B,stroke-width:2px,color:#000,font-weight:bold
     style GenesisBlockFactory fill:#F39C1299,stroke:#D68910,stroke-width:2px,color:#000,font-weight:bold
+    style DefaultGenesisBlockFactory fill:#F39C1299,stroke:#D68910,stroke-width:2px,color:#000,font-weight:bold
     style CustomGenesisBlockFactory fill:#F39C1299,stroke:#D68910,stroke-width:2px,color:#000,font-weight:bold
     style FinancialTransaction fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
     style SignedFinancialTransaction fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
     style ProofOfWork fill:#27AE6099,stroke:#1E8449,stroke-width:2px,color:#000,font-weight:bold
     style CryptoUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
-    style BlockUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
+    style HashUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
+    style ChainConfig fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
+    style JsonUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
 ```
 
 **Key Relationships:**
@@ -216,7 +252,7 @@ Let's say you want to create a **financial ledger**. You would:
 2. Use the built-in `ProofOfWork` consensus (or write your own).
 3. Optionally create a custom genesis block with initial balances.
 4. Add transactions and generate new blocks via the consensus plugin.
-5. Print or analyze your blockchain in memory.
+5. Export your blockchain to JSON for persistence or analysis.
 
 Here's an example from the `Main.java`:
 
@@ -240,6 +276,19 @@ Block<FinancialTransaction> newBlock = consensus.generateBlock(
 if (consensus.validateBlock(newBlock, blockchain.getLastBlock())) {
     blockchain.addBlock(newBlock);
     System.out.println("✅ Block added to chain");
+}
+
+// Export the blockchain to JSON file
+try {
+    blockchain.exportToJson(new File("blockchain.json"));
+    System.out.println("✅ Blockchain exported to JSON");
+    
+    // Later, import the blockchain from JSON
+    Blockchain<FinancialTransaction> importedChain = 
+        Blockchain.importFromJson(new File("blockchain.json"), FinancialTransaction.class);
+    System.out.println("✅ Blockchain imported with " + importedChain.getChain().size() + " blocks");
+} catch (Exception e) {
+    System.err.println("Error during JSON serialization: " + e.getMessage());
 }
 ```
 
@@ -280,15 +329,19 @@ mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 
 | Package                     | Purpose                                 |
 |----------------------------|-----------------------------------------|
-| `com.example.blockchain.blockchain`    | Core block, chain, transaction logic    |
+| `com.example.blockchain.core`          | Core block, chain, transaction logic    |
 | `com.example.blockchain.consensus`     | Interfaces and algorithms for consensus |
 | `com.example.blockchain.transactions`  | Your custom transaction types           |
+| `com.example.blockchain.core.utils`         | Core utilities including JSON serialization |
+| `com.example.blockchain.crypto`        | Cryptographic utilities and signatures   |
+| `com.example.blockchain.logging`       | Logging configuration and utilities     |
 | `com.example.blockchain.Main`          | Demo runner showing how it all works    |
 
 ## 🔧 Utility Classes
 
 - `BlockUtils`: Encapsulates hash computation logic for blocks.
 - `CryptoUtils`: Provides methods for RSA keypair generation, signing, and signature verification.
+- `JsonUtils`: Handles JSON serialization and deserialization of blockchain data.
 
 ## ⚙️ Configuration
 
@@ -530,7 +583,7 @@ mvn test -Dtest=SignedFinancialTransactionTest#testValidSignedTransaction
 
 ## 📚 Planned Features (Future Phases)
 
-- 🔄 JSON or DB-based persistent storage (LevelDB, H2)
+- 🔄 DB-based persistent storage (LevelDB, H2)
 - 🌐 P2P networking using sockets or WebSocket
 - 🧪 CLI-based or GUI simulation for testnets
 - 📊 Web dashboard for monitoring the chain
@@ -541,10 +594,10 @@ mvn test -Dtest=SignedFinancialTransactionTest#testValidSignedTransaction
 
 - Java 21 (as specified in pom.xml)
 - Maven for build and dependency management
+- Jackson for JSON serialization/deserialization
 - JUnit 5 for testing
 - JaCoCo for test coverage
 - SHA-256 hashing
-- Standard libraries only (Phase 1)
 
 ---
 

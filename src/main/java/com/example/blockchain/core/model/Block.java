@@ -3,6 +3,9 @@ package com.example.blockchain.core.model;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Block<T extends Transaction> {
     private int index;
     private String previousHash;
@@ -10,6 +13,10 @@ public class Block<T extends Transaction> {
     private List<T> transactions;
     private int nonce;
     private String hash;
+
+    // Default constructor for deserialization
+    // Required for Jackson to create instances from JSON
+    public Block() {}
 
     public Block(int index, String previousHash, long timestamp, List<T> transactions, int nonce, String hash) {
         this.index = index;

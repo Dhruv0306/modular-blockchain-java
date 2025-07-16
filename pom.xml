@@ -46,6 +46,19 @@
       <artifactId>logback-classic</artifactId>
       <version>1.4.11</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.17.1</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>2.17.1</version>
+    </dependency>
+
   </dependencies>
   <build>
     <plugins>
@@ -57,9 +70,13 @@
           <execution>
             <id>add-source</id>
             <phase>generate-sources</phase>
-            <goals><goal>add-source</goal></goals>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
             <configuration>
-              <sources><source>src/examples/java</source></sources>
+              <sources>
+                <source>src/examples/java</source>
+              </sources>
             </configuration>
           </execution>
         </executions>

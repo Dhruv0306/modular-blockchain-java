@@ -1,0 +1,43 @@
+{
+  "chain" : [ {
+    "index" : 0,
+    "previousHash" : "0",
+    "timestamp" : 1752649558875,
+    "transactions" : [ {
+      "@class" : "com.example.blockchain.transactions.FinancialTransaction",
+      "sender" : "Genesis",
+      "receiver" : "Alice",
+      "amount" : 1000.0,
+      "transactionId" : "3763697f-8b5a-3ac4-9cc4-35765d0c702b",
+      "valid" : true,
+      "summary" : "Genesis -> Alice : $1000.0"
+    }, {
+      "@class" : "com.example.blockchain.transactions.FinancialTransaction",
+      "sender" : "Genesis",
+      "receiver" : "Bob",
+      "amount" : 1000.0,
+      "transactionId" : "72e7bab5-4742-32d5-a0f0-192a574fd741",
+      "valid" : true,
+      "summary" : "Genesis -> Bob : $1000.0"
+    } ],
+    "nonce" : 0,
+    "hash" : "CUSTOM_GENESIS_HASH_WITH_INITIAL_FUNDS"
+  }, {
+    "index" : 1,
+    "previousHash" : "CUSTOM_GENESIS_HASH_WITH_INITIAL_FUNDS",
+    "timestamp" : 1752649558875,
+    "transactions" : [ ],
+    "nonce" : 101133,
+    "hash" : "0000d8b0df1d93ef99c338ec594b30d4a6fa28fe3e723c2f03ad59dac380db35"
+  } ],
+  "pendingTransactions" : [ ],
+  "lastBlock" : {
+    "index" : 1,
+    "previousHash" : "CUSTOM_GENESIS_HASH_WITH_INITIAL_FUNDS",
+    "timestamp" : 1752649558875,
+    "transactions" : [ ],
+    "nonce" : 101133,
+    "hash" : "0000d8b0df1d93ef99c338ec594b30d4a6fa28fe3e723c2f03ad59dac380db35"
+  },
+  "chainValid" : false
+}

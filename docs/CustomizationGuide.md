@@ -10,6 +10,8 @@ This guide provides detailed instructions on how to customize the modular blockc
     - [Supply Chain Transaction Example](#supply-chain-transaction-example)
     - [Voting Transaction Example](#voting-transaction-example)
   - [Best Practices for Transaction Design](#best-practices-for-transaction-design)
+  - [Implementing Digital Signatures for Transactions](#implementing-digital-signatures-for-transactions)
+  - [Digitally Signed Transactions](#digitally-signed-transactions)
 - [Consensus Algorithms](#consensus-algorithms)
   - [Understanding the Consensus Interface](#understanding-the-consensus-interface)
   - [Built-in Consensus: Proof of Work](#built-in-consensus-proof-of-work)
@@ -30,7 +32,12 @@ This guide provides detailed instructions on how to customize the modular blockc
   - [Configuration Properties](#configuration-properties)
   - [Environment-Specific Configurations](#environment-specific-configurations)
   - [Runtime Configuration Changes](#runtime-configuration-changes)
+  - [Adding Custom Configuration Properties](#adding-custom-configuration-properties)
 - [Advanced Customizations](#advanced-customizations)
+  - [JSON Serialization and Persistence](#json-serialization-and-persistence)
+    - [Using JsonUtils](#using-jsonutils)
+    - [Exporting and Importing Blockchain](#exporting-and-importing-blockchain)
+    - [Creating JSON-Compatible Transaction Types](#creating-json-compatible-transaction-types)
   - [Implementing Merkle Trees](#implementing-merkle-trees)
   - [Adding Chain Persistence](#adding-chain-persistence)
   - [Adding Network Communication](#adding-network-communication)
@@ -38,6 +45,8 @@ This guide provides detailed instructions on how to customize the modular blockc
   - [Testing Transaction Types](#testing-transaction-types)
   - [Testing Consensus Algorithms](#testing-consensus-algorithms)
   - [Integration Testing](#integration-testing)
+  - [Testing Edge Cases](#testing-edge-cases)
+  - [Testing Configuration Handling](#testing-configuration-handling)
 - [Best Practices](#best-practices)
   - [Security Considerations](#security-considerations)
   - [Performance Optimization](#performance-optimization)
@@ -757,6 +766,85 @@ public int getMaxBlockSize() {
 ```
 
 ## Advanced Customizations
+
+### JSON Serialization and Persistence
+
+The framework provides built-in support for JSON serialization of blockchain data, allowing you to save and load your blockchain state.
+
+#### Using JsonUtils
+
+The `JsonUtils` class provides utility methods for JSON serialization and deserialization:
+
+```java
+// Serialize an object to a JSON file
+JsonUtils.writeToFile(myObject, new File("data.json"));
+
+// Deserialize from a JSON file
+MyClass obj = JsonUtils.readFromFile(new File("data.json"), MyClass.class);
+
+// Convert object to JSON string
+String json = JsonUtils.toJson(myObject);
+
+// Parse JSON string to object
+MyClass obj = JsonUtils.fromJson(jsonString, MyClass.class);
+```
+
+#### Exporting and Importing Blockchain
+
+The `Blockchain` class provides methods for exporting to and importing from JSON files:
+
+```java
+// Export blockchain to JSON file
+blockchain.exportToJson(new File("blockchain.json"));
+
+// Import blockchain from JSON file
+Blockchain<FinancialTransaction> importedChain = 
+    Blockchain.importFromJson(new File("blockchain.json"), FinancialTransaction.class);
+```
+
+#### Creating JSON-Compatible Transaction Types
+
+To ensure your custom transaction types work with JSON serialization:
+
+1. Add the `@JsonIgnoreProperties(ignoreUnknown = true)` annotation to your class
+2. Provide a no-argument constructor (required by Jackson)
+3. Ensure all fields have proper getters and setters
+
+```java
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class CustomTransaction implements Transaction {
+    private String sender;
+    private String receiver;
+    private String data;
+    
+    // Required for Jackson deserialization
+    public CustomTransaction() {}
+    
+    public CustomTransaction(String sender, String receiver, String data) {
+        this.sender = sender;
+        this.receiver = receiver;
+        this.data = data;
+    }
+    
+    // Getters and setters
+    public String getSender() { return sender; }
+    public void setSender(String sender) { this.sender = sender; }
+    public String getReceiver() { return receiver; }
+    public void setReceiver(String receiver) { this.receiver = receiver; }
+    public String getData() { return data; }
+    public void setData(String data) { this.data = data; }
+    
+    @Override
+    public boolean isValid() {
+        return sender != null && receiver != null && data != null;
+    }
+    
+    @Override
+    public String getSummary() {
+        return sender + ":" + receiver + ":" + data;
+    }
+}
+```
 
 ### Implementing Merkle Trees
 

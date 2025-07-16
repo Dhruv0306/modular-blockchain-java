@@ -6,15 +6,21 @@ import java.util.UUID;
 
 import com.example.blockchain.core.model.SignedTransaction;
 import com.example.blockchain.crypto.CryptoUtils;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SignedFinancialTransaction implements SignedTransaction {
-    private final String sender;
-    private final String receiver;
-    private final double amount;
-    private final PublicKey senderPublicKey;
-    private final String signature;
-    private final String transactionId;
-    private final long timestamp;
+    private String sender;
+    private String receiver;
+    private double amount;
+    private PublicKey senderPublicKey;
+    private String signature;
+    private String transactionId;
+    private long timestamp;
+
+    // Default constructor for deserialization
+    // Required for Jackson to create instances from JSON
+    public SignedFinancialTransaction() {}
 
     public SignedFinancialTransaction(String sender, String receiver, double amount,
             PublicKey senderPublicKey, String signature) {
