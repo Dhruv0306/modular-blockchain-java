@@ -11,6 +11,10 @@ This guide provides detailed instructions for running the Modular Blockchain Jav
   - [Using Configuration Files](#using-configuration-files)
   - [Using Environment Variables](#using-environment-variables)
   - [Using Convenience Scripts with Environment Options](#using-convenience-scripts-with-environment-options)
+- [REST API](#rest-api)
+  - [Running the API](#running-the-api)
+  - [API Endpoints](#api-endpoints)
+  - [Example API Usage](#example-api-usage)
 - [Logging Options](#logging-options)
 - [Advanced Configuration](#advanced-configuration)
   - [Custom Configuration Files](#custom-configuration-files)
@@ -29,7 +33,12 @@ This guide provides detailed instructions for running the Modular Blockchain Jav
 ```bash
 # Build and run with default settings
 mvn clean install
+
+# Run the core blockchain demo
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
+
+# Run the Spring Boot REST API
+mvn spring-boot:run
 ```
 
 ### Using Convenience Scripts
@@ -98,6 +107,61 @@ run-blockchain.bat --env prod
 
 # Run with production environment (PowerShell)
 .\run-blockchain.bat --env prod
+```
+
+## REST API
+
+The blockchain now includes a Spring Boot REST API for interacting with the blockchain through HTTP requests.
+
+### Running the API
+
+```bash
+# Build the project
+mvn clean install
+
+# Run the Spring Boot application
+mvn spring-boot:run
+```
+
+By default, the API will be available at `http://localhost:8080/api/`.
+
+### API Endpoints
+
+| Endpoint | Method | Description | Request Body | Response |
+|----------|--------|-------------|-------------|----------|
+| `/api/chain` | GET | Get the full blockchain | None | JSON array of blocks |
+| `/api/transactions` | POST | Add a new transaction | Transaction JSON | Success/failure message |
+| `/api/mine` | POST | Mine a new block | None | Success/failure message with block hash |
+| `/api/pending` | GET | Get pending transactions | None | JSON array of transactions |
+| `/api/validate` | GET | Validate the blockchain | None | Validation status message |
+
+### Example API Usage
+
+**View the blockchain:**
+```bash
+curl http://localhost:8080/api/chain
+```
+
+**Add a transaction:**
+```bash
+curl -X POST http://localhost:8080/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"sender": "Alice", "receiver": "Bob", "amount": 100}'
+```
+
+**Mine a new block:**
+```bash
+curl -X POST http://localhost:8080/api/mine
+```
+
+**View pending transactions:**
+```bash
+curl http://localhost:8080/api/pending
+```
+
+**Validate the blockchain:**
+```bash
+curl http://localhost:8080/api/validate
 ```
 
 ## Logging Options
@@ -313,6 +377,15 @@ The HTML coverage report will be available at `target/site/jacoco/index.html`.
        LoggingUtils.setBlockchainLogLevel("DEBUG");
    }
    ```
+
+5. **REST API Issues**
+
+   If you're having trouble with the REST API:
+   
+   - Ensure Spring Boot is running (check console output)
+   - Verify the port is not in use by another application
+   - Check that your JSON request body is properly formatted
+   - Look for error messages in the Spring Boot console output
 
 ### Getting Help
 

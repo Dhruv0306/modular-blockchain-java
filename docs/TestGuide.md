@@ -23,6 +23,9 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
 - [Testing JSON Serialization and Persistence](#testing-json-serialization)
   - [Key JSON Serialization Tests](#key-json-serialization-tests)
   - [Example JSON Serialization Test](#example-json-serialization-test)
+- [Testing REST API](#testing-rest-api)
+  - [API Test Classes](#api-test-classes)
+  - [Example API Test](#example-api-test)
 - [Testing Edge Cases and Boundary Conditions](#testing-edge-cases-and-boundary-conditions)
   - [Key Edge Case Tests](#key-edge-case-tests)
   - [Writing Your Own Edge Case Tests](#writing-your-own-edge-case-tests)
@@ -47,6 +50,8 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
 | `JsonUtilsTest`                 | `JsonUtils`                       | Tests JSON serialization and deserialization of blockchain components.    |
 | `BlockchainSerializationTest`   | `Blockchain`                      | Tests exporting and importing blockchain data to/from JSON files.        |
 | `PersistenceManagerTest`        | `PersistenceManager`              | Tests automatic saving and loading of blockchain state between runs.      |
+| `BlockchainControllerTest`      | `BlockchainController`            | Tests REST API endpoints for blockchain interaction.                     |
+| `BlockchainApplicationTest`     | `BlockchainApplication`           | Tests Spring Boot application startup and configuration.                 |
 
 ---
 
@@ -299,6 +304,67 @@ void testBlockchainJsonRoundTrip() throws Exception {
     
     // Clean up
     tempFile.delete();
+}
+```
+
+## Testing REST API
+
+The project now includes tests for the Spring Boot REST API endpoints.
+
+### API Test Classes
+
+1. **BlockchainControllerTest**
+   - Tests REST API endpoints for blockchain interaction
+   - Verifies proper handling of HTTP requests and responses
+   - Tests transaction validation through the API
+   - Tests block mining through the API
+
+2. **BlockchainApplicationTest**
+   - Tests Spring Boot application startup
+   - Verifies proper configuration loading
+   - Tests application context initialization
+
+### Example API Test
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+public class BlockchainControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    public void testGetBlockchain() throws Exception {
+        mockMvc.perform(get("/api/chain"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    public void testAddTransaction() throws Exception {
+        FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 100);
+        
+        mockMvc.perform(post("/api/transactions")
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(JsonUtils.toJson(tx)))
+               .andExpect(status().isOk())
+               .andExpect(content().string(containsString("Transaction added")));
+    }
+
+    @Test
+    public void testMineBlock() throws Exception {
+        // First add a transaction
+        FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 100);
+        mockMvc.perform(post("/api/transactions")
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(JsonUtils.toJson(tx)));
+        
+        // Then mine a block
+        mockMvc.perform(post("/api/mine"))
+               .andExpect(status().isOk())
+               .andExpect(content().string(containsString("Block mined")));
+    }
 }
 ```
 

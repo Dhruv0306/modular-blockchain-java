@@ -16,36 +16,40 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.slf4j.Logger;
 
 /**
- * Main blockchain class that manages the chain of blocks and pending
- * transactions.
- * Uses a generic type T that extends Transaction to allow for different
- * transaction types.
+ * Main blockchain class that manages the chain of blocks and pending transactions.
+ * Uses a generic type T that extends Transaction to allow for different transaction types.
+ * This class provides core blockchain functionality including:
+ * - Adding and validating new blocks and transactions
+ * - Managing the chain of blocks
+ * - Handling pending transactions
+ * - Import/export capabilities
+ * - Chain validation
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Blockchain<T extends Transaction> {
-    // Logger instance for this class
+    // Logger instance for this class to handle logging events
     private static final Logger logger = BlockchainLoggerFactory.getLogger(Blockchain.class);
 
-    // The main chain of blocks
+    // The main chain of blocks stored as an ArrayList for easy access and modification
     private final List<Block<T>> chain = new ArrayList<>();
 
-    // Transactions waiting to be included in next block
+    // Transactions waiting to be included in next block (mempool)
     private final List<T> pendingTransactions = new ArrayList<>();
 
-    // Consensus mechanism used for block validation
+    // Consensus mechanism used for block validation and mining
     private final Consensus<T> consensus;
 
     /**
-     * Creates a new blockchain with a default genesis block and proof of work
-     * consensus.
+     * Creates a new blockchain with a default genesis block and proof of work consensus.
+     * This is the simplest constructor that uses default implementations.
      */
     public Blockchain() {
         this(new DefaultGenesisBlockFactory<>(), new ProofOfWork<>());
     }
 
     /**
-     * Creates a new blockchain with a custom genesis block factory and default
-     * consensus.
+     * Creates a new blockchain with a custom genesis block factory and default consensus.
+     * Allows customization of the genesis block while using default proof of work consensus.
      *
      * @param genesisBlockFactory The factory to create the genesis block
      */
@@ -54,11 +58,11 @@ public class Blockchain<T extends Transaction> {
     }
 
     /**
-     * Creates a new blockchain with a custom genesis block factory and consensus
-     * mechanism.
+     * Creates a new blockchain with a custom genesis block factory and consensus mechanism.
+     * Provides full customization of both genesis block creation and consensus rules.
      *
      * @param genesisBlockFactory The factory to create the genesis block
-     * @param consensus           The consensus mechanism to use
+     * @param consensus The consensus mechanism to use for block validation and mining
      */
     public Blockchain(GenesisBlockFactory<T> genesisBlockFactory, Consensus<T> consensus) {
         this.consensus = consensus;
@@ -67,18 +71,24 @@ public class Blockchain<T extends Transaction> {
 
     /**
      * Adds a new transaction to the pending transactions pool if it's valid.
+     * Transactions in this pool will be included in the next mined block.
      * 
-     * @param tx The transaction to add
+     * @param tx The transaction to add to the pending pool
+     * @return true if transaction was valid and added, false otherwise
      */
-    public void addTransaction(T tx) {
-        if (tx.isValid())
+    public boolean addTransaction(T tx) {
+        if (tx.isValid()){
             pendingTransactions.add(tx);
+            return true;
+        }
+        return false;
     }
 
     /**
      * Returns a copy of the current pending transactions list.
+     * Returns a new ArrayList to prevent external modification of internal state.
      * 
-     * @return List of pending transactions
+     * @return List of pending transactions waiting to be included in next block
      */
     public List<T> getPendingTransactions() {
         return new ArrayList<>(pendingTransactions);
@@ -86,6 +96,7 @@ public class Blockchain<T extends Transaction> {
 
     /**
      * Gets the most recent block in the chain.
+     * Used frequently during mining and validation operations.
      * 
      * @return The last block in the chain
      */
@@ -95,18 +106,20 @@ public class Blockchain<T extends Transaction> {
 
     /**
      * Adds a new block to the chain and clears pending transactions.
+     * This method is called after a new block has been mined and validated.
      * 
-     * @param block The block to add to the chain
+     * @param block The new valid block to add to the chain
      */
     public void addBlock(Block<T> block) {
         chain.add(block);
-        pendingTransactions.clear();
+        pendingTransactions.clear(); // Clear transactions that were included in this block
     }
 
     /**
      * Returns the complete blockchain.
+     * Provides direct access to the underlying chain data structure.
      * 
-     * @return List of all blocks in the chain
+     * @return List of all blocks in the chain from genesis to latest
      */
     public List<Block<T>> getChain() {
         return chain;
@@ -114,32 +127,37 @@ public class Blockchain<T extends Transaction> {
 
     /**
      * Validates the entire blockchain by checking:
-     * 1. Block sequence is valid
+     * 1. Block sequence is valid (each block references previous correctly)
      * 2. Each block is valid according to consensus rules
-     * 3. Block indices are sequential
+     * 3. Block indices are sequential and continuous
      * 
-     * @return true if the blockchain is valid, false otherwise
+     * This is a crucial method for maintaining blockchain integrity.
+     * 
+     * @return true if the blockchain is valid, false if any validation fails
      */
     public boolean isChainValid() {
         logger.debug("Validating blockchain with {} blocks", chain.size());
 
         // A blockchain with only the genesis block is always valid
+        // since genesis block is created by trusted factory
         if (chain.size() == 1) {
             return true;
         }
 
-        // Check each block in the chain
+        // Check each block in the chain starting from block 1 (after genesis)
         for (int i = 1; i < chain.size(); i++) {
             Block<T> currentBlock = chain.get(i);
             Block<T> previousBlock = chain.get(i - 1);
 
             // Validate current block using consensus mechanism
+            // This checks hash, proof of work, etc.
             if (!consensus.validateBlock(currentBlock, previousBlock)) {
                 logger.warn("Invalid block at index {}: {}", i, currentBlock.getHash());
                 return false;
             }
 
             // Check that block index is sequential
+            // Prevents blocks from being inserted out of order
             if (currentBlock.getIndex() != previousBlock.getIndex() + 1) {
                 logger.warn("Non-sequential block index at block {}", i);
                 return false;
@@ -151,6 +169,7 @@ public class Blockchain<T extends Transaction> {
 
     /**
      * Exports the blockchain to a JSON file.
+     * Useful for persistence and blockchain state sharing.
      * 
      * @param file The file to write the blockchain to
      * @throws Exception if there is an error writing to the file
@@ -161,11 +180,12 @@ public class Blockchain<T extends Transaction> {
 
     /**
      * Imports a blockchain from a JSON file.
+     * Used to restore blockchain state or sync with other nodes.
      * 
-     * @param file             The file to read the blockchain from
+     * @param file The file to read the blockchain from
      * @param transactionClass The class type of transactions in the blockchain
      * @return A new Blockchain instance loaded from the file
-     * @throws Exception if there is an error reading from the file
+     * @throws Exception if there is an error reading from the file or invalid format
      */
     public static <T extends Transaction> Blockchain<T> importFromJson(File file, Class<T> transactionClass)
             throws Exception {
