@@ -13,6 +13,7 @@ Thank you for your interest in contributing to the Modular Blockchain Java proje
   - [Working with JSON Serialization and Persistence](#working-with-json-serialization)
   - [Adding a New Transaction Type](#adding-a-new-transaction-type)
   - [Implementing a New Consensus Algorithm](#implementing-a-new-consensus-algorithm)
+  - [Extending the REST API](#extending-the-rest-api)
   - [Adding a New Feature Module](#adding-a-new-feature-module)
 - [Pull Request Process](#pull-request-process)
 
@@ -53,6 +54,7 @@ The project follows a standard Maven structure:
   - `transactions/` - Transaction type implementations
   - `crypto/` - Utilities for digital signatures and cryptographic operations
   - `logging/` - Logging configuration and utilities
+  - `api/` - Spring Boot REST API controllers and application
 - `src/test/java/com/example/blockchain/` - Test code
 - `docs/` - Documentation
 - `logs/` - Log files (generated at runtime)
@@ -76,6 +78,9 @@ mvn exec:java -Dexec.mainClass="com.example.blockchain.Main" -Dexec.args="blockc
 
 # Run with production configuration
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main" -Dexec.args="blockchain-prod.properties"
+
+# Run the Spring Boot REST API
+mvn spring-boot:run
 ```
 
 ### Using the Convenience Script
@@ -113,6 +118,8 @@ chmod +x run-blockchain.sh
 | `JsonUtilsTest`                 | `JsonUtils`                       | Tests JSON serialization and deserialization of blockchain components.    |
 | `BlockchainSerializationTest`   | `Blockchain`                      | Tests exporting and importing blockchain data to/from JSON files.        |
 | `PersistenceManagerTest`        | `PersistenceManager`              | Tests automatic saving and loading of blockchain state between runs.      |
+| `BlockchainControllerTest`      | `BlockchainController`            | Tests REST API endpoints for blockchain interaction.                     |
+| `BlockchainApplicationTest`     | `BlockchainApplication`           | Tests Spring Boot application startup and configuration.                 |
 
 
 ### Running Tests
@@ -198,10 +205,10 @@ Provide clear messages with assertions to make test failures easier to understan
 
 ```java
 // Instead of this:
-true(blockchain.isChainValid());
+assertTrue(blockchain.isChainValid());
 
 // Do this:
-true(blockchain.isChainValid(), "Chain should be valid after adding a properly signed block");
+assertTrue(blockchain.isChainValid(), "Chain should be valid after adding a properly signed block");
 ```
 
 ## Code Style and Formatting
@@ -313,6 +320,57 @@ public class ProofOfStake<T extends Transaction> implements Consensus<T> {
     @Override
     public Block<T> generateBlock(List<T> transactions, Block<T> previousBlock) {
         // Block generation logic...
+    }
+}
+```
+
+### Extending the REST API
+
+1. Create a new controller class in the `com.example.blockchain.api` package or extend the existing `BlockchainController`
+2. Use Spring MVC annotations to define endpoints:
+   - `@RestController` for the class
+   - `@RequestMapping` to define the base path
+   - `@GetMapping`, `@PostMapping`, etc. for specific endpoints
+3. Implement methods to handle the requests
+4. Add unit tests for your endpoints using Spring's `MockMvc`
+
+Example:
+
+```java
+@RestController
+@RequestMapping("/api/analytics")
+public class BlockchainAnalyticsController {
+    
+    private final Blockchain<FinancialTransaction> blockchain;
+    
+    public BlockchainAnalyticsController(BlockchainController mainController) {
+        this.blockchain = mainController.getBlockchain();
+    }
+    
+    @GetMapping("/stats")
+    public Map<String, Object> getBlockchainStats() {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("blockCount", blockchain.getChain().size());
+        stats.put("transactionCount", countAllTransactions());
+        stats.put("averageTransactionsPerBlock", calculateAverageTransactionsPerBlock());
+        return stats;
+    }
+    
+    private int countAllTransactions() {
+        return blockchain.getChain().stream()
+            .mapToInt(block -> block.getTransactions().size())
+            .sum();
+    }
+    
+    private double calculateAverageTransactionsPerBlock() {
+        if (blockchain.getChain().size() <= 1) {
+            return 0.0; // Exclude genesis block
+        }
+        
+        int totalBlocks = blockchain.getChain().size() - 1; // Exclude genesis block
+        int totalTransactions = countAllTransactions();
+        
+        return (double) totalTransactions / totalBlocks;
     }
 }
 ```

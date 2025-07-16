@@ -51,7 +51,7 @@ classDiagram
         -chain List~Block~T~~
         -pendingTransactions List~T~
         -consensus Consensus~T~
-        +addTransaction(T) void
+        +addTransaction(T) boolean
         +addBlock(Block~T~) void
         +isChainValid() boolean
         +exportToJson(File) void
@@ -116,12 +116,22 @@ classDiagram
     
     class PersistenceManager~T~ {
         <<utility>>
-        -persistenceFile File
-        -transactionType Class~T~
-        +PersistenceManager(File, Class~T~)
-        +saveBlockchain(Blockchain~T~) boolean
-        +loadBlockchain() Blockchain~T~
-        +isPersistenceEnabled() boolean
+        +loadBlockchain(Class) Optional~Blockchain~T~~
+        +saveBlockchain(Blockchain) void
+    }
+    
+    class BlockchainController {
+        -blockchain Blockchain~FinancialTransaction~
+        -consensus ProofOfWork~FinancialTransaction~
+        +getBlockchain() List~Block~
+        +addTransaction(FinancialTransaction) String
+        +mineBlock() String
+        +getPendingTransactions() List~FinancialTransaction~
+        +validateChain() String
+    }
+    
+    class BlockchainApplication {
+        +main(String[]) void
     }
     
     Transaction <|-- SignedTransaction
@@ -141,6 +151,10 @@ classDiagram
     ProofOfWork~T~ --> ChainConfig : uses
     PersistenceManager~T~ --> JsonUtils : uses
     PersistenceManager~T~ --> ChainConfig : uses
+    BlockchainController --> Blockchain : uses
+    BlockchainController --> ProofOfWork : uses
+    BlockchainController --> PersistenceManager : uses
+    BlockchainApplication --> BlockchainController : uses
     
     %% Individual styling with colors at 60% opacity and bold text
     style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
@@ -159,3 +173,5 @@ classDiagram
     style ChainConfig fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
     style JsonUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
     style PersistenceManager fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
+    style BlockchainController fill:#FF7F5099,stroke:#FF6347,stroke-width:2px,color:#000,font-weight:bold
+    style BlockchainApplication fill:#FF7F5099,stroke:#FF6347,stroke-width:2px,color:#000,font-weight:bold

@@ -60,6 +60,7 @@ This project is designed for developers, researchers, and educators who want to 
 | 💿 Automatic Persistence    | Blockchain state is saved on shutdown and restored on startup                |
 | 📝 Structured Logging       | SLF4J logging with environment-specific configurations                       |
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
+| 🌐 REST API                | Spring Boot REST API for blockchain interaction                              |
 
 ---
 
@@ -163,7 +164,7 @@ classDiagram
         -chain List~Block~T~~
         -pendingTransactions List~T~
         -consensus Consensus~T~
-        +addTransaction(T) void
+        +addTransaction(T) boolean
         +addBlock(Block~T~) void
         +isChainValid() boolean
         +exportToJson(File) void
@@ -228,12 +229,22 @@ classDiagram
     
     class PersistenceManager~T~ {
         <<utility>>
-        -persistenceFile File
-        -transactionType Class~T~
-        +PersistenceManager(File, Class~T~)
-        +saveBlockchain(Blockchain~T~) boolean
-        +loadBlockchain() Blockchain~T~
-        +isPersistenceEnabled() boolean
+        +loadBlockchain(Class) Optional~Blockchain~T~~
+        +saveBlockchain(Blockchain) void
+    }
+    
+    class BlockchainController {
+        -blockchain Blockchain~FinancialTransaction~
+        -consensus ProofOfWork~FinancialTransaction~
+        +getBlockchain() List~Block~
+        +addTransaction(FinancialTransaction) String
+        +mineBlock() String
+        +getPendingTransactions() List~FinancialTransaction~
+        +validateChain() String
+    }
+    
+    class BlockchainApplication {
+        +main(String[]) void
     }
     
     Transaction <|-- SignedTransaction
@@ -253,6 +264,10 @@ classDiagram
     ProofOfWork~T~ --> ChainConfig : uses
     PersistenceManager~T~ --> JsonUtils : uses
     PersistenceManager~T~ --> ChainConfig : uses
+    BlockchainController --> Blockchain : uses
+    BlockchainController --> ProofOfWork : uses
+    BlockchainController --> PersistenceManager : uses
+    BlockchainApplication --> BlockchainController : uses
     
     %% Individual styling with colors at 60% opacity and bold text
     style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
@@ -271,6 +286,8 @@ classDiagram
     style ChainConfig fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
     style JsonUtils fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
     style PersistenceManager fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
+    style BlockchainController fill:#FF7F5099,stroke:#FF6347,stroke-width:2px,color:#000,font-weight:bold
+    style BlockchainApplication fill:#FF7F5099,stroke:#FF6347,stroke-width:2px,color:#000,font-weight:bold
 ```
 
 **Key Relationships:**
@@ -283,6 +300,8 @@ classDiagram
 - `CustomGenesisBlockFactory<T>` provides customizable genesis block creation
 - `BlockUtils` handles hash computation for blocks
 - `CryptoUtils` manages cryptographic operations for digital signatures
+- `BlockchainController` exposes blockchain operations via REST API
+- `BlockchainApplication` serves as the Spring Boot entry point
 
 ---
 
@@ -349,7 +368,12 @@ cd modular-blockchain-java
 
 ```bash
 mvn clean install
+
+# Run the core blockchain demo
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
+
+# OR run the Spring Boot REST API
+mvn spring-boot:run
 ```
 
 3. Use environment-specific configurations:
@@ -363,6 +387,32 @@ set BLOCKCHAIN_ENV=dev
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 ```
 
+4. Access the REST API:
+
+```
+# View the blockchain
+GET http://localhost:8080/api/chain
+
+# Add a transaction
+POST http://localhost:8080/api/transactions
+Content-Type: application/json
+
+{
+  "sender": "Alice",
+  "receiver": "Bob",
+  "amount": 100
+}
+
+# Mine a new block
+POST http://localhost:8080/api/mine
+
+# View pending transactions
+GET http://localhost:8080/api/pending
+
+# Validate the blockchain
+GET http://localhost:8080/api/validate
+```
+
 > 📘 For detailed run instructions including all CLI options, environment configurations, and troubleshooting tips, see the [Run Guide](docs/RunGuide.md)
 
 ---
@@ -374,9 +424,10 @@ mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 | `com.example.blockchain.core`          | Core block, chain, transaction logic    |
 | `com.example.blockchain.consensus`     | Interfaces and algorithms for consensus |
 | `com.example.blockchain.transactions`  | Your custom transaction types           |
-| `com.example.blockchain.core.utils`         | Core utilities including JSON serialization |
+| `com.example.blockchain.core.utils`    | Core utilities including JSON serialization |
 | `com.example.blockchain.crypto`        | Cryptographic utilities and signatures   |
 | `com.example.blockchain.logging`       | Logging configuration and utilities     |
+| `com.example.blockchain.api`           | REST API controllers and application    |
 | `com.example.blockchain.Main`          | Demo runner showing how it all works    |
 
 ## 🔧 Utility Classes
@@ -629,8 +680,9 @@ mvn test -Dtest=SignedFinancialTransactionTest#testValidSignedTransaction
 
 - 🌐 P2P networking using sockets or WebSocket
 - 🧪 CLI-based or GUI simulation for testnets
-- 📊 Web dashboard for monitoring the chain
+- 📊 Enhanced web dashboard for monitoring the chain
 - 🔄 Advanced DB-based storage (LevelDB, H2) beyond current JSON persistence
+- 🔑 User authentication and wallet integration for the REST API
 
 ---
 
@@ -642,6 +694,7 @@ mvn test -Dtest=SignedFinancialTransactionTest#testValidSignedTransaction
 - JUnit 5 for testing
 - JaCoCo for test coverage
 - SHA-256 hashing
+- Spring Boot for REST API
 
 ---
 

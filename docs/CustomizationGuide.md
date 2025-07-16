@@ -33,6 +33,11 @@ This guide provides detailed instructions on how to customize the modular blockc
   - [Environment-Specific Configurations](#environment-specific-configurations)
   - [Runtime Configuration Changes](#runtime-configuration-changes)
   - [Adding Custom Configuration Properties](#adding-custom-configuration-properties)
+- [REST API Customization](#rest-api-customization)
+  - [Understanding the BlockchainController](#understanding-the-blockchaincontroller)
+  - [Adding Custom Endpoints](#adding-custom-endpoints)
+  - [Customizing Response Formats](#customizing-response-formats)
+  - [Securing the API](#securing-the-api)
 - [Advanced Customizations](#advanced-customizations)
   - [JSON Serialization and Persistence](#json-serialization-and-persistence)
     - [Using JsonUtils](#using-jsonutils)
@@ -45,6 +50,7 @@ This guide provides detailed instructions on how to customize the modular blockc
 - [Testing Your Customizations](#testing-your-customizations)
   - [Testing Transaction Types](#testing-transaction-types)
   - [Testing Consensus Algorithms](#testing-consensus-algorithms)
+  - [Testing REST API Endpoints](#testing-rest-api-endpoints)
   - [Integration Testing](#integration-testing)
   - [Testing Edge Cases](#testing-edge-cases)
   - [Testing Configuration Handling](#testing-configuration-handling)
@@ -768,6 +774,166 @@ public int getMaxBlockSize() {
 }
 ```
 
+## REST API Customization
+
+The framework now includes a Spring Boot REST API for interacting with the blockchain. You can customize this API to fit your specific needs.
+
+### Understanding the BlockchainController
+
+The `BlockchainController` class provides the REST endpoints for blockchain operations:
+
+```java
+@RestController
+@RequestMapping("/api")
+public class BlockchainController {
+    private final Blockchain<FinancialTransaction> blockchain;
+    private final ProofOfWork<FinancialTransaction> consensus;
+    
+    // Constructor and endpoints...
+    
+    @GetMapping("/chain")
+    public List<Block<FinancialTransaction>> getBlockchain() {
+        return blockchain.getChain();
+    }
+    
+    @PostMapping("/transactions")
+    public String addTransaction(@RequestBody FinancialTransaction tx) {
+        boolean added = blockchain.addTransaction(tx);
+        return added ? "Transaction added." : "Invalid transaction.";
+    }
+    
+    @PostMapping("/mine")
+    public String mineBlock() {
+        // Mining logic...
+    }
+    
+    @GetMapping("/pending")
+    public List<FinancialTransaction> getPendingTransactions() {
+        return blockchain.getPendingTransactions();
+    }
+    
+    @GetMapping("/validate")
+    public String validateChain() {
+        return blockchain.isChainValid() ? "Chain is valid." : "Chain is invalid!";
+    }
+}
+```
+
+### Adding Custom Endpoints
+
+You can extend the API by adding custom endpoints to the `BlockchainController` or by creating new controllers:
+
+```java
+// Add a new endpoint to get block by index
+@GetMapping("/block/{index}")
+public ResponseEntity<Block<FinancialTransaction>> getBlockByIndex(@PathVariable int index) {
+    if (index < 0 || index >= blockchain.getChain().size()) {
+        return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok(blockchain.getChain().get(index));
+}
+
+// Add an endpoint to get transaction statistics
+@GetMapping("/stats")
+public Map<String, Object> getStatistics() {
+    Map<String, Object> stats = new HashMap<>();
+    stats.put("blockCount", blockchain.getChain().size());
+    stats.put("pendingTransactions", blockchain.getPendingTransactions().size());
+    
+    // Calculate total transaction count
+    int totalTx = blockchain.getChain().stream()
+        .mapToInt(block -> block.getTransactions().size())
+        .sum();
+    stats.put("totalTransactions", totalTx);
+    
+    return stats;
+}
+```
+
+### Customizing Response Formats
+
+You can customize the response format by creating Data Transfer Objects (DTOs) that represent your data in a specific way:
+
+```java
+// Create a DTO for block responses
+public class BlockDTO {
+    private int index;
+    private String hash;
+    private long timestamp;
+    private int transactionCount;
+    private List<String> transactionIds;
+    
+    // Constructor, getters, setters...
+    
+    // Static factory method to convert Block to BlockDTO
+    public static BlockDTO fromBlock(Block<FinancialTransaction> block) {
+        BlockDTO dto = new BlockDTO();
+        dto.setIndex(block.getIndex());
+        dto.setHash(block.getHash());
+        dto.setTimestamp(block.getTimestamp());
+        dto.setTransactionCount(block.getTransactions().size());
+        
+        // Extract transaction IDs
+        List<String> txIds = block.getTransactions().stream()
+            .map(Transaction::getTransactionId)
+            .collect(Collectors.toList());
+        dto.setTransactionIds(txIds);
+        
+        return dto;
+    }
+}
+
+// Use the DTO in your controller
+@GetMapping("/blocks")
+public List<BlockDTO> getBlocksWithCustomFormat() {
+    return blockchain.getChain().stream()
+        .map(BlockDTO::fromBlock)
+        .collect(Collectors.toList());
+}
+```
+
+### Securing the API
+
+For production use, you should secure your API. Spring Security provides a comprehensive security framework:
+
+```java
+// Add Spring Security dependency to pom.xml
+// <dependency>
+//     <groupId>org.springframework.boot</groupId>
+//     <artifactId>spring-boot-starter-security</artifactId>
+// </dependency>
+
+// Create a security configuration class
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .csrf().disable()
+            .authorizeRequests()
+                .antMatchers(HttpMethod.GET, "/api/chain", "/api/block/*").permitAll()
+                .anyRequest().authenticated()
+            .and()
+            .httpBasic();
+    }
+    
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication()
+            .withUser("admin")
+            .password(passwordEncoder().encode("password"))
+            .roles("ADMIN");
+    }
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
 ## Advanced Customizations
 
 ### JSON Serialization and Persistence
@@ -810,46 +976,28 @@ Blockchain<FinancialTransaction> importedChain =
 The framework now includes a `PersistenceManager` utility class that handles automatic persistence:
 
 ```java
-// Create a persistence manager for a specific transaction type
-PersistenceManager<FinancialTransaction> persistenceManager = 
-    new PersistenceManager<>(new File("data/chain-data.json"), FinancialTransaction.class);
+// Load blockchain from persistence storage
+Optional<Blockchain<FinancialTransaction>> loadedChain = 
+    PersistenceManager.loadBlockchain(FinancialTransaction.class);
 
-// Save blockchain state
-boolean success = persistenceManager.saveBlockchain(blockchain);
-
-// Load blockchain state
-Blockchain<FinancialTransaction> loadedChain = persistenceManager.loadBlockchain();
+// Save blockchain to persistence storage
+PersistenceManager.saveBlockchain(blockchain);
 ```
 
-In the main application, persistence is handled automatically:
+In the REST API controller, persistence is handled automatically:
 
 ```java
-// At application startup
-Blockchain<FinancialTransaction> blockchain;
-PersistenceManager<FinancialTransaction> persistenceManager = 
-    new PersistenceManager<>(new File(config.getPersistenceFile()), FinancialTransaction.class);
+// In BlockchainController constructor
+PersistenceManager.loadBlockchain(FinancialTransaction.class)
+    .ifPresent(loadedChain -> {
+        this.blockchain.getChain().addAll(loadedChain.getChain());
+        this.blockchain.getPendingTransactions().addAll(loadedChain.getPendingTransactions());
+    });
 
-// Try to load existing blockchain
-if (config.isPersistenceEnabled()) {
-    try {
-        blockchain = persistenceManager.loadBlockchain();
-        logger.info("Loaded existing blockchain with {} blocks", blockchain.getChain().size());
-    } catch (Exception e) {
-        logger.warn("Could not load blockchain, creating new one: {}", e.getMessage());
-        blockchain = new Blockchain<>();
-    }
-} else {
-    blockchain = new Blockchain<>();
-}
-
-// At application shutdown
-if (config.isPersistenceEnabled() && blockchain.isChainValid()) {
-    boolean saved = persistenceManager.saveBlockchain(blockchain);
-    if (saved) {
-        logger.info("Blockchain state saved successfully");
-    } else {
-        logger.error("Failed to save blockchain state");
-    }
+// Before application shutdown
+@PreDestroy
+public void cleanup() {
+    PersistenceManager.saveBlockchain(blockchain);
 }
 ```
 
@@ -1130,6 +1278,50 @@ void testCustomConsensusValidation() {
 }
 ```
 
+### Testing REST API Endpoints
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+public class BlockchainControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    public void testGetBlockchain() throws Exception {
+        mockMvc.perform(get("/api/chain"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    public void testAddTransaction() throws Exception {
+        FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 100);
+        
+        mockMvc.perform(post("/api/transactions")
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(JsonUtils.toJson(tx)))
+               .andExpect(status().isOk())
+               .andExpect(content().string(containsString("Transaction added")));
+    }
+
+    @Test
+    public void testMineBlock() throws Exception {
+        // First add a transaction
+        FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 100);
+        mockMvc.perform(post("/api/transactions")
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(JsonUtils.toJson(tx)));
+        
+        // Then mine a block
+        mockMvc.perform(post("/api/mine"))
+               .andExpect(status().isOk())
+               .andExpect(content().string(containsString("Block mined")));
+    }
+}
+```
+
 ### Integration Testing
 
 ```java
@@ -1216,18 +1408,21 @@ void testMissingConfiguration() {
 2. **Cryptographic Security**: Use strong cryptographic primitives for any security-critical operations.
 3. **Privacy**: Be mindful of data stored on the blockchain; it's immutable and potentially public.
 4. **Key Management**: If implementing digital signatures, ensure secure key management.
+5. **API Security**: Secure your REST API with proper authentication and authorization.
 
 ### Performance Optimization
 
 1. **Transaction Batching**: Process multiple transactions in a single block for higher throughput.
 2. **Efficient Data Structures**: Use optimized data structures for frequent operations.
 3. **Consensus Tuning**: Adjust consensus parameters based on your network's characteristics.
+4. **API Caching**: Implement caching for frequently accessed API endpoints.
 
 ### Code Organization
 
 1. **Package Structure**: Organize related components in packages that reflect their purpose.
 2. **Dependency Injection**: Use dependency injection to make your components more testable.
 3. **Clear Interfaces**: Define clear interfaces for components that may have multiple implementations.
+4. **API Documentation**: Use Swagger or SpringDoc to document your REST API endpoints.
 
 ---
 
@@ -1238,9 +1433,10 @@ After customizing your blockchain, consider:
 1. **Advanced Persistence**: Implement database storage (like LevelDB or H2) for better performance and scalability.
 2. **Networking**: Add peer-to-peer communication for a distributed network.
 3. **Monitoring**: Create tools to monitor the health and performance of your blockchain.
-4. **User Interface**: Build a dashboard or API to interact with your blockchain.
+4. **User Interface**: Build a web dashboard to interact with your blockchain API.
 5. **Advanced Features**: Implement smart contracts, sidechains, or other advanced blockchain concepts.
+6. **API Authentication**: Add user authentication and wallet integration for the REST API.
 
 ---
 
-This guide should help you get started with customizing the Modular Blockchain Java framework. Remember that blockchain technology is constantly evolving, so keep exploring new concepts and improvements to enhance your implementation. 
+This guide should help you get started with customizing the Modular Blockchain Java framework. Remember that blockchain technology is constantly evolving, so keep exploring new concepts and improvements to enhance your implementation.
