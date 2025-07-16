@@ -15,11 +15,24 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import org.slf4j.Logger;
 
+/**
+ * Main blockchain class that manages the chain of blocks and pending
+ * transactions.
+ * Uses a generic type T that extends Transaction to allow for different
+ * transaction types.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Blockchain<T extends Transaction> {
+    // Logger instance for this class
     private static final Logger logger = BlockchainLoggerFactory.getLogger(Blockchain.class);
+
+    // The main chain of blocks
     private final List<Block<T>> chain = new ArrayList<>();
+
+    // Transactions waiting to be included in next block
     private final List<T> pendingTransactions = new ArrayList<>();
+
+    // Consensus mechanism used for block validation
     private final Consensus<T> consensus;
 
     /**
@@ -52,30 +65,58 @@ public class Blockchain<T extends Transaction> {
         chain.add(genesisBlockFactory.createGenesisBlock());
     }
 
+    /**
+     * Adds a new transaction to the pending transactions pool if it's valid.
+     * 
+     * @param tx The transaction to add
+     */
     public void addTransaction(T tx) {
         if (tx.isValid())
             pendingTransactions.add(tx);
     }
 
+    /**
+     * Returns a copy of the current pending transactions list.
+     * 
+     * @return List of pending transactions
+     */
     public List<T> getPendingTransactions() {
-        return pendingTransactions;
+        return new ArrayList<>(pendingTransactions);
     }
 
+    /**
+     * Gets the most recent block in the chain.
+     * 
+     * @return The last block in the chain
+     */
     public Block<T> getLastBlock() {
         return chain.get(chain.size() - 1);
     }
 
+    /**
+     * Adds a new block to the chain and clears pending transactions.
+     * 
+     * @param block The block to add to the chain
+     */
     public void addBlock(Block<T> block) {
         chain.add(block);
         pendingTransactions.clear();
     }
 
+    /**
+     * Returns the complete blockchain.
+     * 
+     * @return List of all blocks in the chain
+     */
     public List<Block<T>> getChain() {
         return chain;
     }
 
     /**
-     * Validates the entire blockchain.
+     * Validates the entire blockchain by checking:
+     * 1. Block sequence is valid
+     * 2. Each block is valid according to consensus rules
+     * 3. Block indices are sequential
      * 
      * @return true if the blockchain is valid, false otherwise
      */
@@ -108,10 +149,24 @@ public class Blockchain<T extends Transaction> {
         return true;
     }
 
+    /**
+     * Exports the blockchain to a JSON file.
+     * 
+     * @param file The file to write the blockchain to
+     * @throws Exception if there is an error writing to the file
+     */
     public void exportToJson(File file) throws Exception {
         JsonUtils.writeToFile(this, file);
     }
 
+    /**
+     * Imports a blockchain from a JSON file.
+     * 
+     * @param file             The file to read the blockchain from
+     * @param transactionClass The class type of transactions in the blockchain
+     * @return A new Blockchain instance loaded from the file
+     * @throws Exception if there is an error reading from the file
+     */
     public static <T extends Transaction> Blockchain<T> importFromJson(File file, Class<T> transactionClass)
             throws Exception {
         return JsonUtils.readFromFile(file, JsonUtils.getBlockchainType(transactionClass));

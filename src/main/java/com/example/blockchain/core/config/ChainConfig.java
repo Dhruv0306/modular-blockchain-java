@@ -7,12 +7,18 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import com.example.blockchain.logging.BlockchainLoggerFactory;
 
+/**
+ * Configuration class for the blockchain system.
+ * Implements singleton pattern to ensure only one configuration instance exists.
+ * Loads configuration from properties file and environment variables.
+ */
 public class ChainConfig {
+    // Logger instance for this class
     private static final Logger logger = BlockchainLoggerFactory.getLogger(ChainConfig.class);
 
     // Default values - used if no config file is found
-    private static final int DEFAULT_DIFFICULTY = 4;
-    private static final String DEFAULT_GENESIS_HASH = "GENESIS_HASH";
+    private static final int DEFAULT_DIFFICULTY = 4;  // Default mining difficulty
+    private static final String DEFAULT_GENESIS_HASH = "GENESIS_HASH";  // Default hash for genesis block
 
     // Config file path
     private static final String DEFAULT_CONFIG_FILE = "config/blockchain.properties";
@@ -21,23 +27,35 @@ public class ChainConfig {
     private static ChainConfig instance;
 
     // Configuration properties
-    private int difficulty;
-    private String genesisHash;
-    private String configFile;
-    private String logLevel;
+    private int difficulty;           // Mining difficulty level
+    private String genesisHash;       // Hash of the genesis block
+    private String configFile;        // Path to configuration file
+    private String logLevel;          // Logging level
+    private boolean persistenceEnabled;    // Flag for data persistence
+    private String persistenceDirectory;   // Directory for persistent storage
+    private String persistenceFile;        // Filename for persistent storage
 
-    // Private constructor for singleton pattern
+    /**
+     * Private constructor using default config file.
+     * Part of singleton pattern implementation.
+     */
     private ChainConfig() {
         this(DEFAULT_CONFIG_FILE);
     }
 
-    // Private constructor with specific config file
+    /**
+     * Private constructor with specific config file.
+     * @param configFile Path to the configuration file
+     */
     private ChainConfig(String configFile) {
         this.configFile = configFile;
         loadConfig();
     }
 
-    // Get singleton instance
+    /**
+     * Gets singleton instance using default config file.
+     * @return ChainConfig singleton instance
+     */
     public static synchronized ChainConfig getInstance() {
         if (instance == null) {
             instance = new ChainConfig();
@@ -45,7 +63,12 @@ public class ChainConfig {
         return instance;
     }
 
-    // Get or create instance with specific config file
+    /**
+     * Gets singleton instance with specific config file.
+     * Creates new instance if config file differs from current.
+     * @param configFile Path to the configuration file
+     * @return ChainConfig singleton instance
+     */
     public static synchronized ChainConfig getInstance(String configFile) {
         if (instance == null) {
             instance = new ChainConfig(configFile);
@@ -55,7 +78,10 @@ public class ChainConfig {
         return instance;
     }
 
-    // Load configuration from file or environment
+    /**
+     * Loads configuration from file and environment variables.
+     * Priority: Environment variables > Config file > Default values
+     */
     private void loadConfig() {
         Properties properties = new Properties();
         boolean configLoaded = false;
@@ -69,7 +95,7 @@ public class ChainConfig {
             logger.warn("Config file not found: {}. Using default or environment values.", configFile);
         }
 
-        // Load difficulty
+        // Load difficulty - check env var first, then config file, then default
         String difficultyStr = System.getenv("BLOCKCHAIN_DIFFICULTY");
         if (difficultyStr != null && !difficultyStr.isEmpty()) {
             difficulty = Integer.parseInt(difficultyStr);
@@ -80,7 +106,7 @@ public class ChainConfig {
             difficulty = DEFAULT_DIFFICULTY;
         }
 
-        // Load genesis hash
+        // Load genesis hash - check env var first, then config file, then default
         String genesisHashEnv = System.getenv("BLOCKCHAIN_GENESIS_HASH");
         if (genesisHashEnv != null && !genesisHashEnv.isEmpty()) {
             genesisHash = genesisHashEnv;
@@ -91,31 +117,82 @@ public class ChainConfig {
             genesisHash = DEFAULT_GENESIS_HASH;
         }
 
-        // Load log level
+        // Load log level from config file or use default
         logLevel = properties.getProperty("log_level", "INFO");
+
+        // Load persistence settings from config file or use defaults
+        persistenceEnabled = Boolean.parseBoolean(properties.getProperty("blockchain.persistence.enabled", "false"));
+        persistenceDirectory = properties.getProperty("blockchain.persistence.directory", "data");
+        persistenceFile = properties.getProperty("blockchain.persistence.file", "chain-data.json");
+        if (persistenceEnabled) {
+            logger.info("Persistence enabled: saving to {}/{}", persistenceDirectory, persistenceFile);
+        } else {
+            logger.info("Persistence is disabled.");
+        }
     }
 
-    // Getters for config values
+    /**
+     * Gets the current mining difficulty level.
+     * @return Current difficulty value
+     */
     public int getDifficulty() {
         return difficulty;
     }
 
+    /**
+     * Gets the genesis block hash.
+     * @return Genesis block hash
+     */
     public String getGenesisHash() {
         return genesisHash;
     }
 
+    /**
+     * Gets the current log level.
+     * @return Current log level
+     */
     public String getLogLevel() {
         return logLevel;
     }
 
-    // Method to reload config (useful for testing or runtime changes)
+    /**
+     * Reloads configuration from file and environment.
+     * Useful for testing or runtime configuration changes.
+     */
     public void reloadConfig() {
         loadConfig();
     }
 
-    // Method to switch configuration file at runtime
+    /**
+     * Changes the configuration file path and reloads config.
+     * @param configFile New configuration file path
+     */
     public void setConfigFile(String configFile) {
         this.configFile = configFile;
         reloadConfig();
+    }
+
+    /**
+     * Checks if data persistence is enabled.
+     * @return true if persistence is enabled, false otherwise
+     */
+    public boolean isPersistenceEnabled() {
+        return persistenceEnabled;
+    }
+
+    /**
+     * Gets the directory path for persistent storage.
+     * @return Persistence directory path
+     */
+    public String getPersistenceDirectory() {
+        return persistenceDirectory;
+    }
+
+    /**
+     * Gets the filename for persistent storage.
+     * @return Persistence filename
+     */
+    public String getPersistenceFile() {
+        return persistenceFile;
     }
 }

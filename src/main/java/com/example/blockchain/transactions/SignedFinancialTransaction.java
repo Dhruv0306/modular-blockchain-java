@@ -8,20 +8,42 @@ import com.example.blockchain.core.model.SignedTransaction;
 import com.example.blockchain.crypto.CryptoUtils;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/**
+ * Represents a signed financial transaction in the blockchain.
+ * This class implements the SignedTransaction interface and provides functionality
+ * for creating, validating and managing financial transactions between parties.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SignedFinancialTransaction implements SignedTransaction {
+    // Sender's identifier/address
     private String sender;
+    // Receiver's identifier/address 
     private String receiver;
+    // Transaction amount
     private double amount;
+    // Public key of the sender for signature verification
     private PublicKey senderPublicKey;
+    // Digital signature of the transaction
     private String signature;
+    // Unique identifier for the transaction
     private String transactionId;
+    // Timestamp when transaction was created
     private long timestamp;
 
-    // Default constructor for deserialization
-    // Required for Jackson to create instances from JSON
+    /**
+     * Default constructor required for JSON deserialization
+     */
     public SignedFinancialTransaction() {}
 
+    /**
+     * Creates a new signed financial transaction
+     * 
+     * @param sender The transaction sender's identifier
+     * @param receiver The transaction receiver's identifier
+     * @param amount The amount to transfer
+     * @param senderPublicKey The sender's public key for verification
+     * @param signature The transaction's digital signature
+     */
     public SignedFinancialTransaction(String sender, String receiver, double amount,
             PublicKey senderPublicKey, String signature) {
         this.sender = sender;
@@ -34,7 +56,14 @@ public class SignedFinancialTransaction implements SignedTransaction {
     }
     
     /**
-     * Constructor that allows specifying a transaction ID and timestamp (for testing or special cases)
+     * Creates a new signed financial transaction with a specific transaction ID
+     * 
+     * @param sender The transaction sender's identifier
+     * @param receiver The transaction receiver's identifier
+     * @param amount The amount to transfer
+     * @param senderPublicKey The sender's public key for verification
+     * @param signature The transaction's digital signature
+     * @param transactionId Custom transaction ID (for testing)
      */
     public SignedFinancialTransaction(String sender, String receiver, double amount,
             PublicKey senderPublicKey, String signature, String transactionId) {
@@ -48,7 +77,15 @@ public class SignedFinancialTransaction implements SignedTransaction {
     }
     
     /**
-     * Constructor that allows specifying a transaction ID and timestamp (for testing or special cases)
+     * Creates a new signed financial transaction with a specific transaction ID and timestamp
+     * 
+     * @param sender The transaction sender's identifier
+     * @param receiver The transaction receiver's identifier
+     * @param amount The amount to transfer
+     * @param senderPublicKey The sender's public key for verification
+     * @param signature The transaction's digital signature
+     * @param transactionId Custom transaction ID (for testing)
+     * @param timestamp Custom timestamp (for testing)
      */
     public SignedFinancialTransaction(String sender, String receiver, double amount,
             PublicKey senderPublicKey, String signature, String transactionId, long timestamp) {
@@ -61,6 +98,11 @@ public class SignedFinancialTransaction implements SignedTransaction {
         this.transactionId = transactionId != null ? transactionId : generateTransactionId();
     }
     
+    /**
+     * Generates a deterministic transaction ID based on the transaction data
+     * 
+     * @return UUID string generated from transaction details
+     */
     private String generateTransactionId() {
         // Create a deterministic ID based on transaction data + signature + timestamp
         String baseData = sender + receiver + amount + signature + timestamp;
@@ -72,6 +114,11 @@ public class SignedFinancialTransaction implements SignedTransaction {
         return transactionId;
     }
 
+    /**
+     * Validates the transaction by checking sender, receiver, amount and signature
+     * 
+     * @return true if transaction is valid, false otherwise
+     */
     @Override
     public boolean isValid() {
         return sender != null && receiver != null && amount > 0 && verifySignature();
@@ -87,6 +134,11 @@ public class SignedFinancialTransaction implements SignedTransaction {
         return receiver;
     }
 
+    /**
+     * Creates a human-readable summary of the transaction
+     * 
+     * @return String containing sender, receiver, amount and timestamp
+     */
     @Override
     public String getSummary() {
         return sender + " -> " + receiver + " : $" + amount + " (time: " + timestamp + ")";
@@ -102,6 +154,11 @@ public class SignedFinancialTransaction implements SignedTransaction {
         return senderPublicKey;
     }
 
+    /**
+     * Verifies the digital signature of the transaction
+     * 
+     * @return true if signature is valid, false otherwise
+     */
     @Override
     public boolean verifySignature() {
         try {

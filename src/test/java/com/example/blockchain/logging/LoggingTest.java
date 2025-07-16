@@ -22,10 +22,19 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for logging functionality in the blockchain system.
+ * Tests various logging configurations and utilities.
+ */
 class LoggingTest {
 
+    // Configuration file name used for testing
     private static final String TEST_CONFIG_FILENAME = "test-blockchain.properties";
 
+    /**
+     * Setup method run before each test.
+     * Resets the BlockchainConfig singleton to ensure clean test state.
+     */
     @BeforeEach
     void setUp() throws Exception {
         // Reset BlockchainConfig singleton before each test
@@ -34,7 +43,7 @@ class LoggingTest {
 
     /**
      * Helper method to reset the BlockchainConfig singleton instance using
-     * reflection
+     * reflection. This ensures each test starts with a fresh configuration.
      */
     private void resetBlockchainConfigSingleton() throws Exception {
         Field instance = ChainConfig.class.getDeclaredField("instance");
@@ -43,7 +52,11 @@ class LoggingTest {
     }
 
     /**
-     * Helper method to create a properties file with custom settings
+     * Helper method to create a properties file with custom settings.
+     * Creates a temporary directory and file for test configuration.
+     * 
+     * @param logLevel The logging level to set in the properties file
+     * @return File object representing the created properties file
      */
     private File createPropertiesFile(String logLevel) throws IOException {
         Path tempDir = Files.createTempDirectory("blockchain-test");
@@ -59,6 +72,9 @@ class LoggingTest {
         return configFile;
     }
 
+    /**
+     * Tests creation of a class-based logger using BlockchainLoggerFactory
+     */
     @Test
     void testBlockchainLoggerFactoryClassLogger() {
         // Get a logger for a class
@@ -69,6 +85,9 @@ class LoggingTest {
         assertEquals("com.example.blockchain.logging.LoggingTest", logger.getName());
     }
 
+    /**
+     * Tests creation of a named logger using BlockchainLoggerFactory
+     */
     @Test
     void testBlockchainLoggerFactoryNamedLogger() {
         // Get a logger with a custom name
@@ -80,6 +99,9 @@ class LoggingTest {
         assertEquals(customName, logger.getName());
     }
 
+    /**
+     * Tests setting and changing log levels for a specific logger
+     */
     @Test
     void testSetLogLevel() {
         String loggerName = "com.example.test.logger";
@@ -99,6 +121,9 @@ class LoggingTest {
         assertEquals(Level.ERROR, logger.getLevel());
     }
 
+    /**
+     * Tests behavior when setting an invalid log level
+     */
     @Test
     void testSetLogLevelWithInvalidLevel() {
         String loggerName = "com.example.test.invalid";
@@ -112,6 +137,9 @@ class LoggingTest {
         assertEquals(Level.INFO, logger.getLevel());
     }
 
+    /**
+     * Tests setting the root logger level
+     */
     @Test
     void testSetRootLogLevel() {
         // Set root log level to WARN
@@ -124,6 +152,9 @@ class LoggingTest {
         assertEquals(Level.WARN, rootLogger.getLevel());
     }
 
+    /**
+     * Tests setting the blockchain package log level
+     */
     @Test
     void testSetBlockchainLogLevel() {
         // Set blockchain package log level to TRACE
@@ -136,6 +167,9 @@ class LoggingTest {
         assertEquals(Level.TRACE, blockchainLogger.getLevel());
     }
 
+    /**
+     * Tests configuring logging from a configuration file
+     */
     @Test
     void testConfigureLoggingFromConfig() throws IOException {
         // Create config file with DEBUG log level
@@ -153,6 +187,9 @@ class LoggingTest {
         assertEquals(Level.INFO, blockchainLogger.getLevel());
     }
 
+    /**
+     * Tests error handling when setting log level with invalid parameters
+     */
     @Test
     void testSetLogLevelException() {
         // Force an exception by using null logger name
@@ -160,6 +197,9 @@ class LoggingTest {
         assertFalse(result);
     }
 
+    /**
+     * Tests error handling when configuring logging with invalid configuration
+     */
     @Test
     void testConfigureLoggingFromConfigException() {
         // Create a scenario where the method will throw an exception
@@ -192,6 +232,9 @@ class LoggingTest {
         }
     }
 
+    /**
+     * Tests LoggingUtils constructor for coverage
+     */
     @Test
     void testConstructor() {
         // Test constructor coverage
@@ -199,6 +242,9 @@ class LoggingTest {
         assertNotNull(utils);
     }
 
+    /**
+     * Tests BlockchainLoggerFactory constructor for coverage
+     */
     @Test
     void testBlockchainLoggerFactoryConstructor() {
         // Test constructor coverage

@@ -1,50 +1,78 @@
 <configuration>
-    <!-- Console appender with minimal output for production -->
+    <!-- 
+    Console Appender Configuration
+    - Provides minimal output for production environment
+    - Uses simple time format HH:mm:ss
+    - Only shows WARN level and above messages
+    -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
+            <!-- Simple pattern with time, log level and message -->
             <pattern>%d{HH:mm:ss} %-5level - %msg%n</pattern>
         </encoder>
-        <!-- Only show WARN and above on console in production -->
+        <!-- Filter to only show WARN and above messages in production -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>WARN</level>
         </filter>
     </appender>
 
-    <!-- Main log file with daily rotation and compression -->
+    <!-- 
+    Main File Appender Configuration
+    - Writes to blockchain-prod.log
+    - Implements daily rolling with compression
+    - Keeps 30 days of history
+    - Caps total size at 1GB
+    -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/blockchain-prod.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Daily rollover with compression -->
             <fileNamePattern>logs/blockchain-prod.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
         <encoder>
+            <!-- Detailed pattern with date, thread, level, logger name and message -->
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- Error-specific log file -->
+    <!-- 
+    Error File Appender Configuration
+    - Dedicated log file for ERROR level messages
+    - Daily rolling with compression
+    - Keeps 60 days of history
+    -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/blockchain-error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Daily rollover with compression -->
             <fileNamePattern>logs/blockchain-error.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
             <maxHistory>60</maxHistory>
         </rollingPolicy>
         <encoder>
+            <!-- Detailed pattern matching main log file -->
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
+        <!-- Only capture ERROR level messages -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
     </appender>
 
-    <!-- Production environment uses INFO level -->
+    <!-- Application-specific logger configuration -->
+    <!-- Set blockchain application logging to INFO level -->
     <logger name="com.example.blockchain" level="INFO" />
 
-    <!-- Third-party libraries -->
+    <!-- Configure third-party logging -->
+    <!-- Restrict logback's own logging to WARN level -->
     <logger name="ch.qos.logback" level="WARN" />
 
-    <!-- Set root logger level and appenders -->
+    <!-- 
+    Root Logger Configuration
+    - Sets base logging level to WARN
+    - Attaches all appenders (console, main file, error file)
+    -->
     <root level="WARN">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />

@@ -1,11 +1,17 @@
+<!-- Maven Project Configuration File -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <!-- Maven Version -->
   <modelVersion>4.0.0</modelVersion>
+  
+  <!-- Project Coordinates -->
   <groupId>com.example.blockchain</groupId>
   <artifactId>modular-blockchain-core</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
+
+  <!-- Java Version Configuration -->
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
@@ -13,7 +19,10 @@
 
   <name>modular-blockchain-core</name>
   <url>http://maven.apache.org</url>
+
+  <!-- Project Dependencies -->
   <dependencies>
+    <!-- Testing Dependencies -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -33,6 +42,8 @@
       <version>5.5.0</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- Logging Dependencies -->
     <!-- SLF4J API -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -47,6 +58,7 @@
       <version>1.4.11</version>
     </dependency>
 
+    <!-- JSON Processing Dependencies -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
@@ -60,8 +72,11 @@
     </dependency>
 
   </dependencies>
+
+  <!-- Build Configuration -->
   <build>
     <plugins>
+      <!-- Plugin to add additional source directories -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -81,16 +96,22 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Plugin for executing Java programs -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
       </plugin>
+
+      <!-- Plugin for running tests -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.1.2</version>
       </plugin>
+
+      <!-- Code coverage reporting plugin -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>

@@ -16,6 +16,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for GenesisBlockFactory implementations.
+ * This class tests both DefaultGenesisBlockFactory and CustomGenesisBlockFactory.
+ */
 class GenesisBlockFactoryTest {
 
     @BeforeEach
@@ -26,7 +30,7 @@ class GenesisBlockFactoryTest {
 
     /**
      * Helper method to reset the BlockchainConfig singleton instance using
-     * reflection
+     * reflection. This ensures a clean state for each test.
      */
     private void resetBlockchainConfigSingleton() throws Exception {
         Field instance = ChainConfig.class.getDeclaredField("instance");
@@ -34,6 +38,10 @@ class GenesisBlockFactoryTest {
         instance.set(null, null);
     }
 
+    /**
+     * Test the DefaultGenesisBlockFactory to ensure it creates a genesis block
+     * with expected default values.
+     */
     @Test
     void testDefaultGenesisBlockFactory() {
         // Create a default genesis block factory
@@ -52,6 +60,9 @@ class GenesisBlockFactoryTest {
                 "Default genesis block should have no transactions");
     }
 
+    /**
+     * Test the CustomGenesisBlockFactory with minimal customization (only custom hash).
+     */
     @Test
     void testCustomGenesisBlockFactoryMinimal() {
         // Create a minimal custom genesis block factory with just a custom hash
@@ -72,6 +83,9 @@ class GenesisBlockFactoryTest {
                 "Genesis block should have no transactions if none specified");
     }
 
+    /**
+     * Test the CustomGenesisBlockFactory with custom transactions added individually.
+     */
     @Test
     void testCustomGenesisBlockFactoryWithTransactions() {
         // Create test transactions
@@ -97,6 +111,9 @@ class GenesisBlockFactoryTest {
         assertEquals(tx2, genesisBlock.getTransactions().get(1), "Second transaction should match");
     }
 
+    /**
+     * Test the CustomGenesisBlockFactory with a list of transactions.
+     */
     @Test
     void testCustomGenesisBlockFactoryWithTransactionList() {
         // Create test transactions
@@ -120,6 +137,10 @@ class GenesisBlockFactoryTest {
         assertEquals(tx2, genesisBlock.getTransactions().get(1), "Second transaction should match");
     }
 
+    /**
+     * Test the CustomGenesisBlockFactory with full customization including
+     * custom hash, previous hash, nonce, transactions, and metadata.
+     */
     @Test
     void testCustomGenesisBlockFactoryFullyCustomized() {
         // Create test transactions
@@ -153,13 +174,22 @@ class GenesisBlockFactoryTest {
     }
 
     /**
-     * Simple transaction implementation for testing
+     * Simple transaction implementation for testing purposes.
+     * This class implements the Transaction interface and provides
+     * basic transaction functionality.
      */
     private static class TestTransaction implements Transaction {
         private final String sender;
         private final String receiver;
         private final double amount;
 
+        /**
+         * Constructs a new TestTransaction.
+         *
+         * @param sender The sender of the transaction
+         * @param receiver The receiver of the transaction
+         * @param amount The amount of the transaction
+         */
         public TestTransaction(String sender, String receiver, double amount) {
             this.sender = sender;
             this.receiver = receiver;
@@ -168,6 +198,7 @@ class GenesisBlockFactoryTest {
 
         @Override
         public boolean isValid() {
+            // For testing purposes, all transactions are considered valid
             return true;
         }
 

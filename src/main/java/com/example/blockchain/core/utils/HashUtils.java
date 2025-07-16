@@ -1,4 +1,4 @@
-package com.example.blockchain.core.chain;
+package com.example.blockchain.core.utils;
 
 import java.security.MessageDigest;
 import java.util.List;
@@ -13,6 +13,8 @@ import com.example.blockchain.logging.BlockchainLoggerFactory;
 public class HashUtils {
     private static final Logger logger = BlockchainLoggerFactory.getLogger(ProofOfWork.class);
     public static <T extends Transaction> String computeHash(Block<T> block) {
+        // logger.info("Computing hash for block index: {}, previous hash: {}, timestamp: {}, nonce: {}",
+        //         block.getIndex(), block.getPreviousHash(), block.getTimestamp(), block.getNonce());
         return computeHash(
                 block.getIndex(),
                 block.getPreviousHash(),
@@ -23,6 +25,8 @@ public class HashUtils {
 
     public static <T extends Transaction> String computeHash(int index, String prevHash, long timestamp, List<T> txs,
             int nonce) {
+        // logger.info("Computing hash for block index: {}, previous hash: {}, timestamp: {}, nonce: {}",
+        //         index, prevHash, timestamp, nonce);
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
