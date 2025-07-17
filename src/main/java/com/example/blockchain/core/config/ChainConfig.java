@@ -34,6 +34,7 @@ public class ChainConfig {
     private boolean persistenceEnabled;    // Flag for data persistence
     private String persistenceDirectory;   // Directory for persistent storage
     private String persistenceFile;        // Filename for persistent storage
+    private String persistenceWallatFile; // Filename for wallet persistence
 
     /**
      * Private constructor using default config file.
@@ -124,6 +125,7 @@ public class ChainConfig {
         persistenceEnabled = Boolean.parseBoolean(properties.getProperty("blockchain.persistence.enabled", "false"));
         persistenceDirectory = properties.getProperty("blockchain.persistence.directory", "data");
         persistenceFile = properties.getProperty("blockchain.persistence.file", "chain-data.json");
+        persistenceWallatFile = properties.getProperty("blockchain.persistence.wallet_file", "wallet-data.json");
         if (persistenceEnabled) {
             logger.info("Persistence enabled: saving to {}/{}", persistenceDirectory, persistenceFile);
         } else {
@@ -194,5 +196,13 @@ public class ChainConfig {
      */
     public String getPersistenceFile() {
         return persistenceFile;
+    }
+
+    /**
+     * Gets the filename for wallet persistence.
+     * @return Wallet persistence filename
+     */
+    public String getPersistenceWalletFile() {
+        return persistenceWallatFile;
     }
 }
