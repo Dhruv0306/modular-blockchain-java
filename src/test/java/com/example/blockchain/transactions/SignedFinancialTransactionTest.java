@@ -23,7 +23,7 @@ class SignedFinancialTransactionTest {
         KeyPair pair = CryptoUtils.generateKeyPair();
         // Create transaction with fixed timestamp for testing
         long timestamp = 1234567890L;
-        String summary = "Alice -> Bob : $100.0 (time: " + timestamp + ")";
+        String summary = "alice123 -> bob456 : $100.0 (time: " + timestamp + ")";
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
@@ -87,7 +87,7 @@ class SignedFinancialTransactionTest {
     void testToStringIncludesTransactionId() throws Exception {
         KeyPair pair = CryptoUtils.generateKeyPair();
         long timestamp = 1234567890L;
-        String summary = "Alice -> Bob : $50.0 (time: " + timestamp + ")";
+        String summary = "alice123 -> bob456 : $50.0 (time: " + timestamp + ")";
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
