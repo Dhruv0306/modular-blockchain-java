@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.example.blockchain.core.model.Transaction;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -21,6 +22,13 @@ public class FinancialTransaction implements Transaction {
     private double amount;
     // Unique identifier for this transaction
     private String transactionId;
+    // Sender's Unique ID, used for polymorphic serialization
+    private String senderID;
+    // Receiver's Unique ID, used for polymorphic serialization
+    private String receiverID;
+    // Type of transaction, used for polymorphic serialization
+    @JsonIgnore
+    private final String type = "FinancialTransaction";
 
     /**
      * Default constructor required for JSON deserialization.
@@ -163,5 +171,22 @@ public class FinancialTransaction implements Transaction {
     @Override
     public int hashCode() {
         return Objects.hash(sender, receiver, amount, transactionId);
+    }
+
+    @Override
+    public String getType() {
+        return type;
+    }
+
+    @Override
+    public String getSenderID() {
+        // Returns the sender's unique ID for polymorphic serialization
+        return senderID;
+    }
+
+    @Override
+    public String getReceiverID() {
+        // Returns the receiver's unique ID for polymorphic serialization
+        return receiverID;
     }
 }

@@ -1,69 +1,160 @@
-/**
- * Represents a cryptocurrency wallet that manages cryptographic keys and signing operations.
- * This class handles the generation and storage of RSA key pairs used for transaction signing.
- */
 package com.example.blockchain.wallet.core;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.security.*;
+import java.security.spec.*;
+import java.util.Base64;
+
+/**
+ * Represents a digital wallet that manages cryptographic keys and signing operations.
+ * This class handles RSA key pair generation, storage and digital signatures.
+ */
 public class Wallet {
-    // The key pair containing the public and private keys for this wallet
+
+    /** The RSA key pair used for cryptographic operations */
+    @JsonIgnore
     private KeyPair keyPair;
 
+    /** Unique identifier for the wallet owner */
+    private String userId;
+    
+    /** Name of the wallet owner */
+    private String userName;
+
+    /** Base64 encoded private key string for serialization */
+    private String encodedPrivateKey;
+    
+    /** Base64 encoded public key string for serialization */
+    private String encodedPublicKey;
+
     /**
-     * Creates a new wallet by generating a fresh key pair
-     * @throws NoSuchAlgorithmException if the RSA algorithm is not available
+     * Default no-arg constructor required for JSON deserialization
      */
-    public Wallet() throws NoSuchAlgorithmException {
-        this.keyPair = generateKeyPair();
+    public Wallet() {
     }
 
     /**
-     * Generates a new RSA key pair for the wallet
-     * @return KeyPair containing public and private keys
-     * @throws NoSuchAlgorithmException if the RSA algorithm is not available
+     * Creates a new wallet with generated RSA key pair
+     * @param userId Unique identifier for the wallet owner
+     * @param userName Name of the wallet owner
+     * @throws NoSuchAlgorithmException if RSA algorithm is not available
+     */
+    public Wallet(String userId, String userName) throws NoSuchAlgorithmException {
+        this.userId = userId;
+        this.userName = userName;
+        this.keyPair = generateKeyPair();
+        this.encodedPrivateKey = Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
+        this.encodedPublicKey = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+    }
+
+    /**
+     * Generates a new RSA key pair
+     * @return KeyPair containing public and private RSA keys
+     * @throws NoSuchAlgorithmException if RSA algorithm is not available
      */
     private KeyPair generateKeyPair() throws NoSuchAlgorithmException {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-        generator.initialize(2048); // Using 2048 bit keys for strong security
+        generator.initialize(2048); // Use 2048 bit key size for security
         return generator.generateKeyPair();
     }
 
     /**
-     * Gets the public key associated with this wallet
-     * @return the wallet's public key
+     * Gets the wallet's private key, initializing from encoded strings if needed
+     * @return The RSA private key
      */
-    public PublicKey getPublicKey() {
-        return keyPair.getPublic();
-    }
-
-    /**
-     * Gets the private key associated with this wallet
-     * @return the wallet's private key
-     */
+    @JsonIgnore
     public PrivateKey getPrivateKey() {
+        ensureKeysInitialized();
         return keyPair.getPrivate();
     }
 
     /**
-     * Signs the provided data using the wallet's private key
-     * @param data the string data to sign
-     * @return byte array containing the digital signature
-     * @throws Exception if there is an error during the signing process
+     * Gets the wallet's public key, initializing from encoded strings if needed
+     * @return The RSA public key
+     */
+    @JsonIgnore
+    public PublicKey getPublicKey() {
+        ensureKeysInitialized();
+        return keyPair.getPublic();
+    }
+
+    /**
+     * Initializes the key pair from encoded strings if not already done
+     * Called lazily when keys are first accessed
+     */
+    private void ensureKeysInitialized() {
+        if (keyPair == null && encodedPrivateKey != null && encodedPublicKey != null) {
+            try {
+                // Create key factory and specs for RSA keys
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+                byte[] privateBytes = Base64.getDecoder().decode(encodedPrivateKey);
+                byte[] publicBytes = Base64.getDecoder().decode(encodedPublicKey);
+
+                PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateBytes);
+                X509EncodedKeySpec publicSpec = new X509EncodedKeySpec(publicBytes);
+
+                // Generate keys from encoded formats
+                PrivateKey privateKey = keyFactory.generatePrivate(privateSpec);
+                PublicKey publicKey = keyFactory.generatePublic(publicSpec);
+
+                this.keyPair = new KeyPair(publicKey, privateKey);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to restore RSA key pair from encoded strings", e);
+            }
+        }
+    }
+
+    /**
+     * Signs data using the wallet's private key
+     * @param data The string data to sign
+     * @return Signature bytes
+     * @throws Exception if signing fails
      */
     public byte[] signData(String data) throws Exception {
-        // Create SHA256withRSA signature instance
         Signature signer = Signature.getInstance("SHA256withRSA");
-        // Initialize with private key
-        signer.initSign(keyPair.getPrivate());
-        // Add data
+        signer.initSign(getPrivateKey());
         signer.update(data.getBytes());
-        // Generate and return signature
         return signer.sign();
+    }
+
+    // --- Getters and Setters ---
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    @JsonProperty("encodedPrivateKey")
+    public String getEncodedPrivateKey() {
+        return encodedPrivateKey;
+    }
+
+    @JsonProperty("encodedPrivateKey")
+    public void setEncodedPrivateKey(String encodedPrivateKey) {
+        this.encodedPrivateKey = encodedPrivateKey;
+    }
+
+    @JsonProperty("encodedPublicKey")
+    public String getEncodedPublicKey() {
+        return encodedPublicKey;
+    }
+
+    @JsonProperty("encodedPublicKey")
+    public void setEncodedPublicKey(String encodedPublicKey) {
+        this.encodedPublicKey = encodedPublicKey;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

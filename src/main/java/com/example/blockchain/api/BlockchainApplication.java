@@ -2,12 +2,14 @@ package com.example.blockchain.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Main Spring Boot application class for the Blockchain API
  * This class serves as the entry point for the Spring Boot application
  * and enables auto-configuration through @SpringBootApplication annotation
  */
+@ComponentScan(basePackages = "com.example.blockchain")
 @SpringBootApplication
 public class BlockchainApplication {
     /**
