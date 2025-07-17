@@ -8,69 +8,74 @@ import jakarta.annotation.PreDestroy;
 
 import com.example.blockchain.consensus.ProofOfWork;
 import com.example.blockchain.core.model.Block;
+import com.example.blockchain.core.model.Transaction;
 import com.example.blockchain.core.utils.PersistenceManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
- * REST Controller for managing blockchain operations.
- * Provides endpoints for viewing the chain, adding transactions,
- * mining blocks and validating the chain.
+ * REST API Controller that handles blockchain operations and endpoints.
+ * Provides functionality to:
+ * - View the complete blockchain
+ * - Submit new transactions
+ * - Mine blocks
+ * - View pending transactions
+ * - Validate chain integrity
  */
 @RestController
 @RequestMapping("/api")
 public class BlockchainController {
 
-    // Main blockchain instance for storing financial transactions
-    private final Blockchain<FinancialTransaction> blockchain = new Blockchain<FinancialTransaction>();
+    // Main blockchain instance for managing transaction data and chain state
+    private final Blockchain<Transaction> blockchain;
     
-    // Consensus mechanism for block mining and validation
-    private final ProofOfWork<FinancialTransaction> consensus = new ProofOfWork<>();
+    // Consensus mechanism for block mining and validation using proof of work
+    private final ProofOfWork<Transaction> consensus = new ProofOfWork<>();
 
     /**
-     * Constructor initializes blockchain and loads existing chain data if available.
-     * Creates a new genesis block if no existing chain is found.
+     * Constructor that initializes the blockchain controller.
+     * Attempts to load existing blockchain from persistent storage.
+     * Creates a new blockchain with genesis block if no saved state exists.
      */
     public BlockchainController() {
-        // Initialize the blockchain with a default genesis block and proof of work
-        // consensus
-        // Load existing blockchain data if available
-        PersistenceManager.loadBlockchain(FinancialTransaction.class)
-                .ifPresent(loadedChain -> {
-                    this.blockchain.getChain().addAll(loadedChain.getChain());
-                    this.blockchain.getPendingTransactions().addAll(loadedChain.getPendingTransactions());
-                });
+        // Initialize blockchain from saved state or create new
+        this.blockchain = PersistenceManager.loadBlockchain(Transaction.class)
+        .orElseGet(() -> new Blockchain<>()); 
     }
 
     /**
-     * Returns the full blockchain.
-     * @return List of all blocks in the chain
+     * Retrieves the complete blockchain data structure.
+     * @return List of all blocks in chronological order
      */
     @GetMapping("/chain")
-    public List<Block<FinancialTransaction>> getBlockchain() {
+    public List<Block<Transaction>> getBlockchain() {
         return blockchain.getChain();
     }
 
     /**
-     * Adds a new transaction to the pending transactions pool.
-     * @param tx The financial transaction to add
-     * @return Success/failure message
+     * Adds a new transaction to the pending transaction pool.
+     * Transaction will be included in the next mined block.
+     * @param tx Transaction object containing transfer details
+     * @return Success/failure message indicating transaction status
      */
     @PostMapping("/transactions")
-    public String addTransaction(@RequestBody FinancialTransaction tx) {
+    public String addTransaction(@RequestBody Transaction tx) {
         boolean added = blockchain.addTransaction(tx);
         return added ? "Transaction added." : "Invalid transaction.";
     }
 
     /**
-     * Mines a new block with pending transactions.
-     * Uses proof of work consensus to generate and validate the block.
-     * @return Success/failure message with block hash
+     * Mines a new block by processing pending transactions.
+     * Uses proof of work consensus to:
+     * 1. Generate valid block with transactions
+     * 2. Calculate proof of work
+     * 3. Validate and add block to chain
+     * @return Success message with block hash or failure message
      */
     @PostMapping("/mine")
     public String mineBlock() {
-        Block<FinancialTransaction> newBlock = consensus.generateBlock(
+        Block<Transaction> newBlock = consensus.generateBlock(
                 blockchain.getPendingTransactions(), blockchain.getLastBlock());
         if (consensus.validateBlock(newBlock, blockchain.getLastBlock())) {
             blockchain.addBlock(newBlock);
@@ -81,18 +86,22 @@ public class BlockchainController {
     }
 
     /**
-     * Returns list of pending transactions not yet included in a block.
-     * @return List of pending financial transactions
+     * Retrieves all pending transactions that haven't been mined yet.
+     * These transactions are waiting to be included in the next block.
+     * @return List of pending transactions in the pool
      */
     @GetMapping("/pending")
-    public List<FinancialTransaction> getPendingTransactions() {
+    public List<Transaction> getPendingTransactions() {
         return blockchain.getPendingTransactions();
     }
 
     /**
-     * Validates the entire blockchain.
-     * Checks block hashes and transaction validity.
-     * @return Validation status message
+     * Validates the integrity of the entire blockchain.
+     * Checks:
+     * - Block hash validity
+     * - Previous block hash links
+     * - Transaction data integrity
+     * @return Status message indicating if chain is valid
      */
     @GetMapping("/validate")
     public String validateChain() {
@@ -100,12 +109,13 @@ public class BlockchainController {
     }
 
     /**
-     * Cleanup method called before shutdown.
-     * Persists blockchain state to disk.
+     * Cleanup method called before application shutdown.
+     * Persists the current blockchain state to disk for recovery.
+     * Ensures no data is lost between application restarts.
      */
     @PreDestroy
     public void cleanup() {
-        // Save the blockchain state to disk before shutting down
+        // Save current blockchain state to persistent storage
         PersistenceManager.saveBlockchain(blockchain);
     }
 }
