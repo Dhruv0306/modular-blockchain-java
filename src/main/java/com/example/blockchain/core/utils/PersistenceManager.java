@@ -4,14 +4,16 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import com.example.blockchain.Main;
 import com.example.blockchain.core.chain.Blockchain;
 import com.example.blockchain.core.config.ChainConfig;
 import com.example.blockchain.core.model.Transaction;
 import com.example.blockchain.core.utils.JsonUtils;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
+import com.example.blockchain.logging.LoggingUtils;
 import com.example.blockchain.wallet.core.WalletList;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Manages persistence operations for the blockchain, including saving and
@@ -27,7 +29,7 @@ import org.slf4j.LoggerFactory;
 public class PersistenceManager {
     // Logger instance for this class to track persistence operations
     // Uses SLF4J logging framework for consistent logging across the application
-    private static final Logger logger = LoggerFactory.getLogger(PersistenceManager.class);
+    private static final Logger logger = BlockchainLoggerFactory.getLogger(PersistenceManager.class);
 
     /**
      * Attempts to load a blockchain from a JSON file if it exists.
@@ -51,6 +53,7 @@ public class PersistenceManager {
      */
     public static <T extends Transaction> Optional<Blockchain<T>> loadIfConfigured(Class<T> clazz, String directory,
             String filename) {
+        LoggingUtils.configureLoggingFromConfig();
         // Construct full file path by joining directory and filename
         // Uses Path.of() for platform-independent path handling
         String path = Path.of(directory, filename).toString();
@@ -90,6 +93,7 @@ public class PersistenceManager {
      */
     public static <T extends Transaction> void saveIfEnabled(Blockchain<T> blockchain, String directory,
             String filename) {
+        LoggingUtils.configureLoggingFromConfig();
         // Construct full file path using platform-independent Path API
         String path = Path.of(directory, filename).toString();
         try {
@@ -160,6 +164,7 @@ public class PersistenceManager {
      * @throws RuntimeException if there are any errors during the save operation
      */
     public static void saveWalletList(WalletList walletList, String path) {
+        LoggingUtils.configureLoggingFromConfig();
         try {
             // Attempt to write wallet list to JSON file
             // Uses JsonUtils to handle serialization and file writing
@@ -179,17 +184,31 @@ public class PersistenceManager {
      * @return The loaded WalletList object
      * @throws RuntimeException if there are any errors during the load operation
      */
-    public static WalletList loadWalletList(String path) {
+    public static Optional<WalletList> loadWalletList(String path) {
+        LoggingUtils.configureLoggingFromConfig();
         try {
             // Attempt to read wallet list from JSON file
             // Uses JsonUtils to handle file reading and deserialization
+            File file = new File(path);
+            if (!file.exists()) {
+                logger.warn("Wallet list file does not exist: {}", path);
+                logger.info("Creating new wallet list as file does not exist: {}", path);
+                
+                if (file.getParentFile() != null && !file.getParentFile().exists()) {
+                    // Create parent directories if they don't exist
+                    file.getParentFile().mkdirs();
+                }
+                // Create the file itself if it doesn't exist
+                file.createNewFile();
+                return Optional.of(new WalletList()); // Return an empty wallet list
+            }
             WalletList loadedWalletList = JsonUtils.readFromFile(new File(path), WalletList.class);
             logger.info("Wallet list loaded from JSON file: {}", path);
-            // Return the loaded wallet list
-            return loadedWalletList;
+            // Return the loaded wallet list wrapped in Optional
+            return Optional.of(loadedWalletList);
         } catch (Exception e) {
             logger.error("Failed to load wallet list from '{}': error: {}", path, e.getMessage());
-            throw new RuntimeException("Could not load wallet list", e);
+            return Optional.empty();
         }
     }
 }
