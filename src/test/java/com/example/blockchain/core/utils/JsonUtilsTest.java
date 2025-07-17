@@ -157,6 +157,21 @@ class JsonUtilsTest {
         public void setTransactionId(String transactionId) {
             this.transactionId = transactionId;
         }
+
+        @Override
+        public String getType() {
+            return "TEST";
+        }
+
+        @Override
+        public String getSenderID() {
+            return sender;
+        }
+
+        @Override
+        public String getReceiverID() {
+            return receiver;
+        }
     }
 
     /**

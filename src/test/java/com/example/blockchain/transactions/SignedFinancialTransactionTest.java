@@ -27,7 +27,7 @@ class SignedFinancialTransactionTest {
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 100.0, pair.getPublic(), signature, null, timestamp);
+                "Alice", "Bob", 100.0, pair.getPublic(), signature, "alice123", "bob456", null, timestamp);
 
         assertTrue(tx.isValid());
     }
@@ -43,7 +43,7 @@ class SignedFinancialTransactionTest {
         long timestamp = 1234567890L;
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 100.0, pair.getPublic(), signature, null, timestamp);
+                "Alice", "Bob", 100.0, pair.getPublic(), signature, "alice123", "bob456", null, timestamp);
 
         assertFalse(tx.isValid());
     }
@@ -59,7 +59,7 @@ class SignedFinancialTransactionTest {
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 0.0, pair.getPublic(), signature, null, timestamp);
+                "Alice", "Bob", 0.0, pair.getPublic(), signature, "alice123", "bob456", null, timestamp);
 
         assertFalse(tx.isValid());
     }
@@ -75,7 +75,7 @@ class SignedFinancialTransactionTest {
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", null, 100.0, pair.getPublic(), signature, null, timestamp);
+                "Alice", null, 100.0, pair.getPublic(), signature, "alice123", null, null, timestamp);
 
         assertFalse(tx.isValid());
     }
@@ -91,7 +91,7 @@ class SignedFinancialTransactionTest {
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 50.0, pair.getPublic(), signature, null, timestamp);
+                "Alice", "Bob", 50.0, pair.getPublic(), signature, "alice123", "bob456", null, timestamp);
 
         String expectedPrefix = summary;
         String actualString = tx.toString();
@@ -114,7 +114,7 @@ class SignedFinancialTransactionTest {
         String signature = CryptoUtils.signData(summary, pair.getPrivate());
 
         SignedFinancialTransaction tx = new SignedFinancialTransaction(
-                "Alice", "Bob", 50.0, pair.getPublic(), signature, null, expectedTimestamp);
+                "Alice", "Bob", 50.0, pair.getPublic(), signature, "alice123", "bob456", null, expectedTimestamp);
 
         assertEquals(expectedTimestamp, tx.getTimestamp(), 
                 "getTimestamp should return the timestamp used during construction");

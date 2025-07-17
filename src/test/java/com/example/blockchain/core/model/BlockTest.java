@@ -168,5 +168,25 @@ class BlockTest {
         public String getTransactionId() {
             return "mock-test-" + hashCode();
         }
+
+        @Override
+        public double getAmount() {
+            return 0.0;
+        }
+
+        @Override
+        public String getType() {
+            return "MOCK";
+        }
+
+        @Override
+        public String getSenderID() {
+            return "MOCK-SENDER-ID";
+        }
+
+        @Override
+        public String getReceiverID() {
+            return "MOCK-RECEIVER-ID"; 
+        }
     }
 }

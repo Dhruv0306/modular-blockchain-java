@@ -26,18 +26,18 @@ class HashUtilsTest {
     void testComputeHashConsistency() {
         // Create test block with dummy data
         Block<MockTransaction> block = new Block<>(1, "0", System.currentTimeMillis(), new ArrayList<>(), 0, "dummy");
-        
+
         // Compute hash using block object
         String hash1 = HashUtils.computeHash(block);
-        
+
         // Compute hash using block components
         String hash2 = HashUtils.computeHash(
                 block.getIndex(),
-                block.getPreviousHash(), 
+                block.getPreviousHash(),
                 block.getTimestamp(),
                 block.getTransactions(),
                 block.getNonce());
-                
+
         assertEquals(hash1, hash2, "Hashes from both compute methods should match");
     }
 
@@ -62,6 +62,7 @@ class HashUtilsTest {
 
         /**
          * Constructor for mock transaction
+         * 
          * @param valid boolean indicating if transaction is valid
          */
         public MockTransaction(boolean valid) {
@@ -98,6 +99,7 @@ class HashUtilsTest {
 
         /**
          * Equals method for comparing MockTransactions
+         * 
          * @param o Object to compare with
          * @return true if objects are equal
          */
@@ -125,6 +127,26 @@ class HashUtilsTest {
         @Override
         public String getTransactionId() {
             return "mock-utils-" + (valid ? "valid" : "invalid") + "-" + hashCode();
+        }
+
+        @Override
+        public double getAmount() {
+            return 0.0;
+        }
+
+        @Override
+        public String getType() {
+            return "MOCK";
+        }
+
+        @Override
+        public String getSenderID() {
+            return "mock-sender-id";
+        }
+
+        @Override
+        public String getReceiverID() {
+            return "mock-receiver-id";
         }
     }
 }
