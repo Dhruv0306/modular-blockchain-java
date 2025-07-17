@@ -8,6 +8,8 @@ import com.example.blockchain.core.chain.Blockchain;
 import com.example.blockchain.core.config.ChainConfig;
 import com.example.blockchain.core.model.Transaction;
 import com.example.blockchain.core.utils.JsonUtils;
+import com.example.blockchain.wallet.core.WalletList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * 
  * The PersistenceManager handles:
  * - Loading blockchain data from JSON files
- * - Saving blockchain state to JSON files 
+ * - Saving blockchain state to JSON files
  * - Creating necessary directories and files
  * - Error handling and logging for persistence operations
  */
@@ -83,7 +85,8 @@ public class PersistenceManager {
      * @param filename   The name of the file to save the blockchain to
      * @param <T>        Type parameter extending Transaction to support different
      *                   transaction types
-     * @throws Exception if there are issues creating directories or writing the file
+     * @throws Exception if there are issues creating directories or writing the
+     *                   file
      */
     public static <T extends Transaction> void saveIfEnabled(Blockchain<T> blockchain, String directory,
             String filename) {
@@ -146,5 +149,47 @@ public class PersistenceManager {
         String dir = ChainConfig.getInstance().getPersistenceDirectory();
         String file = ChainConfig.getInstance().getPersistenceFile();
         saveIfEnabled(blockchain, dir, file);
+    }
+
+    /**
+     * Saves a wallet list to a JSON file at the specified path.
+     * Uses JsonUtils to handle the serialization and file writing process.
+     *
+     * @param walletList The wallet list to save
+     * @param path       The file path where the wallet list should be saved
+     * @throws RuntimeException if there are any errors during the save operation
+     */
+    public static void saveWalletList(WalletList walletList, String path) {
+        try {
+            // Attempt to write wallet list to JSON file
+            // Uses JsonUtils to handle serialization and file writing
+            JsonUtils.writeToFile(walletList, new File(path));
+            logger.info("Wallet list saved to JSON file: {}", path);
+        } catch (Exception e) {
+            logger.error("Failed to save wallet list to '{}': error: {}", path, e.getMessage());
+            throw new RuntimeException("Could not save wallet list", e);
+        }
+    }
+
+    /**
+     * Loads a wallet list from a JSON file at the specified path.
+     * Uses JsonUtils to handle the file reading and deserialization process.
+     *
+     * @param path The file path from which to load the wallet list
+     * @return The loaded WalletList object
+     * @throws RuntimeException if there are any errors during the load operation
+     */
+    public static WalletList loadWalletList(String path) {
+        try {
+            // Attempt to read wallet list from JSON file
+            // Uses JsonUtils to handle file reading and deserialization
+            WalletList loadedWalletList = JsonUtils.readFromFile(new File(path), WalletList.class);
+            logger.info("Wallet list loaded from JSON file: {}", path);
+            // Return the loaded wallet list
+            return loadedWalletList;
+        } catch (Exception e) {
+            logger.error("Failed to load wallet list from '{}': error: {}", path, e.getMessage());
+            throw new RuntimeException("Could not load wallet list", e);
+        }
     }
 }
