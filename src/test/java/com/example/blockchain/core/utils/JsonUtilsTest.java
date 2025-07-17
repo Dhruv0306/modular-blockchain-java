@@ -78,6 +78,9 @@ class JsonUtilsTest {
         private boolean valid = true;
         private String summary;
         private String transactionId;
+        private String type = "TEST";
+        private String senderID;
+        private String receiverID;
 
         public TestTransaction() {
             // Default constructor for Jackson
@@ -89,6 +92,8 @@ class JsonUtilsTest {
             this.amount = amount;
             this.summary = sender + " sent " + amount + " to " + receiver;
             this.transactionId = sender + receiver + amount;
+            this.senderID = sender;
+            this.receiverID = receiver;
         }
 
         // Transaction interface implementations
@@ -160,17 +165,29 @@ class JsonUtilsTest {
 
         @Override
         public String getType() {
-            return "TEST";
+            return type;
+        }
+        
+        public void setType(String type) {
+            this.type = type;
         }
 
         @Override
         public String getSenderID() {
-            return sender;
+            return senderID != null ? senderID : sender;
+        }
+        
+        public void setSenderID(String senderID) {
+            this.senderID = senderID;
         }
 
         @Override
         public String getReceiverID() {
-            return receiver;
+            return receiverID != null ? receiverID : receiver;
+        }
+        
+        public void setReceiverID(String receiverID) {
+            this.receiverID = receiverID;
         }
     }
 
@@ -277,6 +294,26 @@ class JsonUtilsTest {
         assertEquals("Alice", fromJson.getSender());
         assertEquals("Bob", fromJson.getReceiver());
         assertEquals(100, fromJson.getAmount());
+        assertEquals("TEST", fromJson.getType());
+    }
+    
+    /**
+     * Tests handling of the type field in JSON serialization
+     */
+    @Test
+    void testTypeFieldHandling() throws Exception {
+        // Create test object
+        TestTransaction transaction = new TestTransaction("Alice", "Bob", 100);
+        transaction.setType("CUSTOM_TYPE");
+        
+        // Convert to JSON
+        String json = JsonUtils.toJson(transaction);
+        
+        // Convert back from JSON
+        TestTransaction fromJson = JsonUtils.fromJson(json, TestTransaction.class);
+        
+        // Verify type field was preserved
+        assertEquals("CUSTOM_TYPE", fromJson.getType());
     }
     
     /**
@@ -306,6 +343,6 @@ class JsonUtilsTest {
         assertEquals(block.getTransactions().size(), loaded.getTransactions().size());
         assertEquals("Alice", loaded.getTransactions().get(0).getSender());
         assertEquals("Bob", loaded.getTransactions().get(0).getReceiver());
-        assertEquals(50.0, ((FinancialTransaction)loaded.getTransactions().get(0)).getAmount());
+        assertEquals(50.0, loaded.getTransactions().get(0).getAmount());
     }
 }
