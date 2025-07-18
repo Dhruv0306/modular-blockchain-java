@@ -27,22 +27,25 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Utility class for handling wallet-related operations including key
- * management,
- * wallet import/export, and validation functions.
+ * Utility class providing functionality for wallet operations including:
+ * - Key pair management (generation, storage, validation)
+ * - Wallet import/export to various formats (JSON, PEM)
+ * - File handling for wallet data
+ * - Security validation and verification
  */
 public class WalletUtils {
-    // Logger instance for this class to handle logging operations
+    // SLF4J Logger for capturing operational events and errors
     private static final Logger logger = LoggerFactory.getLogger(WalletUtils.class);
 
     /**
-     * Saves the public and private keys of a wallet to files in the specified
-     * directory. The keys are stored in Base64 encoded format.
+     * Persists wallet key pairs to the filesystem.
+     * Creates separate files for public and private keys using Base64 encoding.
+     * Files are named using the pattern: name_pub.key and name_priv.key
      *
-     * @param wallet    The wallet containing the keys to save
-     * @param directory The directory path where the key files will be stored
-     * @param name      The base name for the key files
-     * @throws Exception If there is an error creating directories or writing files
+     * @param wallet    Source wallet containing the key pair
+     * @param directory Target directory for key storage
+     * @param name      Base filename for the key files
+     * @throws Exception If directory creation or file writing fails
      */
     public static void saveWalletKeys(Wallet wallet, String directory, String name) throws Exception {
         // Configure logging using external configuration
@@ -62,14 +65,14 @@ public class WalletUtils {
     }
 
     /**
-     * Generates a temporary key file with the specified key and file name.
-     * The key is stored in PEM format with appropriate headers.
+     * Creates a temporary file containing a cryptographic key in PEM format.
+     * Automatically handles cleanup by marking file for deletion on JVM exit.
+     * Includes appropriate PEM headers based on key type.
      *
-     * @param key      The cryptographic key to be written to the file
-     * @param fileName The name of the file to create
-     * @param isPublic Indicates if the key is a public key (true) or private key
-     *                 (false)
-     * @return The created temporary file containing the key in PEM format
+     * @param key      Cryptographic key to store (public or private)
+     * @param fileName Desired name for the temporary file
+     * @param isPublic Flag indicating key type (true=public, false=private)
+     * @return File object referencing the created temporary key file
      */
     public static File generateTempKeyFile(Key key, String fileName, boolean isPublic) {
         // Configure logging using external configuration
@@ -107,15 +110,15 @@ public class WalletUtils {
     }
 
     /**
-     * Validates a private key against a wallet and user ID.
-     * Checks if the provided private key matches the one in the wallet
-     * and if the user ID matches the wallet's user ID.
+     * Validates the authenticity of a private key by comparing it against a wallet.
+     * Performs both user ID matching and key comparison.
+     * Handles Base64 encoded private keys.
      *
-     * @param userId     The user ID to validate against
-     * @param wallet     The wallet containing the reference private key
-     * @param privateKey The private key to validate (Base64 encoded)
-     * @return true if the private key is valid, false otherwise
-     * @throws IllegalArgumentException if any input parameter is null or empty
+     * @param userId     Owner's user identifier
+     * @param wallet     Reference wallet for validation
+     * @param privateKey Base64 encoded private key to validate
+     * @return true if key matches wallet and user ID is valid
+     * @throws IllegalArgumentException for null/empty inputs
      */
     public static boolean isPrivateKeyVlid(String userId, Wallet wallet, String privateKey) {
         // Validate input parameters
@@ -155,13 +158,13 @@ public class WalletUtils {
     }
 
     /**
-     * Exports wallet data to a JSON file including encoded public and private keys.
-     * The keys are stored in PEM format within the JSON structure.
+     * Serializes wallet data to a JSON file including PEM formatted keys.
+     * Creates a temporary file containing the complete wallet state.
+     * File is marked for deletion on JVM exit.
      *
-     * @param wallet The wallet to export
-     * @param userId The user ID associated with the wallet
-     * @return File containing the exported wallet data in JSON format, or null if
-     *         export fails
+     * @param wallet Source wallet to export
+     * @param userId Owner's identifier for the wallet
+     * @return Temporary File containing JSON wallet data, null if export fails
      */
     public static File exportWalletData(Wallet wallet, String userId) {
         // Configure logging using external configuration
@@ -194,12 +197,13 @@ public class WalletUtils {
     }
 
     /**
-     * Imports a wallet from a JSON file containing encoded public and private keys.
-     * The keys should be in PEM format within the JSON structure.
+     * Reconstructs a wallet from a JSON file containing PEM formatted keys.
+     * Handles key pair reconstruction and wallet state restoration.
+     * Supports RSA key pairs only.
      *
-     * @param file The MultipartFile containing the wallet data in JSON format
-     * @return A new Wallet instance populated with the imported data
-     * @throws RuntimeException if there are any errors during import
+     * @param file JSON file containing serialized wallet data
+     * @return Reconstructed Wallet instance
+     * @throws RuntimeException for any import failures
      */
     public static Wallet importWalletFromFile(MultipartFile file) {
         Wallet wallet = null; // Initialize wallet object
@@ -254,6 +258,13 @@ public class WalletUtils {
         return wallet;
     }
 
+    /**
+     * Extracts the Base64 encoded key data from a PEM formatted string.
+     * Removes headers, footers and whitespace.
+     *
+     * @param pem PEM formatted key string
+     * @return Clean Base64 encoded key data
+     */
     private static String extractBase64FromPem(String pem) {
         return pem.replaceAll("-----BEGIN (.*)-----", "")
                 .replaceAll("-----END (.*)-----", "")
@@ -261,12 +272,13 @@ public class WalletUtils {
     }
 
     /**
-     * Reads a private key from a file and returns it in Base64 encoded format.
-     * This format is compatible with the isPrivateKeyVlid method.
+     * Extracts a private key from a file in either PEM or Base64 format.
+     * Automatically detects format and handles conversion.
+     * Validates Base64 encoding of the final output.
      *
-     * @param privateKeyFile The MultipartFile containing the private key
-     * @return The private key as a Base64 encoded string
-     * @throws RuntimeException if there are any errors reading the file
+     * @param privateKeyFile File containing the private key
+     * @return Base64 encoded private key string
+     * @throws RuntimeException for invalid formats or read errors
      */
     public static String readPrivateKeyFromFile(MultipartFile privateKeyFile) {
         // Configure logging using external configuration

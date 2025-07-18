@@ -42,26 +42,31 @@ import jakarta.annotation.PreDestroy;
 
 /**
  * REST Controller for managing blockchain wallets.
- * Provides endpoints for creating and listing wallets, with persistence
- * capabilities.
+ * Provides endpoints for wallet CRUD operations including creation, retrieval, 
+ * import/export functionality and deletion. Implements wallet persistence
+ * to maintain state across application restarts.
  */
 @RestController
 @RequestMapping("/api/wallets")
 public class WalletController {
     private static final Logger logger = BlockchainLoggerFactory.getLogger(WalletController.class);
 
-    // Maintains the list of all wallets in the system
+    // Central repository maintaining all wallet instances
     @Autowired
     private WalletList walletList;
 
     /**
-     * Constructor initializes the wallet list from persistent storage.
-     * If no existing wallet list is found, creates a new empty one.
+     * Initializes controller and configures logging.
+     * Called during Spring bean instantiation.
      */
     public WalletController() {
         LoggingUtils.configureLoggingFromConfig();
     }
 
+    /**
+     * Loads persisted wallets from disk storage on startup.
+     * Only loads if current wallet list is empty.
+     */
     @PostConstruct
     public void loadWalletsFromDiskIfNeeded() {
         if (walletList.isEmpty()) {
@@ -76,12 +81,13 @@ public class WalletController {
     }
 
     /**
-     * Creates a new wallet for a user.
+     * Creates a new wallet or returns existing one for a user.
+     * Generates and provides downloadable public/private key pairs.
      * 
-     * @param userId   Unique identifier for the user
-     * @param userName Name of the user
-     * @return Confirmation message of wallet creation
-     * @throws Exception if wallet creation fails
+     * @param userId Unique identifier for the user
+     * @param userName Display name for the user
+     * @return MultiValueMap containing wallet details and key files
+     * @throws Exception if wallet creation or key generation fails
      */
     @PostMapping("/generate")
     public ResponseEntity<MultiValueMap<String, Object>> createWallet(@RequestParam("userId") String userId,
@@ -155,9 +161,10 @@ public class WalletController {
     }
 
     /**
-     * Retrieves all wallets in the system.
+     * Lists all wallets in the system.
+     * Returns wallet data transfer objects containing public information only.
      * 
-     * @return Collection of wallet entries containing user and wallet information
+     * @return List of WalletDTO objects
      */
     @GetMapping
     public List<WalletDTO> list() {
@@ -168,9 +175,10 @@ public class WalletController {
     }
 
     /**
-     * Retrieves the public keys of all wallets in the system.
+     * Retrieves public keys for all wallets.
+     * Returns map of user IDs to PEM-formatted public keys.
      * 
-     * @return Collection of public keys
+     * @return Map of user IDs to public key strings
      */
     @GetMapping("/public-keys")
     public Map<Object, Object> getPublicKeys() {
@@ -189,10 +197,11 @@ public class WalletController {
     }
 
     /**
-     * Retrieves the public key for a specific user ID.
+     * Gets public key for specific user.
+     * Returns PEM-formatted public key string.
      * 
-     * @param userId Unique identifier for the user
-     * @return Public key of the specified user or an error message if not found
+     * @param userId Target user identifier
+     * @return Public key string or error message
      */
     @GetMapping("/public-key")
     public String getPublicKey(@RequestParam("userId") String userId) {
@@ -209,12 +218,12 @@ public class WalletController {
     }
 
     /**
-     * Exports the wallet data for a specific user.
-     * Validates the user ID and private key before exporting.
+     * Exports wallet data after validating ownership.
+     * Requires private key authentication.
      * 
-     * @param userId
-     * @param privateKey
-     * @return
+     * @param userId User identifier
+     * @param privateKey Private key file for authentication
+     * @return Wallet data file and status messages
      */
     @GetMapping("/export")
     public ResponseEntity<MultiValueMap<String, Object>> exportWalletData(@RequestParam("userId") String userId,
@@ -278,11 +287,11 @@ public class WalletController {
     }
 
     /**
-     * Imports a wallet from an uploaded file.
-     * The file should contain valid wallet data in the expected format.
-     *
-     * @param file The MultipartFile containing the wallet data to import
-     * @return ResponseEntity with success/error message
+     * Imports wallet from backup file.
+     * Validates wallet data integrity before import.
+     * 
+     * @param file Wallet backup file
+     * @return Success/failure status message
      */
     @PostMapping("/import")
     public ResponseEntity<String> importWallet(@RequestParam("file") MultipartFile file) {
@@ -315,12 +324,12 @@ public class WalletController {
     }
 
     /**
-     * Deletes a wallet from the system.
-     * Requires the user ID and matching private key for authorization.
-     *
-     * @param userId        The ID of the user whose wallet should be deleted
-     * @param privateKeyPem The private key in PEM format for authorization
-     * @return ResponseEntity with success/error message
+     * Deletes wallet after ownership verification.
+     * Requires private key authentication.
+     * 
+     * @param userId User identifier
+     * @param privateKey Private key file for authentication
+     * @return Success/failure status message
      */
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteWallet(@RequestParam("userId") String userId,
@@ -354,8 +363,8 @@ public class WalletController {
     }
 
     /**
-     * Saves the current state of wallets before the application shuts down.
-     * Called automatically by the Spring container during bean destruction.
+     * Persists wallet list to disk on shutdown.
+     * Automatically called by Spring container.
      */
     @PreDestroy
     public void saveWallets() {

@@ -8,40 +8,41 @@ import java.security.spec.*;
 import java.util.Base64;
 
 /**
- * Represents a digital wallet that manages cryptographic keys and signing
- * operations.
- * This class handles RSA key pair generation, storage and digital signatures.
+ * A digital wallet implementation that manages cryptographic keys and digital signatures.
+ * Provides functionality for RSA key pair generation, secure key storage, and digital signing operations.
+ * Uses 2048-bit RSA keys and SHA-256 with RSA for signatures.
  */
 public class Wallet {
 
-    /** The RSA key pair used for cryptographic operations */
+    /** The RSA public/private key pair for cryptographic operations */
     @JsonIgnore
     private KeyPair keyPair;
 
-    /** Unique identifier for the wallet owner */
+    /** Unique identifier for the wallet owner/user */
     private String userId;
 
-    /** Name of the wallet owner */
+    /** Display name of the wallet owner */
     private String userName;
 
-    /** Base64 encoded private key string for serialization */
+    /** Base64-encoded private key for persistent storage */
     private String encodedPrivateKey;
 
-    /** Base64 encoded public key string for serialization */
+    /** Base64-encoded public key for persistent storage */
     private String encodedPublicKey;
 
     /**
-     * Default no-arg constructor required for JSON deserialization
+     * Default constructor required for JSON deserialization.
+     * Creates an empty wallet without initializing keys.
      */
     public Wallet() {
     }
 
     /**
-     * Creates a new wallet with generated RSA key pair
+     * Creates a new wallet instance with a freshly generated RSA key pair.
      * 
      * @param userId   Unique identifier for the wallet owner
-     * @param userName Name of the wallet owner
-     * @throws NoSuchAlgorithmException if RSA algorithm is not available
+     * @param userName Display name of the wallet owner
+     * @throws NoSuchAlgorithmException if the RSA algorithm implementation is not available
      */
     public Wallet(String userId, String userName) throws NoSuchAlgorithmException {
         this.userId = userId;
@@ -52,21 +53,21 @@ public class Wallet {
     }
 
     /**
-     * Generates a new RSA key pair
+     * Generates a new 2048-bit RSA key pair for cryptographic operations.
      * 
-     * @return KeyPair containing public and private RSA keys
-     * @throws NoSuchAlgorithmException if RSA algorithm is not available
+     * @return A new KeyPair containing public and private RSA keys
+     * @throws NoSuchAlgorithmException if RSA algorithm is not available in the JCA
      */
     private KeyPair generateKeyPair() throws NoSuchAlgorithmException {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-        generator.initialize(2048); // Use 2048 bit key size for security
+        generator.initialize(2048); // Use 2048-bit key size for adequate security
         return generator.generateKeyPair();
     }
 
     /**
-     * Gets the wallet's private key, initializing from encoded strings if needed
+     * Retrieves the wallet's RSA private key, initializing from encoded storage if necessary.
      * 
-     * @return The RSA private key
+     * @return The wallet's RSA private key for signing operations
      */
     @JsonIgnore
     public PrivateKey getPrivateKey() {
@@ -75,9 +76,9 @@ public class Wallet {
     }
 
     /**
-     * Gets the wallet's public key, initializing from encoded strings if needed
+     * Retrieves the wallet's RSA public key, initializing from encoded storage if necessary.
      * 
-     * @return The RSA public key
+     * @return The wallet's RSA public key for verification
      */
     @JsonIgnore
     public PublicKey getPublicKey() {
@@ -85,12 +86,16 @@ public class Wallet {
         return keyPair.getPublic();
     }
 
+    /**
+     * Initializes the key pair from encoded strings if not already loaded.
+     * Handles PEM format by stripping headers and whitespace before decoding.
+     */
     private void ensureKeysInitialized() {
         if (keyPair == null && encodedPrivateKey != null && encodedPublicKey != null) {
             try {
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-                // Clean PEM if it contains headers
+                // Clean PEM format headers and whitespace
                 String cleanPrivateKey = encodedPrivateKey
                         .replace("-----BEGIN PRIVATE KEY-----", "")
                         .replace("-----END PRIVATE KEY-----", "")
@@ -112,17 +117,17 @@ public class Wallet {
 
                 this.keyPair = new KeyPair(publicKey, privateKey);
             } catch (Exception e) {
-                throw new RuntimeException("Failed to restore RSA key pair from encoded strings", e);
+                throw new RuntimeException("Failed to restore RSA key pair from encoded storage", e);
             }
         }
     }
 
     /**
-     * Signs data using the wallet's private key
+     * Signs the provided data using SHA-256 with RSA and the wallet's private key.
      * 
-     * @param data The string data to sign
-     * @return Signature bytes
-     * @throws Exception if signing fails
+     * @param data The string data to be signed
+     * @return The RSA signature bytes
+     * @throws Exception if the signing operation fails
      */
     public byte[] signData(String data) throws Exception {
         Signature signer = Signature.getInstance("SHA256withRSA");
