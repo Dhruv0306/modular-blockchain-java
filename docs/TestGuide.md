@@ -26,6 +26,10 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
 - [Testing REST API](#testing-rest-api)
   - [API Test Classes](#api-test-classes)
   - [Example API Test](#example-api-test)
+- [Testing Wallet Functionality](#testing-wallet-functionality)
+  - [Key Wallet Test Classes](#key-wallet-test-classes)
+  - [Example Wallet Test](#example-wallet-test)
+  - [Testing Wallet Security](#testing-wallet-security)
 - [Testing Edge Cases and Boundary Conditions](#testing-edge-cases-and-boundary-conditions)
   - [Key Edge Case Tests](#key-edge-case-tests)
   - [Writing Your Own Edge Case Tests](#writing-your-own-edge-case-tests)
@@ -52,6 +56,10 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
 | `PersistenceManagerTest`        | `PersistenceManager`              | Tests automatic saving and loading of blockchain state between runs.      |
 | `BlockchainControllerTest`      | `BlockchainController`            | Tests REST API endpoints for blockchain interaction.                     |
 | `BlockchainApplicationTest`     | `BlockchainApplication`           | Tests Spring Boot application startup and configuration.                 |
+| `WalletTest`                    | `Wallet`                          | Tests wallet creation and key pair generation functionality.            |
+| `WalletListTest`               | `WalletList`                      | Tests adding, retrieving, and managing multiple wallets.               |
+| `WalletControllerTest`         | `WalletController`                | Tests REST API endpoints for wallet operations and authentication.      |
+| `WalletDTOTest`                | `WalletDTO`                       | Tests wallet data transfer object creation and serialization.          |
 
 ---
 
@@ -367,6 +375,66 @@ public class BlockchainControllerTest {
     }
 }
 ```
+
+## Testing Wallet Functionality
+
+The project includes tests for the wallet management system to ensure secure and reliable wallet operations.
+
+### Key Wallet Test Classes
+
+1. **WalletTest**
+   - Tests wallet creation and key pair generation
+   - Verifies public/private key functionality
+   - Tests wallet data serialization
+
+2. **WalletListTest**
+   - Tests adding and retrieving wallets
+   - Verifies wallet lookup by user ID
+   - Tests wallet list persistence
+
+3. **WalletControllerTest**
+   - Tests REST API endpoints for wallet operations
+   - Verifies authentication for sensitive operations
+   - Tests wallet import/export functionality
+
+### Example Wallet Test
+
+```java
+@Test
+void testWalletCreationAndSigning() throws Exception {
+    // Create a new wallet
+    Wallet wallet = new Wallet("testUser", "Test User");
+    
+    // Create a test message
+    String message = "Test message to sign";
+    
+    // Sign the message using the wallet's private key
+    String signature = CryptoUtils.signData(message, wallet.getPrivateKey());
+    
+    // Verify the signature using the wallet's public key
+    boolean isValid = CryptoUtils.verifySignature(message, signature, wallet.getPublicKey());
+    
+    // Assert that the signature is valid
+    assertTrue(isValid, "Signature should be valid when verified with the correct public key");
+    
+    // Try to verify with a different wallet's public key
+    Wallet anotherWallet = new Wallet("anotherUser", "Another User");
+    boolean isInvalid = CryptoUtils.verifySignature(message, signature, anotherWallet.getPublicKey());
+    
+    // Assert that the signature is invalid with the wrong public key
+    assertFalse(isInvalid, "Signature should be invalid when verified with a different public key");
+}
+```
+
+### Testing Wallet Security
+
+When testing wallet functionality, focus on these security aspects:
+
+1. **Key Pair Generation**: Test that generated key pairs are unique and secure
+2. **Signature Verification**: Test that signatures can only be verified with the correct public key
+3. **Authentication**: Test that sensitive operations require valid private key authentication
+4. **Error Handling**: Test proper error responses for invalid inputs or unauthorized access
+5. **Persistence**: Test that wallet data is properly saved and loaded
 
 ## Testing Edge Cases and Boundary Conditions
 
