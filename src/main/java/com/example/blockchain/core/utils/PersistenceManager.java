@@ -168,7 +168,7 @@ public class PersistenceManager {
         try {
             // Attempt to write wallet list to JSON file
             // Uses JsonUtils to handle serialization and file writing
-            JsonUtils.writeToFile(walletList, new File(path));
+            walletList.exportToJson(new File(path));
             logger.info("Wallet list saved to JSON file: {}", path);
         } catch (Exception e) {
             logger.error("Failed to save wallet list to '{}': error: {}", path, e.getMessage());
@@ -204,6 +204,7 @@ public class PersistenceManager {
             }
             WalletList loadedWalletList = JsonUtils.readFromFile(new File(path), WalletList.class);
             logger.info("Wallet list loaded from JSON file: {}", path);
+            logger.info("Number of wallets loaded: {}", loadedWalletList.getAllWalletsAsMap().size());
             // Return the loaded wallet list wrapped in Optional
             return Optional.of(loadedWalletList);
         } catch (Exception e) {

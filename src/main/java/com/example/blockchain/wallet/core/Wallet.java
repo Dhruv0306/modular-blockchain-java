@@ -8,7 +8,8 @@ import java.security.spec.*;
 import java.util.Base64;
 
 /**
- * Represents a digital wallet that manages cryptographic keys and signing operations.
+ * Represents a digital wallet that manages cryptographic keys and signing
+ * operations.
  * This class handles RSA key pair generation, storage and digital signatures.
  */
 public class Wallet {
@@ -19,13 +20,13 @@ public class Wallet {
 
     /** Unique identifier for the wallet owner */
     private String userId;
-    
+
     /** Name of the wallet owner */
     private String userName;
 
     /** Base64 encoded private key string for serialization */
     private String encodedPrivateKey;
-    
+
     /** Base64 encoded public key string for serialization */
     private String encodedPublicKey;
 
@@ -37,7 +38,8 @@ public class Wallet {
 
     /**
      * Creates a new wallet with generated RSA key pair
-     * @param userId Unique identifier for the wallet owner
+     * 
+     * @param userId   Unique identifier for the wallet owner
      * @param userName Name of the wallet owner
      * @throws NoSuchAlgorithmException if RSA algorithm is not available
      */
@@ -51,6 +53,7 @@ public class Wallet {
 
     /**
      * Generates a new RSA key pair
+     * 
      * @return KeyPair containing public and private RSA keys
      * @throws NoSuchAlgorithmException if RSA algorithm is not available
      */
@@ -62,6 +65,7 @@ public class Wallet {
 
     /**
      * Gets the wallet's private key, initializing from encoded strings if needed
+     * 
      * @return The RSA private key
      */
     @JsonIgnore
@@ -72,6 +76,7 @@ public class Wallet {
 
     /**
      * Gets the wallet's public key, initializing from encoded strings if needed
+     * 
      * @return The RSA public key
      */
     @JsonIgnore
@@ -80,23 +85,28 @@ public class Wallet {
         return keyPair.getPublic();
     }
 
-    /**
-     * Initializes the key pair from encoded strings if not already done
-     * Called lazily when keys are first accessed
-     */
     private void ensureKeysInitialized() {
         if (keyPair == null && encodedPrivateKey != null && encodedPublicKey != null) {
             try {
-                // Create key factory and specs for RSA keys
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-                byte[] privateBytes = Base64.getDecoder().decode(encodedPrivateKey);
-                byte[] publicBytes = Base64.getDecoder().decode(encodedPublicKey);
+                // Clean PEM if it contains headers
+                String cleanPrivateKey = encodedPrivateKey
+                        .replace("-----BEGIN PRIVATE KEY-----", "")
+                        .replace("-----END PRIVATE KEY-----", "")
+                        .replaceAll("\\s", "");
+
+                String cleanPublicKey = encodedPublicKey
+                        .replace("-----BEGIN PUBLIC KEY-----", "")
+                        .replace("-----END PUBLIC KEY-----", "")
+                        .replaceAll("\\s", "");
+
+                byte[] privateBytes = Base64.getDecoder().decode(cleanPrivateKey);
+                byte[] publicBytes = Base64.getDecoder().decode(cleanPublicKey);
 
                 PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateBytes);
                 X509EncodedKeySpec publicSpec = new X509EncodedKeySpec(publicBytes);
 
-                // Generate keys from encoded formats
                 PrivateKey privateKey = keyFactory.generatePrivate(privateSpec);
                 PublicKey publicKey = keyFactory.generatePublic(publicSpec);
 
@@ -109,6 +119,7 @@ public class Wallet {
 
     /**
      * Signs data using the wallet's private key
+     * 
      * @param data The string data to sign
      * @return Signature bytes
      * @throws Exception if signing fails
