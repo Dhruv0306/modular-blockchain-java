@@ -15,6 +15,9 @@ This guide provides detailed instructions for running the Modular Blockchain Jav
   - [Running the API](#running-the-api)
   - [API Endpoints](#api-endpoints)
   - [Example API Usage](#example-api-usage)
+- [Wallet API](#wallet-api)
+  - [Wallet API Endpoints](#wallet-api-endpoints)
+  - [Example Wallet API Usage](#example-wallet-api-usage)
 - [Logging Options](#logging-options)
 - [Advanced Configuration](#advanced-configuration)
   - [Custom Configuration Files](#custom-configuration-files)
@@ -162,6 +165,61 @@ curl http://localhost:8080/api/pending
 **Validate the blockchain:**
 ```bash
 curl http://localhost:8080/api/validate
+```
+
+## Wallet API
+
+The blockchain now includes a wallet management system accessible through REST API endpoints.
+
+### Wallet API Endpoints
+
+| Endpoint | Method | Description | Request Parameters | Response |
+|----------|--------|-------------|-------------------|----------|
+| `/api/wallets/generate` | POST | Create a new wallet | `userId`, `userName` | Wallet details and key files |
+| `/api/wallets` | GET | List all wallets | None | JSON array of wallet DTOs |
+| `/api/wallets/public-keys` | GET | Get all public keys | None | Map of user IDs to public keys |
+| `/api/wallets/public-key` | GET | Get public key for user | `userId` | Public key string |
+| `/api/wallets/export` | GET | Export wallet data | `userId`, `privateKey` | Wallet data file |
+| `/api/wallets/import` | POST | Import wallet from file | `file` | Success/failure message |
+| `/api/wallets/delete` | DELETE | Delete a wallet | `userId`, `privateKey` | Success/failure message |
+
+### Example Wallet API Usage
+
+**Create a new wallet:**
+```bash
+curl -X POST http://localhost:8080/api/wallets/generate \
+  -F "userId=alice123" \
+  -F "userName=Alice"
+```
+
+**List all wallets:**
+```bash
+curl http://localhost:8080/api/wallets
+```
+
+**Get a user's public key:**
+```bash
+curl http://localhost:8080/api/wallets/public-key?userId=alice123
+```
+
+**Export wallet data (requires authentication):**
+```bash
+curl -X GET http://localhost:8080/api/wallets/export \
+  -F "userId=alice123" \
+  -F "privateKey=@/path/to/private_key.pem"
+```
+
+**Import wallet from file:**
+```bash
+curl -X POST http://localhost:8080/api/wallets/import \
+  -F "file=@/path/to/wallet_backup.json"
+```
+
+**Delete wallet (requires authentication):**
+```bash
+curl -X DELETE http://localhost:8080/api/wallets/delete \
+  -F "userId=alice123" \
+  -F "privateKey=@/path/to/private_key.pem"
 ```
 
 ## Logging Options

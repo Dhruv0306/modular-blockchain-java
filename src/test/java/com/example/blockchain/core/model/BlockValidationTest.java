@@ -2,7 +2,6 @@ package com.example.blockchain.core.model;
 
 import com.example.blockchain.consensus.ProofOfWork;
 import com.example.blockchain.core.chain.Blockchain;
-import com.example.blockchain.core.model.Block;
 import com.example.blockchain.crypto.CryptoUtils;
 import com.example.blockchain.transactions.SignedFinancialTransaction;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +56,7 @@ public class BlockValidationTest {
         
         // Construct the valid transaction object with Alice's signature
         SignedFinancialTransaction validTx = new SignedFinancialTransaction(
-                "Alice", "Bob", 100.0, aliceKeyPair.getPublic(), signature, null, timestamp);
+                "Alice", "Bob", 100.0, aliceKeyPair.getPublic(), signature, "alice123", "bob456");
         
         // Add valid transaction to pending transactions pool
         blockchain.addTransaction(validTx);
@@ -73,7 +72,7 @@ public class BlockValidationTest {
         // Create a tampered version of the transaction with Bob's signature instead
         String tamperedSignature = CryptoUtils.signData("Tampered data", bobKeyPair.getPrivate());
         SignedFinancialTransaction tamperedTx = new SignedFinancialTransaction(
-                "Alice", "Bob", 100.0, aliceKeyPair.getPublic(), tamperedSignature, null, timestamp);
+                "Alice", "Bob", 100.0, aliceKeyPair.getPublic(), tamperedSignature, "alice123", "bob456");
         
         // Package the tampered transaction into a new block
         List<SignedFinancialTransaction> tamperedTxs = new ArrayList<>();

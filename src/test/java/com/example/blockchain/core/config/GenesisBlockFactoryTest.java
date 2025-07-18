@@ -18,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test class for GenesisBlockFactory implementations.
- * This class tests both DefaultGenesisBlockFactory and CustomGenesisBlockFactory.
+ * This class tests both DefaultGenesisBlockFactory and
+ * CustomGenesisBlockFactory.
  */
 class GenesisBlockFactoryTest {
 
@@ -61,7 +62,8 @@ class GenesisBlockFactoryTest {
     }
 
     /**
-     * Test the CustomGenesisBlockFactory with minimal customization (only custom hash).
+     * Test the CustomGenesisBlockFactory with minimal customization (only custom
+     * hash).
      */
     @Test
     void testCustomGenesisBlockFactoryMinimal() {
@@ -84,7 +86,8 @@ class GenesisBlockFactoryTest {
     }
 
     /**
-     * Test the CustomGenesisBlockFactory with custom transactions added individually.
+     * Test the CustomGenesisBlockFactory with custom transactions added
+     * individually.
      */
     @Test
     void testCustomGenesisBlockFactoryWithTransactions() {
@@ -186,9 +189,9 @@ class GenesisBlockFactoryTest {
         /**
          * Constructs a new TestTransaction.
          *
-         * @param sender The sender of the transaction
+         * @param sender   The sender of the transaction
          * @param receiver The receiver of the transaction
-         * @param amount The amount of the transaction
+         * @param amount   The amount of the transaction
          */
         public TestTransaction(String sender, String receiver, double amount) {
             this.sender = sender;
@@ -220,6 +223,26 @@ class GenesisBlockFactoryTest {
         @Override
         public String getTransactionId() {
             return "test-" + sender + "-" + receiver + "-" + amount;
+        }
+
+        @Override
+        public double getAmount() {
+            return amount;
+        }
+
+        @Override
+        public String getType() {
+            return "TEST";
+        }
+
+        @Override
+        public String getSenderID() {
+            return sender;
+        }
+
+        @Override
+        public String getReceiverID() {
+            return receiver;
         }
     }
 }

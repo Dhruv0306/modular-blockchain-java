@@ -79,3 +79,4 @@ logs/
 # Blockchain Application Data
 # Ignores local blockchain data directory
 data/
+wallet-data/

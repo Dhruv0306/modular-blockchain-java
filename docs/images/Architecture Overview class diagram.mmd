@@ -134,6 +134,38 @@ classDiagram
         +main(String[]) void
     }
     
+    class Wallet {
+        -userId String
+        -userName String
+        -keyPair KeyPair
+        +getPublicKey() PublicKey
+        +getPrivateKey() PrivateKey
+        +signData(String) String
+    }
+    
+    class WalletList {
+        -wallets Map~String, WalletEntry~
+        +addWallet(Wallet) void
+        +getWallet(String) Optional~Wallet~
+        +getAllWallets() List~WalletEntry~
+    }
+    
+    class WalletDTO {
+        -userId String
+        -userName String
+        -publicKeyBase64 String
+    }
+    
+    class WalletController {
+        -walletList WalletList
+        +createWallet(String, String) ResponseEntity
+        +list() List~WalletDTO~
+        +getPublicKeys() Map
+        +exportWalletData(String, MultipartFile) ResponseEntity
+        +importWallet(MultipartFile) ResponseEntity
+        +deleteWallet(String, MultipartFile) ResponseEntity
+    }
+    
     Transaction <|-- SignedTransaction
     Transaction <|.. FinancialTransaction
     SignedTransaction <|.. SignedFinancialTransaction
@@ -155,6 +187,10 @@ classDiagram
     BlockchainController --> ProofOfWork : uses
     BlockchainController --> PersistenceManager : uses
     BlockchainApplication --> BlockchainController : uses
+    Wallet --> CryptoUtils : uses
+    WalletController --> WalletList : uses
+    WalletController --> WalletDTO : creates
+    WalletList *-- Wallet : contains
     
     %% Individual styling with colors at 60% opacity and bold text
     style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
@@ -175,3 +211,7 @@ classDiagram
     style PersistenceManager fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
     style BlockchainController fill:#FF7F5099,stroke:#FF6347,stroke-width:2px,color:#000,font-weight:bold
     style BlockchainApplication fill:#FF7F5099,stroke:#FF6347,stroke-width:2px,color:#000,font-weight:bold
+    style Wallet fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
+    style WalletList fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
+    style WalletDTO fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
+    style WalletController fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold

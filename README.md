@@ -14,6 +14,7 @@ This project is designed for developers, researchers, and educators who want to 
 - [Core Features](#-core-features)
 - [Digital Signatures & Chain Validation](#-digital-signatures--chain-validation)
 - [Automatic Persistence](#-automatic-persistence)
+- [Wallet Management](#-wallet-management)
 - [Architecture Overview](#️-architecture-overview)
 - [Example Use Case](#-example-use-case)
 - [How to Run](#-how-to-run)
@@ -61,6 +62,7 @@ This project is designed for developers, researchers, and educators who want to 
 | 📝 Structured Logging       | SLF4J logging with environment-specific configurations                       |
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
 | 🌐 REST API                | Spring Boot REST API for blockchain interaction                              |
+| 👛 Wallet Management       | Create, export, import, and manage cryptographic wallets                     |
 
 ---
 
@@ -105,6 +107,27 @@ The blockchain now includes **automatic state persistence** between application 
 
 - **Validation Before Persistence**  
   Only valid blockchains are persisted to prevent corruption.
+
+## 👛 Wallet Management
+
+The blockchain now includes a comprehensive wallet management system for secure transaction signing.
+
+### Key Features
+
+- **Wallet Generation**  
+  Create wallets with secure RSA key pairs for transaction signing.
+
+- **Wallet Import/Export**  
+  Securely backup and restore wallets with authentication.
+
+- **Key Management**  
+  Download and manage public/private key pairs for transaction signing.
+
+- **Authentication**  
+  Private key authentication for sensitive wallet operations.
+
+- **Persistence**  
+  Automatic saving and loading of wallet data between application runs.
 
 ---
 
@@ -247,6 +270,38 @@ classDiagram
         +main(String[]) void
     }
     
+    class Wallet {
+        -userId String
+        -userName String
+        -keyPair KeyPair
+        +getPublicKey() PublicKey
+        +getPrivateKey() PrivateKey
+        +signData(String) String
+    }
+    
+    class WalletList {
+        -wallets Map~String, WalletEntry~
+        +addWallet(Wallet) void
+        +getWallet(String) Optional~Wallet~
+        +getAllWallets() List~WalletEntry~
+    }
+    
+    class WalletDTO {
+        -userId String
+        -userName String
+        -publicKeyBase64 String
+    }
+    
+    class WalletController {
+        -walletList WalletList
+        +createWallet(String, String) ResponseEntity
+        +list() List~WalletDTO~
+        +getPublicKeys() Map
+        +exportWalletData(String, MultipartFile) ResponseEntity
+        +importWallet(MultipartFile) ResponseEntity
+        +deleteWallet(String, MultipartFile) ResponseEntity
+    }
+    
     Transaction <|-- SignedTransaction
     Transaction <|.. FinancialTransaction
     SignedTransaction <|.. SignedFinancialTransaction
@@ -268,6 +323,10 @@ classDiagram
     BlockchainController --> ProofOfWork : uses
     BlockchainController --> PersistenceManager : uses
     BlockchainApplication --> BlockchainController : uses
+    Wallet --> CryptoUtils : uses
+    WalletController --> WalletList : uses
+    WalletController --> WalletDTO : creates
+    WalletList *-- Wallet : contains
     
     %% Individual styling with colors at 60% opacity and bold text
     style Blockchain fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
@@ -288,6 +347,10 @@ classDiagram
     style PersistenceManager fill:#9B59B699,stroke:#8E44AD,stroke-width:2px,color:#000,font-weight:bold
     style BlockchainController fill:#FF7F5099,stroke:#FF6347,stroke-width:2px,color:#000,font-weight:bold
     style BlockchainApplication fill:#FF7F5099,stroke:#FF6347,stroke-width:2px,color:#000,font-weight:bold
+    style Wallet fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
+    style WalletList fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
+    style WalletDTO fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
+    style WalletController fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
 ```
 
 **Key Relationships:**
@@ -301,6 +364,8 @@ classDiagram
 - `BlockUtils` handles hash computation for blocks
 - `CryptoUtils` manages cryptographic operations for digital signatures
 - `BlockchainController` exposes blockchain operations via REST API
+- `WalletController` manages wallet operations via REST API
+- `Wallet` represents a user's cryptographic identity
 - `BlockchainApplication` serves as the Spring Boot entry point
 
 ---
@@ -428,6 +493,7 @@ GET http://localhost:8080/api/validate
 | `com.example.blockchain.crypto`        | Cryptographic utilities and signatures   |
 | `com.example.blockchain.logging`       | Logging configuration and utilities     |
 | `com.example.blockchain.api`           | REST API controllers and application    |
+| `com.example.blockchain.wallet`        | Wallet management components and controllers |
 | `com.example.blockchain.Main`          | Demo runner showing how it all works    |
 
 ## 🔧 Utility Classes

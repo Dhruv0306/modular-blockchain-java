@@ -38,6 +38,10 @@ This guide provides detailed instructions on how to customize the modular blockc
   - [Adding Custom Endpoints](#adding-custom-endpoints)
   - [Customizing Response Formats](#customizing-response-formats)
   - [Securing the API](#securing-the-api)
+- [Wallet Customization](#wallet-customization)
+  - [Understanding the Wallet System](#understanding-the-wallet-system)
+  - [Customizing Wallet Functionality](#customizing-wallet-functionality)
+  - [Wallet Security Considerations](#wallet-security-considerations)
 - [Advanced Customizations](#advanced-customizations)
   - [JSON Serialization and Persistence](#json-serialization-and-persistence)
     - [Using JsonUtils](#using-jsonutils)
@@ -934,6 +938,105 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 }
 ```
 
+## Wallet Customization
+
+The blockchain framework now includes a wallet management system that can be customized to fit your specific needs.
+
+### Understanding the Wallet System
+
+The wallet system consists of several key components:
+
+- `Wallet`: Represents a user's wallet containing cryptographic keys
+- `WalletList`: Manages the collection of wallets in the system
+- `WalletController`: Provides REST API endpoints for wallet operations
+- `WalletDTO`: Data Transfer Object for wallet information
+
+### Customizing Wallet Functionality
+
+#### Extending the Wallet Class
+
+You can extend the `Wallet` class to add additional functionality:
+
+```java
+public class EnhancedWallet extends Wallet {
+    private final Map<String, Double> assetBalances;
+    
+    public EnhancedWallet(String userId, String userName, KeyPair keyPair) {
+        super(userId, userName, keyPair);
+        this.assetBalances = new HashMap<>();
+    }
+    
+    public void addAsset(String assetId, double amount) {
+        assetBalances.put(assetId, getAssetBalance(assetId) + amount);
+    }
+    
+    public double getAssetBalance(String assetId) {
+        return assetBalances.getOrDefault(assetId, 0.0);
+    }
+    
+    // Additional methods...
+}
+```
+
+#### Creating Custom Wallet DTOs
+
+You can create custom DTOs to expose additional wallet information:
+
+```java
+public class EnhancedWalletDTO extends WalletDTO {
+    private final Map<String, Double> assetBalances;
+    
+    public EnhancedWalletDTO(EnhancedWallet wallet) {
+        super(wallet);
+        this.assetBalances = new HashMap<>(wallet.getAssetBalances());
+    }
+    
+    public Map<String, Double> getAssetBalances() {
+        return assetBalances;
+    }
+}
+```
+
+#### Adding Custom Wallet Endpoints
+
+You can extend the `WalletController` or create a new controller to add custom endpoints:
+
+```java
+@RestController
+@RequestMapping("/api/wallet-assets")
+public class WalletAssetController {
+    @Autowired
+    private WalletList walletList;
+    
+    @PostMapping("/add")
+    public ResponseEntity<String> addAsset(
+            @RequestParam("userId") String userId,
+            @RequestParam("assetId") String assetId,
+            @RequestParam("amount") double amount,
+            @RequestParam("privateKey") MultipartFile privateKeyFile) {
+        
+        // Implementation...
+    }
+    
+    @GetMapping("/balance")
+    public ResponseEntity<Map<String, Double>> getAssetBalances(
+            @RequestParam("userId") String userId) {
+        
+        // Implementation...
+    }
+}
+```
+
+### Wallet Security Considerations
+
+When customizing the wallet system, consider these security best practices:
+
+1. **Never store private keys**: Private keys should never be stored on the server
+2. **Use secure key generation**: Ensure proper entropy for key generation
+3. **Implement proper authentication**: Verify ownership before sensitive operations
+4. **Encrypt wallet backups**: Add encryption to exported wallet data
+5. **Implement rate limiting**: Prevent brute force attacks on wallet endpoints
+
 ## Advanced Customizations
 
 ### JSON Serialization and Persistence
@@ -1139,304 +1242,237 @@ public interface BlockchainStorage<T extends Transaction> {
 // Simple file-based implementation
 public class FileBasedStorage<T extends Transaction> implements BlockchainStorage<T> {
     private final String dataDirectory;
-    private final ObjectMapper objectMapper;
     
-    public FileBasedStorage(String dataDirectory) {
-        this.dataDirectory = dataDirectory;
-        this.objectMapper = new ObjectMapper();
-        
-        // Create directory if it doesn't exist
-        new File(dataDirectory).mkdirs();
-    }
-    
-    @Override
-    public void saveBlock(Block<T> block) {
-        try {
-            File file = new File(dataDirectory + "/block_" + block.getIndex() + ".json");
-            objectMapper.writeValue(file, block);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save block", e);
-        }
-    }
-    
-    @Override
-    public Block<T> loadBlock(int index) {
-        try {
-            File file = new File(dataDirectory + "/block_" + index + ".json");
-            return objectMapper.readValue(file, Block.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load block", e);
-        }
-    }
-    
-    // Implementation of other methods...
+    // Implementation...
 }
 ```
 
 ### Adding Network Communication
 
-For a multi-node blockchain, implement peer-to-peer networking:
+To create a distributed blockchain network, you can add P2P networking capabilities:
 
 ```java
-public interface P2PNetwork<T extends Transaction> {
+public interface BlockchainNode<T extends Transaction> {
     void broadcastTransaction(T transaction);
     void broadcastBlock(Block<T> block);
-    void registerTransactionHandler(Consumer<T> handler);
-    void registerBlockHandler(Consumer<Block<T>> handler);
-    void start();
-    void stop();
+    void syncChain();
+    void addPeer(String peerAddress);
+    void removePeer(String peerAddress);
+    List<String> getPeers();
 }
 
-// Simple WebSocket-based implementation
-public class WebSocketP2PNetwork<T extends Transaction> implements P2PNetwork<T> {
-    private final List<String> peerAddresses;
-    private final int port;
-    private Consumer<T> transactionHandler;
-    private Consumer<Block<T>> blockHandler;
-    private Server server;
+// WebSocket-based implementation
+public class WebSocketBlockchainNode<T extends Transaction> implements BlockchainNode<T> {
+    private final Blockchain<T> blockchain;
+    private final Set<String> peers;
+    private final WebSocketServer server;
     
-    public WebSocketP2PNetwork(List<String> peerAddresses, int port) {
-        this.peerAddresses = peerAddresses;
-        this.port = port;
-    }
-    
-    @Override
-    public void broadcastTransaction(T transaction) {
-        // Implementation would serialize transaction and send to all peers
-    }
-    
-    @Override
-    public void broadcastBlock(Block<T> block) {
-        // Implementation would serialize block and send to all peers
-    }
-    
-    @Override
-    public void registerTransactionHandler(Consumer<T> handler) {
-        this.transactionHandler = handler;
-    }
-    
-    @Override
-    public void registerBlockHandler(Consumer<Block<T>> handler) {
-        this.blockHandler = handler;
-    }
-    
-    @Override
-    public void start() {
-        // Start WebSocket server to listen for incoming messages
-        // Connect to peers and set up message handling
-    }
-    
-    @Override
-    public void stop() {
-        // Shut down connections and server
-    }
+    // Implementation...
 }
 ```
 
----
-
 ## Testing Your Customizations
-
-The framework includes comprehensive tests that you can use as templates for testing your own customizations.
 
 ### Testing Transaction Types
 
+When testing custom transaction types, focus on:
+
+1. **Validation Logic**: Test that `isValid()` correctly identifies valid and invalid transactions
+2. **Immutability**: Ensure transaction objects cannot be modified after creation
+3. **Serialization**: Test that transactions can be properly serialized and deserialized
+
+Example test:
+
 ```java
 @Test
-void testCustomTransactionIsValid() {
-    YourTransaction tx = new YourTransaction(/* parameters */);
-    assertTrue(tx.isValid());
+void testCustomTransactionValidation() {
+    // Valid transaction
+    CustomTransaction validTx = new CustomTransaction("Alice", "Bob", "Test data");
+    assertTrue(validTx.isValid());
     
-    // Test invalid scenarios
-    YourTransaction invalidTx = new YourTransaction(/* invalid parameters */);
+    // Invalid transaction (null sender)
+    CustomTransaction invalidTx = new CustomTransaction(null, "Bob", "Test data");
     assertFalse(invalidTx.isValid());
 }
 ```
 
 ### Testing Consensus Algorithms
 
+When testing custom consensus algorithms, focus on:
+
+1. **Block Generation**: Test that blocks are generated correctly
+2. **Block Validation**: Test that valid blocks are accepted and invalid blocks are rejected
+3. **Chain Integrity**: Test that the consensus algorithm maintains chain integrity
+
+Example test:
+
 ```java
 @Test
 void testCustomConsensusValidation() {
-    YourConsensus<MockTransaction> consensus = new YourConsensus<>();
-    Block<MockTransaction> genesisBlock = new Block<>(0, "0", System.currentTimeMillis(), 
-                                                    new ArrayList<>(), 0, "genesis_hash");
+    // Create a custom consensus algorithm
+    List<String> validators = Arrays.asList("validator1", "validator2", "validator3");
+    ProofOfAuthority<FinancialTransaction> consensus = 
+        new ProofOfAuthority<>(validators, "validator1");
     
-    List<MockTransaction> txs = new ArrayList<>();
-    txs.add(new MockTransaction(true));
+    // Create a blockchain with the custom consensus
+    Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
     
-    // Generate a block with your consensus algorithm
-    Block<MockTransaction> newBlock = consensus.generateBlock(txs, genesisBlock);
+    // Add a transaction
+    blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
     
-    // Test validation
-    assertTrue(consensus.validateBlock(newBlock, genesisBlock));
+    // Generate a block
+    Block<FinancialTransaction> block = consensus.generateBlock(
+        blockchain.getPendingTransactions(), blockchain.getLastBlock());
     
-    // Test invalid scenarios
-    Block<MockTransaction> invalidBlock = new Block<>(1, "wrong_hash", System.currentTimeMillis(), 
-                                                    new ArrayList<>(), 0, "invalid_hash");
-    assertFalse(consensus.validateBlock(invalidBlock, genesisBlock));
+    // Validate the block
+    assertTrue(consensus.validateBlock(block, blockchain.getLastBlock()));
 }
 ```
 
 ### Testing REST API Endpoints
 
+When testing custom API endpoints, use Spring's `MockMvc`:
+
 ```java
 @SpringBootTest
 @AutoConfigureMockMvc
-public class BlockchainControllerTest {
-
+public class CustomApiTest {
+    
     @Autowired
     private MockMvc mockMvc;
-
+    
     @Test
-    public void testGetBlockchain() throws Exception {
-        mockMvc.perform(get("/api/chain"))
+    public void testCustomEndpoint() throws Exception {
+        mockMvc.perform(get("/api/custom-endpoint"))
                .andExpect(status().isOk())
-               .andExpect(jsonPath("$").isArray());
-    }
-
-    @Test
-    public void testAddTransaction() throws Exception {
-        FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 100);
-        
-        mockMvc.perform(post("/api/transactions")
-               .contentType(MediaType.APPLICATION_JSON)
-               .content(JsonUtils.toJson(tx)))
-               .andExpect(status().isOk())
-               .andExpect(content().string(containsString("Transaction added")));
-    }
-
-    @Test
-    public void testMineBlock() throws Exception {
-        // First add a transaction
-        FinancialTransaction tx = new FinancialTransaction("Alice", "Bob", 100);
-        mockMvc.perform(post("/api/transactions")
-               .contentType(MediaType.APPLICATION_JSON)
-               .content(JsonUtils.toJson(tx)));
-        
-        // Then mine a block
-        mockMvc.perform(post("/api/mine"))
-               .andExpect(status().isOk())
-               .andExpect(content().string(containsString("Block mined")));
+               .andExpect(jsonPath("$.key").value("expectedValue"));
     }
 }
 ```
 
 ### Integration Testing
 
+Test how your customizations work together:
+
 ```java
 @Test
-void testEndToEndFlow() {
-    // Create blockchain with your custom components
-    Blockchain<YourTransaction> blockchain = new Blockchain<>();
-    YourConsensus<YourTransaction> consensus = new YourConsensus<>();
+void testEndToEndCustomization() {
+    // Create custom components
+    CustomConsensus<CustomTransaction> consensus = new CustomConsensus<>();
+    Blockchain<CustomTransaction> blockchain = new Blockchain<>(consensus);
     
     // Add transactions
-    blockchain.addTransaction(new YourTransaction(/* parameters */));
-    blockchain.addTransaction(new YourTransaction(/* parameters */));
+    blockchain.addTransaction(new CustomTransaction("Alice", "Bob", "Data 1"));
+    blockchain.addTransaction(new CustomTransaction("Charlie", "Dave", "Data 2"));
     
-    // Generate block
-    Block<YourTransaction> newBlock = consensus.generateBlock(
-            blockchain.getPendingTransactions(),
-            blockchain.getLastBlock()
-    );
-    
-    // Validate and add block
-    assertTrue(consensus.validateBlock(newBlock, blockchain.getLastBlock()));
-    blockchain.addBlock(newBlock);
+    // Generate and add a block
+    Block<CustomTransaction> block = consensus.generateBlock(
+        blockchain.getPendingTransactions(), blockchain.getLastBlock());
+    blockchain.addBlock(block);
     
     // Verify chain state
     assertEquals(2, blockchain.getChain().size());
+    assertTrue(blockchain.isChainValid());
     assertEquals(0, blockchain.getPendingTransactions().size());
 }
 ```
 
 ### Testing Edge Cases
 
-Always include tests for edge cases in your customizations:
+Always test edge cases and error conditions:
 
 ```java
-// Test with empty transaction list
 @Test
 void testEmptyTransactionList() {
-    List<YourTransaction> emptyList = new ArrayList<>();
-    Block<YourTransaction> block = consensus.generateBlock(emptyList, blockchain.getLastBlock());
+    CustomConsensus<CustomTransaction> consensus = new CustomConsensus<>();
+    Blockchain<CustomTransaction> blockchain = new Blockchain<>(consensus);
+    
+    // Generate block with no transactions
+    Block<CustomTransaction> block = consensus.generateBlock(
+        new ArrayList<>(), blockchain.getLastBlock());
+    
+    // Should still be valid
     assertTrue(consensus.validateBlock(block, blockchain.getLastBlock()));
-    blockchain.addBlock(block);
-    assertEquals(2, blockchain.getChain().size());
 }
 
-// Test with tampered transactions
 @Test
-void testTamperedTransaction() {
-    // Create a valid transaction
-    YourSignedTransaction validTx = createValidSignedTransaction();
+void testInvalidBlock() {
+    CustomConsensus<CustomTransaction> consensus = new CustomConsensus<>();
     
-    // Create a tampered version with invalid signature
-    YourSignedTransaction tamperedTx = createTamperedTransaction();
+    // Create valid blocks
+    Block<CustomTransaction> previousBlock = new Block<>(0, "0", System.currentTimeMillis(),
+        new ArrayList<>(), 0, "genesis");
+    Block<CustomTransaction> validBlock = new Block<>(1, "genesis", System.currentTimeMillis(),
+        new ArrayList<>(), 0, "valid");
     
-    // Create a block with the tampered transaction but valid hash
-    Block<YourSignedTransaction> tamperedBlock = createBlockWithTransaction(tamperedTx);
+    // Create invalid block (wrong previous hash)
+    Block<CustomTransaction> invalidBlock = new Block<>(1, "wrong", System.currentTimeMillis(),
+        new ArrayList<>(), 0, "invalid");
     
-    // Verify the blockchain detects the tampering
-    assertFalse(blockchain.isChainValid());
+    // Validation results
+    assertTrue(consensus.validateBlock(validBlock, previousBlock));
+    assertFalse(consensus.validateBlock(invalidBlock, previousBlock));
 }
 ```
 
 ### Testing Configuration Handling
 
-Test how your customizations handle configuration errors:
+Test that your custom configuration properties are loaded correctly:
 
 ```java
 @Test
-void testMissingConfiguration() {
-    // Test with non-existent configuration file
-    YourCustomComponent component = new YourCustomComponent("non-existent-config.properties");
+void testCustomConfigurationProperties() {
+    // Create a temporary properties file
+    File tempFile = File.createTempFile("test-config", ".properties");
+    try (FileWriter writer = new FileWriter(tempFile)) {
+        writer.write("custom_property=test_value\n");
+        writer.write("difficulty=3\n");
+    }
     
-    // Verify it falls back to default values
-    assertEquals(DEFAULT_VALUE, component.getSomeProperty());
+    // Load the configuration
+    BlockchainConfig config = BlockchainConfig.getInstance(tempFile.getAbsolutePath());
+    
+    // Verify properties
+    assertEquals(3, config.getDifficulty());
+    assertEquals("test_value", config.getCustomProperty());
+    
+    // Clean up
+    tempFile.delete();
 }
 ```
-
----
 
 ## Best Practices
 
 ### Security Considerations
 
-1. **Input Validation**: Thoroughly validate all inputs, especially in transaction `isValid()` methods.
-2. **Cryptographic Security**: Use strong cryptographic primitives for any security-critical operations.
-3. **Privacy**: Be mindful of data stored on the blockchain; it's immutable and potentially public.
-4. **Key Management**: If implementing digital signatures, ensure secure key management.
-5. **API Security**: Secure your REST API with proper authentication and authorization.
+1. **Input Validation**: Always validate inputs, especially in API endpoints
+2. **Digital Signatures**: Use digital signatures for transaction authentication
+3. **Secure Key Management**: Never store private keys on the server
+4. **Rate Limiting**: Implement rate limiting for API endpoints
+5. **Secure Configuration**: Don't hardcode sensitive values in your code
 
 ### Performance Optimization
 
-1. **Transaction Batching**: Process multiple transactions in a single block for higher throughput.
-2. **Efficient Data Structures**: Use optimized data structures for frequent operations.
-3. **Consensus Tuning**: Adjust consensus parameters based on your network's characteristics.
-4. **API Caching**: Implement caching for frequently accessed API endpoints.
+1. **Efficient Data Structures**: Use appropriate data structures for your use case
+2. **Batch Processing**: Process transactions in batches when possible
+3. **Caching**: Cache frequently accessed data
+4. **Asynchronous Processing**: Use asynchronous processing for non-blocking operations
+5. **Database Indexing**: If using a database, ensure proper indexing
 
 ### Code Organization
 
-1. **Package Structure**: Organize related components in packages that reflect their purpose.
-2. **Dependency Injection**: Use dependency injection to make your components more testable.
-3. **Clear Interfaces**: Define clear interfaces for components that may have multiple implementations.
-4. **API Documentation**: Use Swagger or SpringDoc to document your REST API endpoints.
-
----
+1. **Package Structure**: Organize code into logical packages
+2. **Separation of Concerns**: Keep different responsibilities in different classes
+3. **Interface-Based Design**: Design to interfaces, not implementations
+4. **Documentation**: Document your code thoroughly
+5. **Testing**: Write comprehensive tests for all components
 
 ## Next Steps
 
 After customizing your blockchain, consider:
 
-1. **Advanced Persistence**: Implement database storage (like LevelDB or H2) for better performance and scalability.
-2. **Networking**: Add peer-to-peer communication for a distributed network.
-3. **Monitoring**: Create tools to monitor the health and performance of your blockchain.
-4. **User Interface**: Build a web dashboard to interact with your blockchain API.
-5. **Advanced Features**: Implement smart contracts, sidechains, or other advanced blockchain concepts.
-6. **API Authentication**: Add user authentication and wallet integration for the REST API.
-
----
-
-This guide should help you get started with customizing the Modular Blockchain Java framework. Remember that blockchain technology is constantly evolving, so keep exploring new concepts and improvements to enhance your implementation.
+1. **Deployment**: Deploy your blockchain to a production environment
+2. **Monitoring**: Add monitoring and alerting
+3. **User Interface**: Create a web or mobile interface
+4. **Documentation**: Create comprehensive documentation for users
+5. **Community**: Build a community around your blockchain project

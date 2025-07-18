@@ -290,7 +290,7 @@ public class BlockchainTest {
         public String getSummary() {
             return "mock transaction";
         }
-        
+
         @Override
         public String getTransactionId() {
             return "mock-" + (valid ? "valid" : "invalid") + "-" + hashCode();
@@ -309,6 +309,26 @@ public class BlockchainTest {
         @Override
         public int hashCode() {
             return Objects.hash(valid);
+        }
+
+        @Override
+        public double getAmount() {
+            return 0.0; // Mock amount for testing
+        }
+
+        @Override
+        public String getType() {
+            return "MOCK"; // Mock transaction type
+        }
+
+        @Override
+        public String getSenderID() {
+            return "MOCK_SENDER_ID"; // Mock sender ID
+        }
+
+        @Override
+        public String getReceiverID() {
+            return "MOCK_RECEIVER_ID"; // Mock receiver ID
         }
     }
 }

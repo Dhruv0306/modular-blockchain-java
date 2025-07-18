@@ -14,6 +14,7 @@ Thank you for your interest in contributing to the Modular Blockchain Java proje
   - [Adding a New Transaction Type](#adding-a-new-transaction-type)
   - [Implementing a New Consensus Algorithm](#implementing-a-new-consensus-algorithm)
   - [Extending the REST API](#extending-the-rest-api)
+  - [Working with Wallet Components](#working-with-wallet-components)
   - [Adding a New Feature Module](#adding-a-new-feature-module)
 - [Pull Request Process](#pull-request-process)
 
@@ -55,6 +56,7 @@ The project follows a standard Maven structure:
   - `crypto/` - Utilities for digital signatures and cryptographic operations
   - `logging/` - Logging configuration and utilities
   - `api/` - Spring Boot REST API controllers and application
+  - `wallet/` - Wallet management components and controllers
 - `src/test/java/com/example/blockchain/` - Test code
 - `docs/` - Documentation
 - `logs/` - Log files (generated at runtime)
@@ -120,6 +122,10 @@ chmod +x run-blockchain.sh
 | `PersistenceManagerTest`        | `PersistenceManager`              | Tests automatic saving and loading of blockchain state between runs.      |
 | `BlockchainControllerTest`      | `BlockchainController`            | Tests REST API endpoints for blockchain interaction.                     |
 | `BlockchainApplicationTest`     | `BlockchainApplication`           | Tests Spring Boot application startup and configuration.                 |
+| `WalletTest`                    | `Wallet`                          | Tests wallet creation and key pair generation functionality.            |
+| `WalletListTest`               | `WalletList`                      | Tests adding, retrieving, and managing multiple wallets.               |
+| `WalletControllerTest`         | `WalletController`                | Tests REST API endpoints for wallet operations and authentication.      |
+| `WalletDTOTest`                | `WalletDTO`                       | Tests wallet data transfer object creation and serialization.          |
 
 
 ### Running Tests
@@ -374,6 +380,30 @@ public class BlockchainAnalyticsController {
     }
 }
 ```
+
+### Working with Wallet Components
+
+When working with the wallet management system:
+
+1. Ensure all wallet classes have:
+   - Proper authentication for sensitive operations
+   - Clear separation between public and private data
+   - Comprehensive error handling
+
+2. For wallet-related endpoints:
+   - Implement proper input validation
+   - Use multipart form data for file uploads
+   - Return appropriate HTTP status codes
+
+3. When adding new wallet features:
+   - Add appropriate unit tests in `WalletTest` and `WalletControllerTest`
+   - Test both successful operations and error cases
+   - Test authentication requirements
+
+4. When working with wallet persistence:
+   - Ensure wallet data is properly serializable
+   - Test persistence with both valid and invalid wallet data
+   - Verify error handling for missing or corrupted wallet files
 
 ### Adding a New Feature Module
 

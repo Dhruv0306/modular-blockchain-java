@@ -84,8 +84,10 @@ public class ProofOfWorkTest {
      */
     @Test
     void testInvalidDifficulty() {
-        // Create a block with insufficient difficulty (only 3 leading zeros instead of 4)
-        // The default difficulty is 4, so a hash with only 3 leading zeros should be invalid
+        // Create a block with insufficient difficulty (only 3 leading zeros instead of
+        // 4)
+        // The default difficulty is 4, so a hash with only 3 leading zeros should be
+        // invalid
         Block<MockTransaction> invalidBlock = new Block<>(
                 1,
                 genesisBlock.getHash(),
@@ -145,7 +147,8 @@ public class ProofOfWorkTest {
     }
 
     /**
-     * Tests that a block with valid hash but insufficient difficulty fails validation.
+     * Tests that a block with valid hash but insufficient difficulty fails
+     * validation.
      */
     @Test
     void testValidHashButInvalidDifficulty() throws Exception {
@@ -232,6 +235,26 @@ public class ProofOfWorkTest {
         public String getTransactionId() {
             return "mock-" + (valid ? "valid" : "invalid") + "-" + hashCode();
         }
+
+        @Override
+        public double getAmount() {
+            return 100.0; // Return mock amount
+        }
+
+        @Override
+        public String getType() {
+            return "MOCK"; // Return mock transaction type
+        }
+
+        @Override
+        public String getSenderID() {
+            return "MOCK-SENDER-" + hashCode(); // Return mock sender ID
+        }
+
+        @Override
+        public String getReceiverID() {
+            return "MOCK-RECEIVER-" + hashCode(); // Return mock receiver ID
+        }
     }
 
     /**
@@ -258,6 +281,26 @@ public class ProofOfWorkTest {
         @Override
         public String getTransactionId() {
             return "throwing-mock-transaction";
+        }
+
+        @Override
+        public double getAmount() {
+            return 0.0; // Return default amount for throwing mock transaction
+        }
+
+        @Override
+        public String getType() {
+            return "THROWING_MOCK"; // Return type indicating this is a throwing mock transaction
+        }
+
+        @Override
+        public String getSenderID() {
+            return "THROWING_MOCK_SENDER"; // Return mock sender ID
+        }
+
+        @Override
+        public String getReceiverID() {
+            return "THROWING_MOCK_RECEIVER"; // Return mock receiver ID
         }
     }
 }
