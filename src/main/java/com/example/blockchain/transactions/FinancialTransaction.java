@@ -97,7 +97,7 @@ public class FinancialTransaction implements Transaction {
         this.receiver = receiver;
         this.amount = amount;
         this.senderID = "U00-1";
-        this.receiver = "U00-2";
+        this.receiverID = "U00-2";
         this.transactionId = generateTransactionId();
     }
 
@@ -116,7 +116,7 @@ public class FinancialTransaction implements Transaction {
         this.receiver = receiver;
         this.amount = amount;
         this.senderID = "U00-1";
-        this.receiver = "U00-2";
+        this.receiverID = "U00-2";
         this.transactionId = transactionId != null ? transactionId : generateTransactionId();
     }
 
