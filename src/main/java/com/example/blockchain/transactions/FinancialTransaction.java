@@ -1,5 +1,9 @@
 package com.example.blockchain.transactions;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -9,14 +13,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * Represents a financial transaction between two parties in the blockchain.
- * This class implements the Transaction interface and handles the core transaction data
+ * This class implements the Transaction interface and handles the core
+ * transaction data
  * including sender, receiver, amount and transaction ID.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FinancialTransaction implements Transaction {
     // The address/identifier of the transaction sender
     private String sender;
-    // The address/identifier of the transaction receiver 
+    // The address/identifier of the transaction receiver
     private String receiver;
     // The amount being transferred in the transaction
     private double amount;
@@ -34,51 +39,105 @@ public class FinancialTransaction implements Transaction {
      * Default constructor required for JSON deserialization.
      * Creates an empty transaction that must be populated via setters.
      */
-    public FinancialTransaction() {}
+    public FinancialTransaction() {
+    }
 
     /**
-     * Creates a new financial transaction with the specified sender, receiver and amount.
+     * Creates a new financial transaction with the specified sender, receiver and
+     * amount.
      * Automatically generates a transaction ID.
      *
-     * @param sender The address of the sending party
+     * @param sender   The address of the sending party
      * @param receiver The address of the receiving party
-     * @param amount The amount to transfer
+     * @param amount   The amount to transfer
+     * @param senderID The unique identifier of the sender
+     * @param receiverID The unique identifier of the receiver
      */
-    public FinancialTransaction(String sender, String receiver, double amount) {
+    public FinancialTransaction(String sender, String receiver, double amount, String senderID, String receiverID) {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
+        this.senderID = senderID;
+        this.receiverID = receiverID;
         this.transactionId = generateTransactionId();
     }
-    
+
     /**
      * Creates a new financial transaction with a specified transaction ID.
      * Primarily used for testing or special cases where ID needs to be controlled.
      *
-     * @param sender The address of the sending party
+     * @param sender        The address of the sending party
+     * @param receiver      The address of the receiving party
+     * @param amount        The amount to transfer
+     * @param senderID      The unique identifier of the sender
+     * @param receiverID    The unique identifier of the receiverq
+     * @param transactionId The specific transaction ID to use, or null to generate
+     *                      one
+     */
+    public FinancialTransaction(String sender, String receiver, double amount, String senderID, String receiverID, String transactionId) {
+        this.sender = sender;
+        this.receiver = receiver;
+        this.amount = amount;
+        this.senderID = senderID;
+        this.receiverID = receiverID;
+        this.transactionId = transactionId != null ? transactionId : generateTransactionId();
+    }
+
+    /**
+     * Creates a new financial transaction with the specified sender, receiver and
+     * amount.
+     * Automatically generates a transaction ID.
+     *
+     * @param sender   The address of the sending party
      * @param receiver The address of the receiving party
-     * @param amount The amount to transfer
-     * @param transactionId The specific transaction ID to use, or null to generate one
+     * @param amount   The amount to transfer
+     */
+    public FinancialTransaction(String sender, String receiver, double amount){
+        this.sender = sender;
+        this.receiver = receiver;
+        this.amount = amount;
+        this.senderID = "U00-1";
+        this.receiver = "U00-2";
+        this.transactionId = generateTransactionId();
+    }
+
+    /**
+     * Creates a new financial transaction with a specified transaction ID.
+     * Primarily used for testing or special cases where ID needs to be controlled.
+     *
+     * @param sender        The address of the sending party
+     * @param receiver      The address of the receiving party
+     * @param amount        The amount to transfer
+     * @param transactionId The specific transaction ID to use, or null to generate
+     *                      one
      */
     public FinancialTransaction(String sender, String receiver, double amount, String transactionId) {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
+        this.senderID = "U00-1";
+        this.receiver = "U00-2";
         this.transactionId = transactionId != null ? transactionId : generateTransactionId();
     }
-    
+
     /**
-     * Generates a unique transaction ID based on the transaction details and timestamp.
+     * Generates a unique transaction ID based on the transaction details and
+     * timestamp.
      * Uses UUID.nameUUIDFromBytes to create a deterministic but unique identifier.
      *
      * @return A string representation of the generated UUID
      */
     private String generateTransactionId() {
         // Create a deterministic ID based on transaction data + random component
-        String baseData = sender + receiver + amount + System.currentTimeMillis();
-        return UUID.nameUUIDFromBytes(baseData.getBytes()).toString();
+        try {
+            String baseData = sender + receiver + amount + System.currentTimeMillis();
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(baseData.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to generate transaction ID", e);
+        }
     }
-    
+
     /**
      * @return The unique identifier for this transaction
      */
@@ -88,7 +147,8 @@ public class FinancialTransaction implements Transaction {
     }
 
     /**
-     * Validates the transaction by checking if sender, receiver are set and amount is positive.
+     * Validates the transaction by checking if sender, receiver are set and amount
+     * is positive.
      * 
      * @return true if the transaction is valid, false otherwise
      */
@@ -188,5 +248,10 @@ public class FinancialTransaction implements Transaction {
     public String getReceiverID() {
         // Returns the receiver's unique ID for polymorphic serialization
         return receiverID;
+    }
+
+    @Override
+    public Object getHash() {
+        return transactionId;
     }
 }

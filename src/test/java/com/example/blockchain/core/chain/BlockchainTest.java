@@ -330,5 +330,10 @@ public class BlockchainTest {
         public String getReceiverID() {
             return "MOCK_RECEIVER_ID"; // Mock receiver ID
         }
+
+        @Override
+        public Object getHash() {
+            return getTransactionId();
+        }
     }
 }

@@ -11,6 +11,7 @@ import com.example.blockchain.core.model.Block;
 import com.example.blockchain.core.model.Transaction;
 import com.example.blockchain.core.utils.JsonUtils;
 import com.example.blockchain.logging.BlockchainLoggerFactory;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import org.slf4j.Logger;
@@ -190,5 +191,16 @@ public class Blockchain<T extends Transaction> {
     public static <T extends Transaction> Blockchain<T> importFromJson(File file, Class<T> transactionClass)
             throws Exception {
         return JsonUtils.readFromFile(file, JsonUtils.getBlockchainType(transactionClass));
+    }
+
+    /**
+     * Returns the number of blocks in the blockchain.
+     * Used to get the current height of the blockchain.
+     *
+     * @return The number of blocks in the chain
+     */
+    @JsonIgnore
+    public int getBlockCount() {
+        return chain.size();
     }
 }

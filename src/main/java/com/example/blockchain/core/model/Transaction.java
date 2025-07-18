@@ -175,4 +175,6 @@ public interface Transaction {
      * @throws IllegalStateException if the receiver ID is not available
      */
     String getReceiverID();
+
+    Object getHash();
 }
