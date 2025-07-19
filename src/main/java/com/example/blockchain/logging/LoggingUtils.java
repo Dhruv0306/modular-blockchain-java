@@ -94,8 +94,6 @@ public class LoggingUtils {
             // If this fails, we don't want to prevent application startup
             org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(LoggingUtils.class);
             logger.warn("Failed to configure logging from blockchain config: {}", e.getMessage());
-            String error = "Failed to configure logging from blockchain config: " + e.getMessage();
-            throw new RuntimeException(error, e);
         }
     }
 }

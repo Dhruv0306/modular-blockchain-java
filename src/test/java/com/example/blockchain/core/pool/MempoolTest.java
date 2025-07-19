@@ -229,4 +229,132 @@ class MempoolTest {
         assertEquals(1, mempool.size());
         assertTrue(mempool.contains("valid_hash"));
     }
+    
+    @Test
+    void isEmpty_EmptyMempool_ReturnsTrue() {
+        // Assert
+        assertTrue(mempool.isEmpty());
+    }
+    
+    @Test
+    void isEmpty_WithTransactions_ReturnsFalse() {
+        // Arrange
+        mempool.addTransaction(validTransaction);
+        
+        // Assert
+        assertFalse(mempool.isEmpty());
+    }
+    
+    @Test
+    void getAllTransactions_EmptyMempool_ReturnsEmptyList() {
+        // Act
+        List<Transaction> result = mempool.getAllTransactions();
+        
+        // Assert
+        assertTrue(result.isEmpty());
+    }
+    
+    @Test
+    void getAllTransactions_WithTransactions_ReturnsAllTransactions() {
+        // Arrange
+        mempool.addTransaction(validTransaction);
+        
+        // Create another valid transaction
+        Transaction anotherTransaction = Mockito.mock(Transaction.class);
+        when(anotherTransaction.getHash()).thenReturn("another_hash");
+        try {
+            when(anotherTransaction.isValid()).thenReturn(true);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        mempool.addTransaction(anotherTransaction);
+        
+        // Act
+        List<Transaction> result = mempool.getAllTransactions();
+        
+        // Assert
+        assertEquals(2, result.size());
+        assertTrue(result.contains(validTransaction));
+        assertTrue(result.contains(anotherTransaction));
+    }
+    
+    @Test
+    void getTopN_LimitLessThanSize_ReturnsLimitedTransactions() {
+        // Arrange
+        mempool.addTransaction(validTransaction);
+        
+        // Create another valid transaction
+        Transaction anotherTransaction = Mockito.mock(Transaction.class);
+        when(anotherTransaction.getHash()).thenReturn("another_hash");
+        try {
+            when(anotherTransaction.isValid()).thenReturn(true);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        mempool.addTransaction(anotherTransaction);
+        
+        // Act
+        List<Transaction> result = mempool.getTopN(1);
+        
+        // Assert
+        assertEquals(1, result.size());
+    }
+    
+    @Test
+    void getTopN_LimitGreaterThanSize_ReturnsAllTransactions() {
+        // Arrange
+        mempool.addTransaction(validTransaction);
+        
+        // Act
+        List<Transaction> result = mempool.getTopN(10);
+        
+        // Assert
+        assertEquals(1, result.size());
+        assertTrue(result.contains(validTransaction));
+    }
+    
+    @Test
+    void clear_RemovesAllTransactions() {
+        // Arrange
+        mempool.addTransaction(validTransaction);
+        
+        // Create another valid transaction
+        Transaction anotherTransaction = Mockito.mock(Transaction.class);
+        when(anotherTransaction.getHash()).thenReturn("another_hash");
+        try {
+            when(anotherTransaction.isValid()).thenReturn(true);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        mempool.addTransaction(anotherTransaction);
+        
+        // Act
+        mempool.clear();
+        
+        // Assert
+        assertEquals(0, mempool.size());
+        assertTrue(mempool.isEmpty());
+        assertFalse(mempool.contains("valid_hash"));
+        assertFalse(mempool.contains("another_hash"));
+    }
+    
+    @Test
+    void addTransaction_ThrowsNoSuchAlgorithmException_ThrowsRuntimeException() {
+        // Arrange
+        Transaction exceptionTransaction = Mockito.mock(Transaction.class);
+        when(exceptionTransaction.getHash()).thenReturn("exception_hash");
+        try {
+            when(exceptionTransaction.isValid()).thenThrow(new NoSuchAlgorithmException("Test exception"));
+        } catch (NoSuchAlgorithmException e) {
+            fail("Should not throw exception during test setup");
+        }
+        
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            mempool.addTransaction(exceptionTransaction);
+        });
+        
+        // Verify the exception message contains the expected text
+        assertTrue(exception.getMessage().contains("Failed To varify Transection"));
+    }
 }

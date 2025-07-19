@@ -4,13 +4,21 @@
  */
 package com.example.blockchain.examples;
 
+import com.example.blockchain.consensus.Consensus;
+import com.example.blockchain.core.chain.Blockchain;
 import com.example.blockchain.core.config.ChainConfig;
-import com.example.blockchain.examples.DemoRunner;
+import com.example.blockchain.core.model.Block;
+import com.example.blockchain.transactions.FinancialTransaction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DemoRunnerTest {
     // Stream to capture System.out for verification
@@ -58,5 +66,21 @@ class DemoRunnerTest {
         DemoRunner demoRunner = new DemoRunner();
         demoRunner.runCustomGenesisBlockchainExample(config);
         // Just verify it runs without exception
+    }
+    
+    /**
+     * Test that the output contains expected log messages.
+     * This verifies that the blockchain operations are being logged correctly.
+     */
+    @Test
+    void testOutputContainsExpectedMessages() {
+        DemoRunner demoRunner = new DemoRunner();
+        demoRunner.runDefaultBlockchainExample(config);
+        
+        String output = outContent.toString();
+        assertTrue(output.contains("Genesis block:"), "Output should mention genesis block");
+        assertTrue(output.contains("Mining block"), "Output should mention mining");
+        assertTrue(output.contains("Block mined"), "Output should confirm block was mined");
+        assertTrue(output.contains("Final blockchain state:"), "Output should show final state");
     }
 }

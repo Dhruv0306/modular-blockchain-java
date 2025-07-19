@@ -35,6 +35,17 @@ public class Main {
      *
      * @param args Command line arguments - first argument can be path to config file
      */
+    /**
+     * Gets the environment variable value.
+     * Extracted for testability.
+     * 
+     * @param name The name of the environment variable
+     * @return The value of the environment variable
+     */
+    protected static String getEnvVariable(String name) {
+        return System.getenv(name);
+    }
+
     public static void main(String[] args) {
         // Default configuration file path
         String configFile = "config/blockchain.properties"; // default
@@ -45,7 +56,7 @@ public class Main {
         }
 
         // Check for environment-specific configuration
-        String env = System.getenv("BLOCKCHAIN_ENV");
+        String env = getEnvVariable("BLOCKCHAIN_ENV");
         if (env != null && !env.isEmpty()) {
             configFile = "config/blockchain-" + env + ".properties";
         }

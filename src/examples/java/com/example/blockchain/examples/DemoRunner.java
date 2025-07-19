@@ -112,6 +112,23 @@ public class DemoRunner {
 
         // Initialize consensus mechanism (Proof of Work)
         Consensus<FinancialTransaction> consensus = new ProofOfWork<>();
+        
+        // Call the overloaded method with the consensus
+        runBlockchainExample(blockchain, config, consensus);
+    }
+    
+    /**
+     * Overloaded helper method that accepts a custom consensus algorithm.
+     * This allows for testing with different consensus implementations.
+     *
+     * @param blockchain The blockchain instance to operate on
+     * @param config     The chain configuration parameters
+     * @param consensus  The consensus algorithm to use
+     */
+    private void runBlockchainExample(
+            Blockchain<FinancialTransaction> blockchain,
+            ChainConfig config,
+            Consensus<FinancialTransaction> consensus) {
 
         // Display the genesis block information
         logger.info("\nGenesis block:");
