@@ -9,7 +9,6 @@ import com.example.blockchain.wallet.core.WalletList;
 
 import jakarta.annotation.PreDestroy;
 
-import com.example.blockchain.Main;
 import com.example.blockchain.consensus.ProofOfWork;
 import com.example.blockchain.core.model.Block;
 import com.example.blockchain.core.model.Transaction;

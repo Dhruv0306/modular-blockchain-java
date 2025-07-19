@@ -13,7 +13,6 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 
-import com.example.blockchain.Main;
 import com.example.blockchain.core.model.SignedTransaction;
 import com.example.blockchain.crypto.CryptoUtils;
 import com.example.blockchain.logging.BlockchainLoggerFactory;

@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import com.example.blockchain.Main;
 import com.example.blockchain.core.chain.Blockchain;
 import com.example.blockchain.core.config.ChainConfig;
 import com.example.blockchain.core.model.Transaction;
