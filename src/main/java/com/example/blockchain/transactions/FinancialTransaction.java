@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.example.blockchain.core.model.Transaction;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -35,6 +36,8 @@ public class FinancialTransaction implements Transaction {
     @JsonIgnore
     private final String type = "FinancialTransaction";
 
+    private static final org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(FinancialTransaction.class);
+
     /**
      * Default constructor required for JSON deserialization.
      * Creates an empty transaction that must be populated via setters.
@@ -52,14 +55,21 @@ public class FinancialTransaction implements Transaction {
      * @param amount   The amount to transfer
      * @param senderID The unique identifier of the sender
      * @param receiverID The unique identifier of the receiver
+     * @throws NoSuchAlgorithmException 
      */
-    public FinancialTransaction(String sender, String receiver, double amount, String senderID, String receiverID) {
+    public FinancialTransaction(String sender, String receiver, double amount, String senderID, String receiverID) throws NoSuchAlgorithmException {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
         this.senderID = senderID;
         this.receiverID = receiverID;
-        this.transactionId = generateTransactionId();
+        try {
+            this.transactionId = generateTransactionId();
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Error generating transaction ID. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new NoSuchAlgorithmException(error, e);
+        }
     }
 
     /**
@@ -73,14 +83,21 @@ public class FinancialTransaction implements Transaction {
      * @param receiverID    The unique identifier of the receiverq
      * @param transactionId The specific transaction ID to use, or null to generate
      *                      one
+     * @throws NoSuchAlgorithmException 
      */
-    public FinancialTransaction(String sender, String receiver, double amount, String senderID, String receiverID, String transactionId) {
+    public FinancialTransaction(String sender, String receiver, double amount, String senderID, String receiverID, String transactionId) throws NoSuchAlgorithmException {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
         this.senderID = senderID;
         this.receiverID = receiverID;
-        this.transactionId = transactionId != null ? transactionId : generateTransactionId();
+        try {
+            this.transactionId = transactionId != null ? transactionId : generateTransactionId();
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Error generating transaction ID. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new NoSuchAlgorithmException(error, e);
+        }
     }
 
     /**
@@ -91,14 +108,21 @@ public class FinancialTransaction implements Transaction {
      * @param sender   The address of the sending party
      * @param receiver The address of the receiving party
      * @param amount   The amount to transfer
+     * @throws NoSuchAlgorithmException 
      */
-    public FinancialTransaction(String sender, String receiver, double amount){
+    public FinancialTransaction(String sender, String receiver, double amount) throws NoSuchAlgorithmException{
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
         this.senderID = "U00-1";
         this.receiverID = "U00-2";
-        this.transactionId = generateTransactionId();
+        try {
+            this.transactionId = generateTransactionId();
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Error generating transaction ID. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new NoSuchAlgorithmException(error, e);
+        }
     }
 
     /**
@@ -110,14 +134,21 @@ public class FinancialTransaction implements Transaction {
      * @param amount        The amount to transfer
      * @param transactionId The specific transaction ID to use, or null to generate
      *                      one
+     * @throws NoSuchAlgorithmException 
      */
-    public FinancialTransaction(String sender, String receiver, double amount, String transactionId) {
+    public FinancialTransaction(String sender, String receiver, double amount, String transactionId) throws NoSuchAlgorithmException {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
         this.senderID = "U00-1";
         this.receiverID = "U00-2";
-        this.transactionId = transactionId != null ? transactionId : generateTransactionId();
+        try {
+            this.transactionId = transactionId != null ? transactionId : generateTransactionId();
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Error generating transaction ID. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new NoSuchAlgorithmException(error, e);
+        }
     }
 
     /**
@@ -126,15 +157,18 @@ public class FinancialTransaction implements Transaction {
      * Uses UUID.nameUUIDFromBytes to create a deterministic but unique identifier.
      *
      * @return A string representation of the generated UUID
+     * @throws NoSuchAlgorithmException 
      */
-    private String generateTransactionId() {
+    private String generateTransactionId() throws NoSuchAlgorithmException {
         // Create a deterministic ID based on transaction data + random component
         try {
             String baseData = sender + receiver + amount + System.currentTimeMillis();
             byte[] hash = MessageDigest.getInstance("SHA-256").digest(baseData.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to generate transaction ID", e);
+            String error = "Error generating transaction ID. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new NoSuchAlgorithmException(error, e);
         }
     }
 

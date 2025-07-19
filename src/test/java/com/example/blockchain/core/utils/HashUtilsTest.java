@@ -3,6 +3,8 @@ package com.example.blockchain.core.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -11,12 +13,14 @@ import org.junit.jupiter.api.Test;
 import com.example.blockchain.core.model.Block;
 import com.example.blockchain.core.model.Transaction;
 import com.example.blockchain.core.utils.HashUtils;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 
 /**
  * Test class for HashUtils functionality
  * Verifies hash computation methods and consistency
  */
 class HashUtilsTest {
+    private static final org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(HashUtilsTest.class);
 
     /**
      * Test that both hash computation methods produce identical results
@@ -28,15 +32,22 @@ class HashUtilsTest {
         Block<MockTransaction> block = new Block<>(1, "0", System.currentTimeMillis(), new ArrayList<>(), 0, "dummy");
 
         // Compute hash using block object
-        String hash1 = HashUtils.computeHash(block);
-
+        String hash1;
         // Compute hash using block components
-        String hash2 = HashUtils.computeHash(
-                block.getIndex(),
-                block.getPreviousHash(),
-                block.getTimestamp(),
-                block.getTransactions(),
-                block.getNonce());
+        String hash2;
+        try {
+            hash1 = HashUtils.computeHash(block);
+            hash2 = HashUtils.computeHash(
+                    block.getIndex(),
+                    block.getPreviousHash(),
+                    block.getTimestamp(),
+                    block.getTransactions(),
+                    block.getNonce());
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            String error = "Failed to compute block hash: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
 
         assertEquals(hash1, hash2, "Hashes from both compute methods should match");
     }

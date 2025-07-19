@@ -6,19 +6,23 @@
 package com.example.blockchain.wallet.core;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import org.springframework.stereotype.Component;
 
 import com.example.blockchain.core.utils.JsonUtils;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Component
 public class WalletList {
     // Thread-safe map storing user wallet entries indexed by user ID
     private Map<String, WalletEntry> wallets = new ConcurrentHashMap<>();
+    private static final org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(WalletList.class);
 
     /**
      * Adds a new wallet entry to the list.
@@ -135,13 +139,19 @@ public class WalletList {
      * 
      * @param file The destination file to write the JSON data
      * @return Success message with the file path
-     * @throws RuntimeException if export fails
+     * @throws IOException if writing to the file fails
      */
-    public String exportToJson(File file) {
+    public String exportToJson(File file) throws IOException {
         try {
             JsonUtils.writeToFile(this, file);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to export wallet list to JSON file: " + file.getAbsolutePath(), e);
+        } catch (NullPointerException e) {
+            logger.error("Failed to export wallet list to JSON file: " + file.getAbsolutePath(), e);
+            String error = "Failed to export wallet list to JSON file: " + file.getAbsolutePath();
+            throw new NullPointerException(error);
+        } catch (IOException e) {
+            logger.error("Failed to export wallet list to JSON file: " + file.getAbsolutePath(), e);
+            String error = "Failed to export wallet list to JSON file: " + file.getAbsolutePath();
+            throw new IOException(error, e);
         }
         return "Wallet list exported to " + file.getAbsolutePath();
     }

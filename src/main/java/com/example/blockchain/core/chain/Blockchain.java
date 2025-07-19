@@ -1,6 +1,7 @@
 package com.example.blockchain.core.chain;
 
 import java.io.File;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import com.example.blockchain.consensus.Consensus;
@@ -78,9 +79,15 @@ public class Blockchain<T extends Transaction> {
      * @return true if transaction was valid and added, false otherwise
      */
     public boolean addTransaction(T tx) {
-        if (tx.isValid()){
-            pendingTransactions.add(tx);
-            return true;
+        try {
+            if (tx.isValid()){
+                pendingTransactions.add(tx);
+                return true;
+            }
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed to Validate Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
         }
         return false;
     }

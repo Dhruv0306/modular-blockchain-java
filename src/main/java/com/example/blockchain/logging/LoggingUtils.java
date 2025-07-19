@@ -37,7 +37,8 @@ public class LoggingUtils {
             // Log the error and return false to indicate failure
             org.slf4j.Logger rootLogger = BlockchainLoggerFactory.getLogger(LoggingUtils.class);
             rootLogger.error("Failed to set log level: " + e.getMessage(), e);
-            return false;
+            String error = "Failed to set log level: " + e.getMessage();
+            throw new RuntimeException(error, e);
         }
     }
 
@@ -93,6 +94,8 @@ public class LoggingUtils {
             // If this fails, we don't want to prevent application startup
             org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(LoggingUtils.class);
             logger.warn("Failed to configure logging from blockchain config: {}", e.getMessage());
+            String error = "Failed to configure logging from blockchain config: " + e.getMessage();
+            throw new RuntimeException(error, e);
         }
     }
 }

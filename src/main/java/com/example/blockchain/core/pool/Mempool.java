@@ -1,7 +1,9 @@
 package com.example.blockchain.core.pool;
 
 import com.example.blockchain.core.model.Transaction;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -9,12 +11,19 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class Mempool {
+    private static final org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(Mempool.class);
 
     private final Map<String, Transaction> transactionMap = new ConcurrentHashMap<>();
 
     public boolean addTransaction(Transaction tx) {
         if (transactionMap.containsKey(tx.getHash())) return false;
-        if (!tx.isValid()) return false;
+        try {
+            if (!tx.isValid()) return false;
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed To varify Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
         transactionMap.put(tx.getHash().toString(), tx);
         return true;
     }

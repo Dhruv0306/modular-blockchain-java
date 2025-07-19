@@ -1,8 +1,11 @@
 package com.example.blockchain.api;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
@@ -42,7 +45,7 @@ import jakarta.annotation.PreDestroy;
 
 /**
  * REST Controller for managing blockchain wallets.
- * Provides endpoints for wallet CRUD operations including creation, retrieval, 
+ * Provides endpoints for wallet CRUD operations including creation, retrieval,
  * import/export functionality and deletion. Implements wallet persistence
  * to maintain state across application restarts.
  */
@@ -84,7 +87,7 @@ public class WalletController {
      * Creates a new wallet or returns existing one for a user.
      * Generates and provides downloadable public/private key pairs.
      * 
-     * @param userId Unique identifier for the user
+     * @param userId   Unique identifier for the user
      * @param userName Display name for the user
      * @return MultiValueMap containing wallet details and key files
      * @throws Exception if wallet creation or key generation fails
@@ -170,7 +173,14 @@ public class WalletController {
     public List<WalletDTO> list() {
         logger.debug("Retrieving list of all wallets");
         return walletList.getAllWalletEntries().stream()
-                .map(WalletDTO::new)
+                .map(t -> {
+                    try {
+                        return new WalletDTO(t);
+                    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                        logger.error("Error retrieving wallet data", e.getMessage());
+                        return new WalletDTO();
+                    }
+                })
                 .collect(Collectors.toList());
     }
 
@@ -208,7 +218,14 @@ public class WalletController {
         logger.debug("Retrieving public key for user ID: {}", userId);
         Wallet wallet = walletList.getWalletByUserID(userId).wallet;
         if (wallet != null) {
-            PublicKey publicKey = wallet.getPublicKey();
+            PublicKey publicKey;
+            try {
+                publicKey = wallet.getPublicKey();
+            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                logger.error("Error retrieving public key for user ID: " + userId + ". " + e.getMessage());
+                String error = "Error retrieving public key for user ID: " + userId + ". " + e.getMessage();
+                return error;
+            }
             String base64 = Base64.getEncoder().encodeToString(publicKey.getEncoded());
             return "-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----";
         } else {
@@ -221,7 +238,7 @@ public class WalletController {
      * Exports wallet data after validating ownership.
      * Requires private key authentication.
      * 
-     * @param userId User identifier
+     * @param userId     User identifier
      * @param privateKey Private key file for authentication
      * @return Wallet data file and status messages
      */
@@ -247,7 +264,16 @@ public class WalletController {
         }
 
         // Read Private Key from the file provided
-        String privateKeyString = WalletUtils.readPrivateKeyFromFile(privateKey);
+        String privateKeyString;
+        try {
+            privateKeyString = WalletUtils.readPrivateKeyFromFile(privateKey);
+        } catch (IOException e) {
+            logger.error("Error reading private key file: {}", e.getMessage());
+            MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
+            errorBody.add("Error", "Failed to read private key file: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorBody);
+        }
+
         if (privateKeyString == null || privateKeyString.isEmpty()) {
             logger.warn("Private key file is empty.");
             MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
@@ -256,10 +282,18 @@ public class WalletController {
         }
 
         // Validate the private key
-        if (!WalletUtils.isPrivateKeyVlid(userId, wallet, privateKeyString)) {
-            logger.warn("Invalid private key provided for user ID: {}", userId);
+        try {
+            if (!WalletUtils.isPrivateKeyVlid(userId, wallet, privateKeyString)) {
+                logger.warn("Invalid private key provided for user ID: {}", userId);
+                MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
+                errorBody.add("Error", "Invalid private key provided for User ID: " + userId);
+                return ResponseEntity.badRequest().body(errorBody);
+            }
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            logger.error("Error Validating Privatekey. \nError: ", e.getMessage());
+            String error = "Error Validating Privatekey. \nError: " + e.getMessage();
             MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
-            errorBody.add("Error", "Invalid private key provided for User ID: " + userId);
+            errorBody.add("Error", error);
             return ResponseEntity.badRequest().body(errorBody);
         }
 
@@ -327,7 +361,7 @@ public class WalletController {
      * Deletes wallet after ownership verification.
      * Requires private key authentication.
      * 
-     * @param userId User identifier
+     * @param userId     User identifier
      * @param privateKey Private key file for authentication
      * @return Success/failure status message
      */
@@ -346,15 +380,31 @@ public class WalletController {
         }
 
         // Read Private Key from the file provided
-        String privateKeyString = WalletUtils.readPrivateKeyFromFile(privateKey);
+        String privateKeyString;
+        try {
+            privateKeyString = WalletUtils.readPrivateKeyFromFile(privateKey);
+        } catch (IOException e) {
+            logger.error("Error reading private key file: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Failed to read private key file: " + e.getMessage());
+        }
         if (privateKeyString == null || privateKeyString.isEmpty()) {
             logger.warn("Private key file is empty.");
             return ResponseEntity.badRequest().body("Private key file is empty.");
         }
 
         // Validate the provided private key matches the wallet
-        if (!WalletUtils.isPrivateKeyVlid(userId, wallet, privateKeyString)) {
-            return ResponseEntity.status(403).body("Private key does not match. Deletion unauthorized.");
+        try {
+            if (!WalletUtils.isPrivateKeyVlid(userId, wallet, privateKeyString)) {
+                return ResponseEntity.status(403).body("Private key does not match. Deletion unauthorized.");
+            }
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Error validating private key: " + e.getMessage());
+            String error = "Error validating private key: " + e.getMessage();
+            return ResponseEntity.status(500).body(error);
+        } catch (InvalidKeySpecException e) {
+            logger.error("Error validating private key: " + e.getMessage());
+            String error = "Error validating private key: " + e.getMessage();
+            return ResponseEntity.status(500).body(error);
         }
 
         // Remove the wallet if validation passes

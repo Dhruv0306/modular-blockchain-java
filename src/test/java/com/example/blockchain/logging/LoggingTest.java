@@ -193,8 +193,7 @@ class LoggingTest {
     @Test
     void testSetLogLevelException() {
         // Force an exception by using null logger name
-        boolean result = LoggingUtils.setLogLevel(null, "DEBUG");
-        assertFalse(result);
+        assertThrows(RuntimeException.class, () -> LoggingUtils.setLogLevel(null, "DEBUG"));
     }
 
     /**

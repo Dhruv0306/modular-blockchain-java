@@ -8,6 +8,8 @@ import org.mockito.Mockito;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,23 +45,38 @@ class WalletUtilsTest {
     @Test
     void testValidPrivateKey() {
         // Test with valid inputs
-        boolean result = WalletUtils.isPrivateKeyVlid(userId, mockWallet, encodedPrivateKey);
+        boolean result;
+        try {
+            result = WalletUtils.isPrivateKeyVlid(userId, mockWallet, encodedPrivateKey);
+        }
+        catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            fail("Unexpected exception: " + e.getMessage());
+            return;
+        }
         assertTrue(result, "Valid private key should return true");
     }
 
     @Test
     void testInvalidUserId() {
         // Test with mismatched user ID
-        boolean result = WalletUtils.isPrivateKeyVlid("wrongUser", mockWallet, encodedPrivateKey);
-        assertFalse(result, "Invalid user ID should return false");
+        try {
+            boolean result = WalletUtils.isPrivateKeyVlid("wrongUser", mockWallet, encodedPrivateKey);
+            assertFalse(result, "Invalid user ID should return false");
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
     }
 
     @Test
     void testInvalidPrivateKey() {
         // Test with invalid private key
         String wrongKey = Base64.getEncoder().encodeToString("wrongKey".getBytes());
-        boolean result = WalletUtils.isPrivateKeyVlid(userId, mockWallet, wrongKey);
-        assertFalse(result, "Invalid private key should return false");
+        try {
+            boolean result = WalletUtils.isPrivateKeyVlid(userId, mockWallet, wrongKey);
+            assertFalse(result, "Invalid private key should return false");
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
     }
 
     @Test
@@ -110,7 +127,8 @@ class WalletUtilsTest {
     @Test
     void testInvalidBase64PrivateKey() {
         // Test with invalid Base64 encoding
-        boolean result = WalletUtils.isPrivateKeyVlid(userId, mockWallet, "not-valid-base64!");
-        assertFalse(result, "Invalid Base64 encoding should return false");
+        assertThrows(IllegalArgumentException.class, () -> {
+            WalletUtils.isPrivateKeyVlid(userId, mockWallet, "not-valid-base64!");
+        }, "Invalid Base64 encoding should throw IllegalArgumentException");
     }
 }

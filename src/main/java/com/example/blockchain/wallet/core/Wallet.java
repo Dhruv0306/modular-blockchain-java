@@ -1,5 +1,6 @@
 package com.example.blockchain.wallet.core;
 
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -8,8 +9,10 @@ import java.security.spec.*;
 import java.util.Base64;
 
 /**
- * A digital wallet implementation that manages cryptographic keys and digital signatures.
- * Provides functionality for RSA key pair generation, secure key storage, and digital signing operations.
+ * A digital wallet implementation that manages cryptographic keys and digital
+ * signatures.
+ * Provides functionality for RSA key pair generation, secure key storage, and
+ * digital signing operations.
  * Uses 2048-bit RSA keys and SHA-256 with RSA for signatures.
  */
 public class Wallet {
@@ -30,6 +33,8 @@ public class Wallet {
     /** Base64-encoded public key for persistent storage */
     private String encodedPublicKey;
 
+    private static org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(Wallet.class);
+
     /**
      * Default constructor required for JSON deserialization.
      * Creates an empty wallet without initializing keys.
@@ -42,7 +47,8 @@ public class Wallet {
      * 
      * @param userId   Unique identifier for the wallet owner
      * @param userName Display name of the wallet owner
-     * @throws NoSuchAlgorithmException if the RSA algorithm implementation is not available
+     * @throws NoSuchAlgorithmException if the RSA algorithm implementation is not
+     *                                  available
      */
     public Wallet(String userId, String userName) throws NoSuchAlgorithmException {
         this.userId = userId;
@@ -65,32 +71,61 @@ public class Wallet {
     }
 
     /**
-     * Retrieves the wallet's RSA private key, initializing from encoded storage if necessary.
+     * Retrieves the wallet's RSA private key, initializing from encoded storage if
+     * necessary.
      * 
      * @return The wallet's RSA private key for signing operations
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
      */
     @JsonIgnore
-    public PrivateKey getPrivateKey() {
-        ensureKeysInitialized();
+    public PrivateKey getPrivateKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        try {
+            ensureKeysInitialized();
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Error initializing keys: " + e.getMessage());
+            String error = "Error initializing keys: " + e.getMessage();
+            throw new NoSuchAlgorithmException(error, e);
+        } catch (InvalidKeySpecException e) {
+            logger.error("Error initializing keys: " + e.getMessage());
+            String error = "Error initializing keys: " + e.getMessage();
+            throw new InvalidKeySpecException(error, e);
+        }
         return keyPair.getPrivate();
     }
 
     /**
-     * Retrieves the wallet's RSA public key, initializing from encoded storage if necessary.
+     * Retrieves the wallet's RSA public key, initializing from encoded storage if
+     * necessary.
      * 
      * @return The wallet's RSA public key for verification
+     * @throws NoSuchAlgorithmException 
+     * @throws InvalidKeySpecException 
      */
     @JsonIgnore
-    public PublicKey getPublicKey() {
-        ensureKeysInitialized();
+    public PublicKey getPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        try {
+            ensureKeysInitialized();
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Error initializing keys: " + e.getMessage());
+            String error = "Error initializing keys: " + e.getMessage();
+            throw new NoSuchAlgorithmException(error, e);
+        } catch (InvalidKeySpecException e) {
+            logger.error("Error initializing keys: " + e.getMessage());
+            String error = "Error initializing keys: " + e.getMessage();
+            throw new InvalidKeySpecException(error, e);
+        }
         return keyPair.getPublic();
     }
 
     /**
      * Initializes the key pair from encoded strings if not already loaded.
      * Handles PEM format by stripping headers and whitespace before decoding.
+     * 
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
      */
-    private void ensureKeysInitialized() {
+    private void ensureKeysInitialized() throws NoSuchAlgorithmException, InvalidKeySpecException {
         if (keyPair == null && encodedPrivateKey != null && encodedPublicKey != null) {
             try {
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -116,8 +151,18 @@ public class Wallet {
                 PublicKey publicKey = keyFactory.generatePublic(publicSpec);
 
                 this.keyPair = new KeyPair(publicKey, privateKey);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to restore RSA key pair from encoded storage", e);
+            } catch (NullPointerException e) {
+                logger.error("Error initializing keys: " + e.getMessage());
+                String error = "Error initializing keys: " + e.getMessage();
+                throw new NullPointerException(error);
+            } catch (NoSuchAlgorithmException e) {
+                logger.error("Error initializing keys: " + e.getMessage());
+                String error = "Error initializing keys: " + e.getMessage();
+                throw new NoSuchAlgorithmException(error, e);
+            } catch (InvalidKeySpecException e) {
+                logger.error("Error initializing keys: " + e.getMessage());
+                String error = "Error initializing keys: " + e.getMessage();
+                throw new InvalidKeySpecException(error, e);
             }
         }
     }

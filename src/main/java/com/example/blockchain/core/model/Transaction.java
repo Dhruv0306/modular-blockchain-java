@@ -1,5 +1,7 @@
 package com.example.blockchain.core.model;
 
+import java.security.NoSuchAlgorithmException;
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -66,9 +68,10 @@ public interface Transaction {
      * - Transaction complies with business rules
      * 
      * @return true if the transaction is valid, false otherwise
+     * @throws NoSuchAlgorithmException 
      * @throws IllegalStateException if validation cannot be performed
      */
-    boolean isValid();
+    boolean isValid() throws NoSuchAlgorithmException;
 
     /**
      * Gets the sender of this transaction.

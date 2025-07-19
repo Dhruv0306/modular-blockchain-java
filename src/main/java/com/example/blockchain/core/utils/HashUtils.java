@@ -1,6 +1,8 @@
 package com.example.blockchain.core.utils;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -15,16 +17,22 @@ public class HashUtils {
     public static <T extends Transaction> String computeHash(Block<T> block) {
         // logger.info("Computing hash for block index: {}, previous hash: {}, timestamp: {}, nonce: {}",
         //         block.getIndex(), block.getPreviousHash(), block.getTimestamp(), block.getNonce());
-        return computeHash(
-                block.getIndex(),
-                block.getPreviousHash(),
-                block.getTimestamp(),
-                block.getTransactions(),
-                block.getNonce());
+        try {
+            return computeHash(
+                    block.getIndex(),
+                    block.getPreviousHash(),
+                    block.getTimestamp(),
+                    block.getTransactions(),
+                    block.getNonce());
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            String error = "Failed to compute block hash: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
     }
 
     public static <T extends Transaction> String computeHash(int index, String prevHash, long timestamp, List<T> txs,
-            int nonce) {
+            int nonce) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         // logger.info("Computing hash for block index: {}, previous hash: {}, timestamp: {}, nonce: {}",
         //         index, prevHash, timestamp, nonce);
         try {
@@ -51,10 +59,10 @@ public class HashUtils {
             return sb.toString();
         } catch (java.security.NoSuchAlgorithmException e) {
             logger.error("SHA-256 algorithm not available for hash computation", e);
-            throw new RuntimeException("Failed to compute block hash: SHA-256 algorithm not available", e);
+            throw new NoSuchAlgorithmException("Failed to compute block hash: SHA-256 algorithm not available", e);
         } catch (java.io.UnsupportedEncodingException e) {
             logger.error("UTF-8 encoding not supported for hash computation", e);
-            throw new RuntimeException("Failed to compute block hash: UTF-8 encoding not supported", e);
+            throw new UnsupportedEncodingException("Failed to compute block hash: UTF-8 encoding not supported");
         } catch (Exception e) {
             logger.error("Unexpected error computing block hash for block with index " + index, e);
             throw new RuntimeException("Failed to compute block hash: " + e.getMessage(), e);

@@ -1,6 +1,8 @@
 package com.example.blockchain.core.pool;
 
 import com.example.blockchain.core.model.Transaction;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -8,6 +10,7 @@ import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +21,7 @@ class MempoolTest {
     private Transaction validTransaction;
     private Transaction invalidTransaction;
     private Transaction duplicateTransaction;
+    private static final org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(MempoolTest.class);
 
     @BeforeEach
     void setUp() {
@@ -26,17 +30,35 @@ class MempoolTest {
         // Create a valid transaction mock
         validTransaction = Mockito.mock(Transaction.class);
         when(validTransaction.getHash()).thenReturn("valid_hash");
-        when(validTransaction.isValid()).thenReturn(true);
+        try {
+            when(validTransaction.isValid()).thenReturn(true);
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed To varify Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
         
         // Create an invalid transaction mock
         invalidTransaction = Mockito.mock(Transaction.class);
         when(invalidTransaction.getHash()).thenReturn("invalid_hash");
-        when(invalidTransaction.isValid()).thenReturn(false);
+        try {
+            when(invalidTransaction.isValid()).thenReturn(false);
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed To varify Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
         
         // Create a duplicate transaction mock with same hash as valid transaction
         duplicateTransaction = Mockito.mock(Transaction.class);
         when(duplicateTransaction.getHash()).thenReturn("valid_hash");
-        when(duplicateTransaction.isValid()).thenReturn(true);
+        try {
+            when(duplicateTransaction.isValid()).thenReturn(true);
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed To varify Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
     }
 
     @Test
@@ -136,7 +158,13 @@ class MempoolTest {
         // Create another valid transaction with different hash
         Transaction anotherTransaction = Mockito.mock(Transaction.class);
         when(anotherTransaction.getHash()).thenReturn("another_hash");
-        when(anotherTransaction.isValid()).thenReturn(true);
+        try {
+            when(anotherTransaction.isValid()).thenReturn(true);
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed To varify Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
         mempool.addTransaction(anotherTransaction);
         
         // Act
@@ -154,13 +182,25 @@ class MempoolTest {
         // Create another valid transaction with different hash
         Transaction anotherTransaction = Mockito.mock(Transaction.class);
         when(anotherTransaction.getHash()).thenReturn("another_hash");
-        when(anotherTransaction.isValid()).thenReturn(true);
+        try {
+            when(anotherTransaction.isValid()).thenReturn(true);
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed To varify Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
         mempool.addTransaction(anotherTransaction);
         
         // Create a third transaction that won't be removed
         Transaction thirdTransaction = Mockito.mock(Transaction.class);
         when(thirdTransaction.getHash()).thenReturn("third_hash");
-        when(thirdTransaction.isValid()).thenReturn(true);
+        try {
+            when(thirdTransaction.isValid()).thenReturn(true);
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed To varify Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
         mempool.addTransaction(thirdTransaction);
         
         // Create list of transactions to remove

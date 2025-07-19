@@ -3,10 +3,12 @@ package com.example.blockchain.core.chain;
 import com.example.blockchain.consensus.ProofOfWork;
 import com.example.blockchain.core.chain.Blockchain;
 import com.example.blockchain.core.model.Block;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 import com.example.blockchain.transactions.FinancialTransaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,6 +21,7 @@ public class BlockchainEdgeCasesTest {
 
     private Blockchain<FinancialTransaction> blockchain;
     private ProofOfWork<FinancialTransaction> pow;
+    private static final org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(BlockchainEdgeCasesTest.class);
 
     /**
      * Sets up a fresh blockchain and proof of work instance before each test.
@@ -57,8 +60,15 @@ public class BlockchainEdgeCasesTest {
     @Test
     void testDuplicateTransactions() {
         // Create two separate but identical transactions
-        FinancialTransaction tx1 = new FinancialTransaction("Alice", "Bob", 100);
-        FinancialTransaction tx2 = new FinancialTransaction("Alice", "Bob", 100);
+        FinancialTransaction tx1, tx2;
+        try {
+            tx1 = new FinancialTransaction("Alice", "Bob", 100);
+            tx2 = new FinancialTransaction("Alice", "Bob", 100);
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Error generating transaction. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
         
         // Add both transactions to pending list
         blockchain.addTransaction(tx1);
@@ -99,7 +109,13 @@ public class BlockchainEdgeCasesTest {
         // Add a small number of transactions for testing purposes
         int maxTransactions = 5;
         for (int i = 0; i < maxTransactions; i++) {
-            blockchain.addTransaction(new FinancialTransaction("User" + i, "Receiver" + i, i + 1));
+            try {
+                blockchain.addTransaction(new FinancialTransaction("User" + i, "Receiver" + i, i + 1));
+            } catch (NoSuchAlgorithmException e) {
+                String error = "Error generating transaction. \nError: " + e.getMessage();
+                logger.error(error, e);
+                throw new RuntimeException(error, e);
+            }
         }
         
         // Verify all transactions were added to pending list

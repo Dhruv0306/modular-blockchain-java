@@ -1,6 +1,7 @@
 package com.example.blockchain.core.utils;
 
 import com.example.blockchain.core.chain.Blockchain;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 import com.example.blockchain.transactions.FinancialTransaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +29,7 @@ class PersistenceManagerTest {
     private Blockchain<FinancialTransaction> blockchain;
     private String testDirectory;
     private String testFilename = "test-chain.json";
+    private static final org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(PersistenceManagerTest.class);
     
     /**
      * Set up test environment before each test
@@ -35,7 +38,13 @@ class PersistenceManagerTest {
     @BeforeEach
     void setUp() {
         blockchain = new Blockchain<>();
-        blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
+        try {
+            blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Failed to create Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
         testDirectory = tempDir.toString();
     }
     

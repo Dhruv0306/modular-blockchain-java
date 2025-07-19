@@ -1,5 +1,7 @@
 package com.example.blockchain.consensus;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 import com.example.blockchain.core.config.ChainConfig;
@@ -92,7 +94,13 @@ public class ProofOfWork<T extends Transaction> implements Consensus<T> {
         long startTime = System.currentTimeMillis();
         do {
             // Try new hash with incremented nonce
-            hash = HashUtils.computeHash(index, previousBlock.getHash(), timestamp, txs, nonce);
+            try {
+                hash = HashUtils.computeHash(index, previousBlock.getHash(), timestamp, txs, nonce);
+            } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+                String error = "Error computing hash. \nError: " + e.getMessage();
+                logger.error(error, e);
+                throw new RuntimeException(error, e);
+            }
             nonce++;
 
             // Log progress every 100,000 attempts

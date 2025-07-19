@@ -12,6 +12,7 @@ import com.example.blockchain.logging.BlockchainLoggerFactory;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,8 +59,14 @@ public class DemoRunner {
 
         // Create initial genesis transactions - allocate initial funds
         List<FinancialTransaction> genesisTransactions = new ArrayList<>();
-        genesisTransactions.add(new FinancialTransaction("Genesis", "Alice", 1000, "U000", "U124"));
-        genesisTransactions.add(new FinancialTransaction("Genesis", "Bob", 1000, "U000", "U123"));
+        try {
+            genesisTransactions.add(new FinancialTransaction("Genesis", "Alice", 1000, "U000", "U124"));
+            genesisTransactions.add(new FinancialTransaction("Genesis", "Bob", 1000, "U000", "U123"));
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Error Creating Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
 
         // Create custom genesis block factory with initial configuration
         CustomGenesisBlockFactory<FinancialTransaction> customFactory = CustomGenesisBlockFactory
@@ -115,8 +122,14 @@ public class DemoRunner {
         }
 
         // Add sample transactions to pending pool
-        blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100, "U124", "U123"));
-        blockchain.addTransaction(new FinancialTransaction("Charlie", "Dave", 75, "U125", "U126"));
+        try {
+            blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100, "U124", "U123"));
+            blockchain.addTransaction(new FinancialTransaction("Charlie", "Dave", 75, "U125", "U126"));
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Error Creating Transection. \nError: " + e.getMessage();
+            logger.error(error, e);
+            throw new RuntimeException(error, e);
+        }
 
         // Mine a new block with pending transactions
         logger.info("\nMining block... (difficulty=" + config.getDifficulty() + ")");

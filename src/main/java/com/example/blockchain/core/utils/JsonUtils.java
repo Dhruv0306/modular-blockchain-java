@@ -2,12 +2,15 @@ package com.example.blockchain.core.utils;
 
 import com.example.blockchain.core.chain.Blockchain;
 import com.example.blockchain.core.model.Transaction;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
+import com.example.blockchain.logging.LoggingUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Utility class for JSON serialization and deserialization operations
@@ -16,22 +19,30 @@ import java.io.File;
 public class JsonUtils {
     // ObjectMapper instance configured for pretty printing and date/time handling
     static final ObjectMapper mapper = new ObjectMapper();
+    static final org.slf4j.Logger logger = BlockchainLoggerFactory.getLogger(JsonUtils.class);
 
     static {
         // Register JavaTimeModule for proper datetime serialization
         mapper.registerModule(new JavaTimeModule());
         // Enable pretty printing of JSON output
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        LoggingUtils.configureLoggingFromConfig();
     }
 
     /**
      * Writes an object to a JSON file
      * @param object The object to serialize
      * @param file The file to write to
-     * @throws Exception if writing fails
+     * @throws IOException if writing fails
      */
-    public static <T> void writeToFile(T object, File file) throws Exception {
-        mapper.writeValue(file, object);
+    public static <T> void writeToFile(T object, File file) throws IOException{
+        try {
+            mapper.writeValue(file, object);
+        } catch (IOException e) {
+            logger.error("Failed to write object to JSON file: " + file.getAbsolutePath(), e);
+            String error = "Failed to write object to JSON file: " + file.getAbsolutePath();
+            throw new IOException(error, e);
+        }
     }
 
     /**

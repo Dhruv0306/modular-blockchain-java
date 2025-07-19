@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 /**
@@ -111,8 +112,14 @@ public class BlockchainController {
                 return "Error processing transaction: " + e.getMessage();
             }
         } else {
-            tx = new FinancialTransaction(tx.getSender(), tx.getReceiver(), tx.getAmount(), tx.getSenderID(),
-                    tx.getReceiverID());
+            try {
+                tx = new FinancialTransaction(tx.getSender(), tx.getReceiver(), tx.getAmount(), tx.getSenderID(),
+                        tx.getReceiverID());
+            } catch (NoSuchAlgorithmException e) {
+                String error = "Failed to create transaction: " + e.getMessage();
+                logger.error(error, e);
+                return error;
+            }
         }
         boolean added = mempool.addTransaction(tx);
         return added ? "Transaction added to MemPool." : "Invalid transaction.";

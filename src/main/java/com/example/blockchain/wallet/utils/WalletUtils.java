@@ -73,8 +73,9 @@ public class WalletUtils {
      * @param fileName Desired name for the temporary file
      * @param isPublic Flag indicating key type (true=public, false=private)
      * @return File object referencing the created temporary key file
+     * @throws IOException 
      */
-    public static File generateTempKeyFile(Key key, String fileName, boolean isPublic) {
+    public static File generateTempKeyFile(Key key, String fileName, boolean isPublic) throws IOException {
         // Configure logging using external configuration
         LoggingUtils.configureLoggingFromConfig();
 
@@ -105,6 +106,8 @@ public class WalletUtils {
             if (tempFile != null && tempFile.exists()) {
                 tempFile.delete();
             }
+            String error = "Failed to create temporary key file: " + fileName + " \nError: " + e.getMessage();
+            throw new IOException(error, e);
         }
         return tempFile;
     }
@@ -118,9 +121,11 @@ public class WalletUtils {
      * @param wallet     Reference wallet for validation
      * @param privateKey Base64 encoded private key to validate
      * @return true if key matches wallet and user ID is valid
+     * @throws NoSuchAlgorithmException 
+     * @throws InvalidKeySpecException 
      * @throws IllegalArgumentException for null/empty inputs
      */
-    public static boolean isPrivateKeyVlid(String userId, Wallet wallet, String privateKey) {
+    public static boolean isPrivateKeyVlid(String userId, Wallet wallet, String privateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
         // Validate input parameters
         if (userId == null || userId.isEmpty()) {
             throw new IllegalArgumentException("User ID cannot be null or empty");
@@ -151,9 +156,18 @@ public class WalletUtils {
             }
             // Return the validation result
             return isValid;
-        } catch (Exception e) {
+        } catch (NullPointerException e) {
             logger.error("Error validating private key for user: {}", userId, e);
-            return false;
+            String error = "Error validating private key for user: " + userId + " \nError: " + e.getMessage();
+            throw new NullPointerException(error);
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Error validating private key for user: {}", userId, e);
+            String error = "Error validating private key for user: " + userId + " \nError: " + e.getMessage();
+            throw new NoSuchAlgorithmException(error, e);
+        } catch (InvalidKeySpecException e) {
+            logger.error("Error validating private key for user: {}", userId, e);
+            String error = "Error validating private key for user: " + userId + " \nError: " + e.getMessage();
+            throw new InvalidKeySpecException(error, e);
         }
     }
 
@@ -165,8 +179,11 @@ public class WalletUtils {
      * @param wallet Source wallet to export
      * @param userId Owner's identifier for the wallet
      * @return Temporary File containing JSON wallet data, null if export fails
+     * @throws IOException 
+     * @throws NoSuchAlgorithmException 
+     * @throws InvalidKeySpecException 
      */
-    public static File exportWalletData(Wallet wallet, String userId) {
+    public static File exportWalletData(Wallet wallet, String userId) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         // Configure logging using external configuration
         LoggingUtils.configureLoggingFromConfig();
         logger.info("Exporting wallet data for user: {}", userId);
@@ -192,7 +209,16 @@ public class WalletUtils {
 
         } catch (IOException e) {
             logger.error("Failed to export wallet data for user: {}", userId, e);
-            return null;
+            String error = "Failed to export wallet data for user: " + userId + " \nError: " + e.getMessage();
+            throw new IOException(error, e);
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Failed to export wallet data for user: {} \nError {}", userId, e.getMessage());
+            String error = "Failed to export wallet data for user: " + userId + " \nError: " + e.getMessage();
+            throw new NoSuchAlgorithmException(error, e);
+        } catch (InvalidKeySpecException e) {
+            logger.error("Failed to export wallet data for user: {} \nError {}", userId, e.getMessage());
+            String error = "Failed to export wallet data for user: " + userId + " \nError: " + e.getMessage();
+            throw new InvalidKeySpecException(error, e);
         }
     }
 
@@ -203,9 +229,12 @@ public class WalletUtils {
      *
      * @param file JSON file containing serialized wallet data
      * @return Reconstructed Wallet instance
+     * @throws NoSuchAlgorithmException 
+     * @throws InvalidKeySpecException 
+     * @throws IOException 
      * @throws RuntimeException for any import failures
      */
-    public static Wallet importWalletFromFile(MultipartFile file) {
+    public static Wallet importWalletFromFile(MultipartFile file) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
         Wallet wallet = null; // Initialize wallet object
 
         try {
@@ -246,13 +275,16 @@ public class WalletUtils {
 
         } catch (NoSuchAlgorithmException e) {
             logger.error("RSA algorithm not available", e);
-            throw new RuntimeException("Failed to initialize key factory", e);
+            String error = "RSA algorithm not available \nError: " + e.getMessage();
+            throw new NoSuchAlgorithmException(error, e);
         } catch (InvalidKeySpecException e) {
             logger.error("Invalid key specification while importing wallet", e);
-            throw new RuntimeException("Failed to generate keys from imported data", e);
+            String error = "Invalid key specification while importing wallet \nError: " + e.getMessage();
+            throw new InvalidKeySpecException(error, e);
         } catch (IOException e) {
             logger.error("Error reading wallet file data", e);
-            throw new RuntimeException("Failed to process wallet import file", e);
+            String error = "Error reading wallet file data \nError: " + e.getMessage();
+            throw new IOException(error, e);
         }
 
         return wallet;
@@ -278,9 +310,10 @@ public class WalletUtils {
      *
      * @param privateKeyFile File containing the private key
      * @return Base64 encoded private key string
+     * @throws IOException 
      * @throws RuntimeException for invalid formats or read errors
      */
-    public static String readPrivateKeyFromFile(MultipartFile privateKeyFile) {
+    public static String readPrivateKeyFromFile(MultipartFile privateKeyFile) throws IOException {
         // Configure logging using external configuration
         LoggingUtils.configureLoggingFromConfig();
         logger.info("Reading private key from file: {}", privateKeyFile.getOriginalFilename());
@@ -307,12 +340,14 @@ public class WalletUtils {
                     return content.trim();
                 } catch (IllegalArgumentException e) {
                     logger.error("File does not contain a valid Base64 encoded private key", e);
-                    throw new RuntimeException("Invalid private key format", e);
+                    String error = "File does not contain a valid Base64 encoded private key \nError: " + e.getMessage();
+                    throw new IllegalArgumentException(error, e);
                 }
             }
         } catch (IOException e) {
             logger.error("Error reading private key file", e);
-            throw new RuntimeException("Failed to read private key file", e);
+            String error = "Error reading private key file \nError: " + e.getMessage();
+            throw new IOException(error, e);
         }
     }
 }
