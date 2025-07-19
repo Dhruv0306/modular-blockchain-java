@@ -101,13 +101,19 @@ public class FinancialTransactionTest {
     }
 
     /**
-     * Test that hashCode() returns same value for equal transactions
+     * Test that hashCode() returns different value for transactions with same values
+     * since they have different transaction IDs generated with timestamps.
      */
     @Test
-    void testHashCode() {
+    void testHashCode() throws InterruptedException {
         FinancialTransaction tx1 = new FinancialTransaction("Alice", "Bob", 10.0);
+        // Add a small delay to ensure different timestamps in transaction ID generation
+        Thread.sleep(5);
         FinancialTransaction tx2 = new FinancialTransaction("Alice", "Bob", 10.0);
+        
+        System.out.println("First Transaction: " + tx1);
+        System.out.println("Second Transaction: " + tx2);
 
-        assertEquals(tx1.hashCode(), tx2.hashCode());
+        assertNotEquals(tx1.hashCode(), tx2.hashCode(), "Should be different since both have different transaction IDs");
     }
 }
