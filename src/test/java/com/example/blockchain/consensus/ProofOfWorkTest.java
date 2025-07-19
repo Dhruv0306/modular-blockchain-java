@@ -255,6 +255,11 @@ public class ProofOfWorkTest {
         public String getReceiverID() {
             return "MOCK-RECEIVER-" + hashCode(); // Return mock receiver ID
         }
+
+        @Override
+        public Object getHash() {
+            return getTransactionId();
+        }
     }
 
     /**
@@ -301,6 +306,11 @@ public class ProofOfWorkTest {
         @Override
         public String getReceiverID() {
             return "THROWING_MOCK_RECEIVER"; // Return mock receiver ID
+        }
+
+        @Override
+        public Object getHash() {
+            return getTransactionId();
         }
     }
 }

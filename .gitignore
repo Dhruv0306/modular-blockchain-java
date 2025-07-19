@@ -80,3 +80,4 @@ logs/
 # Ignores local blockchain data directory
 data/
 wallet-data/
+test-dir/

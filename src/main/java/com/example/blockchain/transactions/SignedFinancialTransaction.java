@@ -1,6 +1,9 @@
 package com.example.blockchain.transactions;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -168,8 +171,13 @@ public class SignedFinancialTransaction implements SignedTransaction {
      */
     private String generateTransactionId() {
         // Create a deterministic ID based on transaction data + signature + timestamp
-        String baseData = sender + receiver + amount + signature + timestamp;
-        return UUID.nameUUIDFromBytes(baseData.getBytes()).toString();
+        try {
+            String baseData = sender + receiver + amount + signature + timestamp;
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(baseData.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to generate transaction ID", e);
+        }
     }
 
     @Override
@@ -236,7 +244,7 @@ public class SignedFinancialTransaction implements SignedTransaction {
     public boolean verifySignature() {
         try {
             String data = getSummary(); // must match the signed input
-            logger.info("Verifying signature for transaction: " + data);
+            // logger.info("Verifying signature for transaction: " + data);
             return CryptoUtils.verifySignature(data, signature, senderPublicKey);
         } catch (Exception e) {
             return false;
@@ -300,5 +308,9 @@ public class SignedFinancialTransaction implements SignedTransaction {
     public String getEncodedSenderPublicKey() {
         return encodedSenderPublicKey;
     }
-    
+
+    @Override
+    public Object getHash() {
+       return transactionId;
+    }
 }

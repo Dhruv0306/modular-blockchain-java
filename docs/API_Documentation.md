@@ -98,7 +98,7 @@ Retrieves the entire blockchain.
 
 ### Add Transaction
 
-Adds a new transaction to the pending transactions pool.
+Adds a new transaction to the mempool (transaction pool).
 
 - **URL**: `/transactions`
 - **Method**: `POST`
@@ -117,10 +117,12 @@ Adds a new transaction to the pending transactions pool.
 - **Error Response**:
   - **Code**: 400 Bad Request
   - **Content**: `"Invalid transaction."`
+  - **Code**: 409 Conflict
+  - **Content**: `"Duplicate transaction."`
 
 ### Mine Block
 
-Mines a new block with the current pending transactions.
+Mines a new block with transactions from the mempool, up to the configured maximum transactions per block.
 
 - **URL**: `/mine`
 - **Method**: `POST`
@@ -134,7 +136,7 @@ Mines a new block with the current pending transactions.
 
 ### Get Pending Transactions
 
-Retrieves all pending transactions that have not yet been included in a block.
+Retrieves all pending transactions from the mempool that have not yet been included in a block.
 
 - **URL**: `/pending`
 - **Method**: `GET`
@@ -148,13 +150,17 @@ Retrieves all pending transactions that have not yet been included in a block.
       "sender": "Alice",
       "receiver": "Bob",
       "amount": 100,
-      "transactionId": "tx123"
+      "transactionId": "tx123",
+      "senderID": "Alice",
+      "receiverID": "Bob"
     },
     {
       "sender": "Charlie",
       "receiver": "Dave",
       "amount": 50,
-      "transactionId": "tx124"
+      "transactionId": "tx124",
+      "senderID": "Charlie",
+      "receiverID": "Dave"
     }
   ]
   ```
@@ -219,7 +225,8 @@ Retrieves statistics about the blockchain.
   {
     "blockCount": 2,
     "pendingTransactions": 1,
-    "totalTransactions": 3
+    "totalTransactions": 3,
+    "maxTransactionsPerBlock": 10
   }
   ```
 
@@ -378,7 +385,9 @@ Standard financial transaction used in the blockchain.
   "sender": "Alice",
   "receiver": "Bob",
   "amount": 100,
-  "transactionId": "tx123"
+  "transactionId": "tx123",
+  "senderID": "Alice",
+  "receiverID": "Bob"
 }
 ```
 
@@ -392,6 +401,8 @@ Financial transaction with digital signature for enhanced security.
   "receiver": "Bob",
   "amount": 100,
   "transactionId": "tx123",
+  "senderID": "Alice",
+  "receiverID": "Bob",
   "senderPublicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...",
   "signature": "MEUCIQD0lkJH9BqXFwQv7xOJ9w4U8+SY5IGBH0MbXs+B9eKJ0AIgFOeQvqFu...",
   "timestamp": 1625097600000

@@ -57,6 +57,7 @@ The project follows a standard Maven structure:
   - `logging/` - Logging configuration and utilities
   - `api/` - Spring Boot REST API controllers and application
   - `wallet/` - Wallet management components and controllers
+  - `mempool/` - Transaction pool management and processing
 - `src/test/java/com/example/blockchain/` - Test code
 - `docs/` - Documentation
 - `logs/` - Log files (generated at runtime)
@@ -126,6 +127,7 @@ chmod +x run-blockchain.sh
 | `WalletListTest`               | `WalletList`                      | Tests adding, retrieving, and managing multiple wallets.               |
 | `WalletControllerTest`         | `WalletController`                | Tests REST API endpoints for wallet operations and authentication.      |
 | `WalletDTOTest`                | `WalletDTO`                       | Tests wallet data transfer object creation and serialization.          |
+| `MempoolTest`                  | `Mempool`                         | Tests transaction pool operations, deduplication, and thread safety.    |
 
 
 ### Running Tests
@@ -237,6 +239,28 @@ assertTrue(blockchain.isChainValid(), "Chain should be valid after adding a prop
 - Example: `Add ProofOfStake consensus algorithm (#42)`
 
 ## Creating New Modules
+
+### Working with the Mempool
+
+When working with the Mempool (transaction pool) component:
+
+1. Ensure all transaction classes implement the `Transaction` interface properly:
+   - Implement the `getHash()` method to return a unique identifier for the transaction
+   - Make sure the hash is consistent for identical transactions to enable deduplication
+
+2. For transaction deduplication:
+   - Override `equals()` and `hashCode()` in your transaction classes if needed
+   - Ensure the `getHash()` method returns a value that uniquely identifies the transaction
+
+3. When adding new Mempool features:
+   - Maintain thread safety for all operations
+   - Add appropriate unit tests in `MempoolTest`
+   - Test both successful operations and error cases
+
+4. When extending the Mempool:
+   - Consider implementing a custom `Mempool` subclass for specialized behavior
+   - Test with different transaction types to ensure generic type compatibility
+   - Verify proper integration with the `BlockchainController`
 
 ### Working with JSON Serialization and Persistence
 

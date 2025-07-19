@@ -35,6 +35,7 @@ public class ChainConfig {
     private String persistenceDirectory;   // Directory for persistent storage
     private String persistenceFile;        // Filename for persistent storage
     private String persistenceWallatFile; // Filename for wallet persistence
+    private int MAX_TRANSECTIONS_PER_BLOCK; // Number of Maximum Transection in a block
 
     /**
      * Private constructor using default config file.
@@ -131,6 +132,9 @@ public class ChainConfig {
         } else {
             logger.info("Persistence is disabled.");
         }
+
+        // Load Maximum Transection per block from config file or use default
+        MAX_TRANSECTIONS_PER_BLOCK = Integer.parseInt(properties.getProperty("blockchain.max_transactions_per_block", "10"));
     }
 
     /**
@@ -204,5 +208,13 @@ public class ChainConfig {
      */
     public String getPersistenceWalletFile() {
         return persistenceWallatFile;
+    }
+
+    /**
+     * Gets the Maximum number of transections per block
+     * @return MAX_TRANSECTIONS_PER_BLOCK
+     */
+    public int getMaxTransactionsPerBlock() {
+        return MAX_TRANSECTIONS_PER_BLOCK;
     }
 }

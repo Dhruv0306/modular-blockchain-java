@@ -81,6 +81,7 @@ class JsonUtilsTest {
         private String type = "TEST";
         private String senderID;
         private String receiverID;
+        private String hash;
 
         public TestTransaction() {
             // Default constructor for Jackson
@@ -188,6 +189,15 @@ class JsonUtilsTest {
         
         public void setReceiverID(String receiverID) {
             this.receiverID = receiverID;
+        }
+
+        @Override
+        public Object getHash() {
+            return hash != null ? hash : getTransactionId();
+        }
+        
+        public void setHash(String hash) {
+            this.hash = hash;
         }
     }
 

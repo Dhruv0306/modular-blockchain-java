@@ -244,5 +244,10 @@ class GenesisBlockFactoryTest {
         public String getReceiverID() {
             return receiver;
         }
+
+        @Override
+        public Object getHash() {
+            return getTransactionId();
+        }
     }
 }

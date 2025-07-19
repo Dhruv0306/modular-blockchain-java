@@ -60,6 +60,7 @@ This guide explains how to effectively run, analyze, and debug tests for the Mod
 | `WalletListTest`               | `WalletList`                      | Tests adding, retrieving, and managing multiple wallets.               |
 | `WalletControllerTest`         | `WalletController`                | Tests REST API endpoints for wallet operations and authentication.      |
 | `WalletDTOTest`                | `WalletDTO`                       | Tests wallet data transfer object creation and serialization.          |
+| `MempoolTest`                  | `Mempool`                         | Tests transaction pool operations, deduplication, and thread safety.    |
 
 ---
 
@@ -258,6 +259,61 @@ When tests fail, Maven provides:
 4. **Assertion Errors**
    - Use more specific assertions with descriptive messages
    - Consider using assertAll for multiple related assertions
+
+## Testing Mempool Functionality
+
+The project includes tests for the Mempool (transaction pool) component to ensure proper transaction management.
+
+### Key Mempool Tests
+
+1. **Transaction Addition**
+   - Tests adding valid and invalid transactions to the mempool
+   - Verifies transaction validation during addition
+
+2. **Transaction Deduplication**
+   - Tests that duplicate transactions are not added to the mempool
+   - Verifies content-addressable storage using transaction hashes
+
+3. **Transaction Removal**
+   - Tests removing processed transactions from the mempool
+   - Verifies batch removal of multiple transactions
+
+4. **Thread Safety**
+   - Tests concurrent access to the mempool from multiple threads
+   - Ensures thread-safe operations using ConcurrentHashMap
+
+### Example Mempool Test
+
+```java
+@Test
+void testAddAndRemoveTransactions() {
+    // Create a mempool
+    Mempool<FinancialTransaction> mempool = new Mempool<>();
+    
+    // Create test transactions
+    FinancialTransaction tx1 = new FinancialTransaction("Alice", "Bob", 100);
+    FinancialTransaction tx2 = new FinancialTransaction("Charlie", "Dave", 50);
+    
+    // Add transactions to mempool
+    assertTrue(mempool.addTransaction(tx1));
+    assertTrue(mempool.addTransaction(tx2));
+    assertEquals(2, mempool.size());
+    
+    // Get transactions from mempool
+    List<FinancialTransaction> transactions = mempool.getTransactions();
+    assertEquals(2, transactions.size());
+    
+    // Remove transactions from mempool
+    mempool.removeTransactions(Collections.singletonList(tx1));
+    assertEquals(1, mempool.size());
+    assertFalse(mempool.contains(tx1));
+    assertTrue(mempool.contains(tx2));
+    
+    // Clear mempool
+    mempool.clear();
+    assertEquals(0, mempool.size());
+}
+```
 
 ## Testing JSON Serialization and Persistence
 

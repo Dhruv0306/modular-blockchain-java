@@ -148,5 +148,10 @@ class HashUtilsTest {
         public String getReceiverID() {
             return "mock-receiver-id";
         }
+
+        @Override
+        public Object getHash() {
+            return getTransactionId();
+        }
     }
 }

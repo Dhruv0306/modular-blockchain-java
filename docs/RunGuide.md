@@ -266,6 +266,22 @@ run-blockchain.bat --env prod --log DEBUG
 
 ## Advanced Configuration
 
+### Mempool Configuration
+
+The Mempool (transaction pool) can be configured using the `max_transactions_per_block` property, which controls how many transactions can be included in a single block when mining:
+
+```properties
+# Set maximum transactions per block
+max_transactions_per_block=20
+```
+
+Or by using environment variables:
+
+```bash
+set BLOCKCHAIN_MAX_TRANSACTIONS_PER_BLOCK=20
+mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
+```
+
 ### Custom Configuration Files
 
 You can create your own configuration files with custom settings:
@@ -276,6 +292,7 @@ echo "difficulty=3" > my-custom-config.properties
 echo "genesis_hash=CUSTOM_HASH" >> my-custom-config.properties
 echo "persistence.enabled=true" >> my-custom-config.properties
 echo "persistence.file=data/my-custom-chain.json" >> my-custom-config.properties
+echo "max_transactions_per_block=20" >> my-custom-config.properties
 
 # Run with custom configuration
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main" -Dexec.args="my-custom-config.properties"
@@ -298,6 +315,7 @@ int difficulty = config.getDifficulty();
 String genesisHash = config.getGenesisHash();
 boolean persistenceEnabled = config.isPersistenceEnabled();
 String persistenceFile = config.getPersistenceFile();
+int maxTransactionsPerBlock = config.getMaxTransactionsPerBlock();
 ```
 
 ## Persistence Options

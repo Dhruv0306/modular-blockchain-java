@@ -9,12 +9,16 @@ import com.example.blockchain.wallet.core.WalletList;
 
 import jakarta.annotation.PreDestroy;
 
+import com.example.blockchain.Main;
 import com.example.blockchain.consensus.ProofOfWork;
 import com.example.blockchain.core.model.Block;
 import com.example.blockchain.core.model.Transaction;
+import com.example.blockchain.core.pool.Mempool;
 import com.example.blockchain.core.utils.PersistenceManager;
 import com.example.blockchain.crypto.CryptoUtils;
+import com.example.blockchain.logging.BlockchainLoggerFactory;
 
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,12 +40,21 @@ public class BlockchainController {
     // Main blockchain instance for managing transaction data and chain state
     private final Blockchain<Transaction> blockchain;
 
+    // Maximum transections per block
+    private int MAX_TRANSECTIONS_PER_BLOCK = 10;
+
     // Wallet management instance for handling user wallets
     @Autowired
     private WalletList walletList;
 
+    // Mempool management instance for handling pending transactions
+    @Autowired
+    private Mempool mempool;
+
     // Consensus mechanism for block mining and validation using proof of work
     private final ProofOfWork<Transaction> consensus = new ProofOfWork<>();
+
+    private static final Logger logger = BlockchainLoggerFactory.getLogger(BlockchainController.class);
 
     /**
      * Constructor that initializes the blockchain controller.
@@ -49,9 +62,21 @@ public class BlockchainController {
      * Creates a new blockchain with genesis block if no saved state exists.
      */
     public BlockchainController() {
-        // Initialize blockchain from saved state or create new
+        logger.info("Initializing BlockchainController...");
+
+        // Attempt to load existing blockchain from persistent storage
+        logger.debug("Loading blockchain from persistent storage");
         this.blockchain = PersistenceManager.loadBlockchain(Transaction.class)
-                .orElseGet(() -> new Blockchain<>());
+                .orElseGet(() -> {
+                    logger.info("No existing blockchain found, creating new instance");
+                    return new Blockchain<>();
+                });
+        logger.info("Blockchain loaded with blocks {}", blockchain.getBlockCount());
+        // Get max transactions per block from chain configuration
+        logger.debug("Setting max transactions per block from chain config");
+        this.MAX_TRANSECTIONS_PER_BLOCK = ChainConfig.getInstance().getMaxTransactionsPerBlock();
+        logger.info("BlockchainController initialized with max {} transactions per block",
+                MAX_TRANSECTIONS_PER_BLOCK);
     }
 
     /**
@@ -85,9 +110,12 @@ public class BlockchainController {
                 // Log the exception or handle it appropriately
                 return "Error processing transaction: " + e.getMessage();
             }
+        } else {
+            tx = new FinancialTransaction(tx.getSender(), tx.getReceiver(), tx.getAmount(), tx.getSenderID(),
+                    tx.getReceiverID());
         }
-        boolean added = blockchain.addTransaction(tx);
-        return added ? "Transaction added." : "Invalid transaction.";
+        boolean added = mempool.addTransaction(tx);
+        return added ? "Transaction added to MemPool." : "Invalid transaction.";
     }
 
     /**
@@ -150,10 +178,20 @@ public class BlockchainController {
      */
     @PostMapping("/mine")
     public String mineBlock() {
-        Block<Transaction> newBlock = consensus.generateBlock(
-                blockchain.getPendingTransactions(), blockchain.getLastBlock());
+        Block<Transaction> newBlock = null;
+        if (mempool.isEmpty()) {
+            return "No transactions to mine.";
+        }
+        if (mempool.size() < this.MAX_TRANSECTIONS_PER_BLOCK) {
+            newBlock = consensus.generateBlock(mempool.getAllTransactions(),
+                    blockchain.getLastBlock());
+        } else {
+            newBlock = consensus.generateBlock(mempool.getTopN(MAX_TRANSECTIONS_PER_BLOCK),
+                    blockchain.getLastBlock());
+        }
         if (consensus.validateBlock(newBlock, blockchain.getLastBlock())) {
             blockchain.addBlock(newBlock);
+            mempool.removeAllTransactions(newBlock.getTransactions());
             return "Block mined and added to chain: " + newBlock.getHash();
         } else {
             return "Block mining failed.";
@@ -168,7 +206,7 @@ public class BlockchainController {
      */
     @GetMapping("/pending")
     public List<Transaction> getPendingTransactions() {
-        return blockchain.getPendingTransactions();
+        return mempool.getAllTransactions();
     }
 
     /**

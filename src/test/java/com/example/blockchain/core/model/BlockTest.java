@@ -188,5 +188,10 @@ class BlockTest {
         public String getReceiverID() {
             return "MOCK-RECEIVER-ID"; 
         }
+
+        @Override
+        public Object getHash() {
+            return getTransactionId();
+        }
     }
 }
