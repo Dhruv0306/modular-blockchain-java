@@ -15,6 +15,7 @@ This project is designed for developers, researchers, and educators who want to 
 - [Digital Signatures & Chain Validation](#-digital-signatures--chain-validation)
 - [Automatic Persistence](#-automatic-persistence)
 - [Wallet Management](#-wallet-management)
+- [Mempool Management](#-mempool-management)
 - [Architecture Overview](#️-architecture-overview)
 - [Example Use Case](#-example-use-case)
 - [How to Run](#-how-to-run)
@@ -63,6 +64,7 @@ This project is designed for developers, researchers, and educators who want to 
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
 | 🌐 REST API                | Spring Boot REST API for blockchain interaction                              |
 | 👛 Wallet Management       | Create, export, import, and manage cryptographic wallets                     |
+| 🏊 Mempool Management      | Thread-safe transaction pool with deduplication and validation               |
 
 ---
 
@@ -129,6 +131,27 @@ The blockchain now includes a comprehensive wallet management system for secure 
 - **Persistence**  
   Automatic saving and loading of wallet data between application runs.
 
+## 🏊 Mempool Management
+
+The blockchain now includes a dedicated Mempool (transaction pool) component for efficient transaction management.
+
+### Key Features
+
+- **Thread-safe Transaction Pool**  
+  Uses `ConcurrentHashMap` to manage pending transactions safely in a multi-threaded environment.
+
+- **Transaction Deduplication**  
+  Prevents duplicate transactions using content-addressable storage based on transaction hashes.
+
+- **Transaction Validation**  
+  Validates transactions before adding them to the pool.
+
+- **Configurable Block Size**  
+  Supports configurable maximum transactions per block via `blockchain.max_transactions_per_block` property.
+
+- **Content-Addressable Storage**  
+  Uses transaction hash as unique identifier through the new `getHash()` method in the `Transaction` interface.
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -136,9 +159,20 @@ The blockchain now includes a comprehensive wallet management system for secure 
 ```mermaid
 %%{init: {"themeVariables": { "fontFamily": "Roboto, sans-serif", "fontSize" : "17px" }}}%%
 classDiagram
+    class Mempool~T~ {
+        -transactions ConcurrentHashMap
+        +addTransaction(T) boolean
+        +getTransactions() List~T~
+        +clear() void
+        +removeTransactions(List~T~) void
+        +size() int
+        +contains(T) boolean
+    }
+    
     class Transaction {
         <<interface>>
         +getTransactionId() String
+        +getHash() Object
         +isValid() boolean
         +getSender() String
         +getReceiver() String
@@ -185,11 +219,10 @@ classDiagram
     
     class Blockchain~T~ {
         -chain List~Block~T~~
-        -pendingTransactions List~T~
         -consensus Consensus~T~
-        +addTransaction(T) boolean
         +addBlock(Block~T~) void
         +isChainValid() boolean
+        +getBlockCount() int
         +exportToJson(File) void
         +importFromJson(File, Class) Blockchain~T~
     }
@@ -199,7 +232,10 @@ classDiagram
         -receiver String
         -amount double
         -transactionId String
+        -senderID String
+        -receiverID String
         +getAmount() double
+        +getHash() Object
     }
     
     class SignedFinancialTransaction {
@@ -210,8 +246,11 @@ classDiagram
         -signature String
         -transactionId String
         -timestamp long
+        -senderID String
+        -receiverID String
         +getAmount() double
         +getTimestamp() long
+        +getHash() Object
     }
     
     class ProofOfWork~T~ {
@@ -240,6 +279,7 @@ classDiagram
         +getGenesisHash() String
         +isPersistenceEnabled() boolean
         +getPersistenceFile() String
+        +getMaxTransactionsPerBlock() int
     }
     
     class JsonUtils {
@@ -259,6 +299,7 @@ classDiagram
     class BlockchainController {
         -blockchain Blockchain~FinancialTransaction~
         -consensus ProofOfWork~FinancialTransaction~
+        -mempool Mempool~FinancialTransaction~
         +getBlockchain() List~Block~
         +addTransaction(FinancialTransaction) String
         +mineBlock() String
@@ -322,6 +363,7 @@ classDiagram
     BlockchainController --> Blockchain : uses
     BlockchainController --> ProofOfWork : uses
     BlockchainController --> PersistenceManager : uses
+    BlockchainController --> Mempool : uses
     BlockchainApplication --> BlockchainController : uses
     Wallet --> CryptoUtils : uses
     WalletController --> WalletList : uses
@@ -351,6 +393,7 @@ classDiagram
     style WalletList fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
     style WalletDTO fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
     style WalletController fill:#3498DB99,stroke:#2874A6,stroke-width:2px,color:#000,font-weight:bold
+    style Mempool fill:#4A90E299,stroke:#2E5984,stroke-width:2px,color:#000,font-weight:bold
 ```
 
 **Key Relationships:**
@@ -363,6 +406,7 @@ classDiagram
 - `CustomGenesisBlockFactory<T>` provides customizable genesis block creation
 - `BlockUtils` handles hash computation for blocks
 - `CryptoUtils` manages cryptographic operations for digital signatures
+- `Mempool<T>` manages pending transactions awaiting inclusion in blocks
 - `BlockchainController` exposes blockchain operations via REST API
 - `WalletController` manages wallet operations via REST API
 - `Wallet` represents a user's cryptographic identity
@@ -387,20 +431,27 @@ Here's an example from the `Main.java`:
 Blockchain<FinancialTransaction> blockchain = new Blockchain<>();
 // Use the built-in Proof of Work consensus algorithm
 Consensus<FinancialTransaction> consensus = new ProofOfWork<>();
+// Create a mempool to manage pending transactions
+Mempool<FinancialTransaction> mempool = new Mempool<>();
 
-// Add some sample transactions
-blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
-blockchain.addTransaction(new FinancialTransaction("Charlie", "Dave", 75));
+// Add some sample transactions to the mempool
+mempool.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
+mempool.addTransaction(new FinancialTransaction("Charlie", "Dave", 75));
+
+// Get transactions from mempool for the new block
+List<FinancialTransaction> pendingTransactions = mempool.getTransactions();
 
 // Generate a new block with the pending transactions
 Block<FinancialTransaction> newBlock = consensus.generateBlock(
-        blockchain.getPendingTransactions(),
+        pendingTransactions,
         blockchain.getLastBlock()
 );
 
 // Validate and add the block to the chain
 if (consensus.validateBlock(newBlock, blockchain.getLastBlock())) {
     blockchain.addBlock(newBlock);
+    // Remove processed transactions from mempool
+    mempool.removeTransactions(pendingTransactions);
     System.out.println("✅ Block added to chain");
 }
 
@@ -494,6 +545,7 @@ GET http://localhost:8080/api/validate
 | `com.example.blockchain.logging`       | Logging configuration and utilities     |
 | `com.example.blockchain.api`           | REST API controllers and application    |
 | `com.example.blockchain.wallet`        | Wallet management components and controllers |
+| `com.example.blockchain.mempool`       | Transaction pool management and processing |
 | `com.example.blockchain.Main`          | Demo runner showing how it all works    |
 
 ## 🔧 Utility Classes
@@ -520,6 +572,7 @@ The blockchain uses a modular configuration system that allows for different set
 | `log_level`          | Logging level (TRACE, DEBUG, INFO, WARN, ERROR)  | INFO               |
 | `persistence.enabled`| Enable automatic blockchain persistence          | true               |
 | `persistence.file`   | File path for blockchain persistence storage     | data/chain-data.json |
+| `max_transactions_per_block` | Maximum number of transactions in a block | 10                 |
 
 ### Usage in Code
 
@@ -587,6 +640,19 @@ public class CertificateTransaction implements Transaction {
     private String student;
     private String course;
     private String grade;
+    private String transactionId;
+    private String senderID;
+    private String receiverID;
+
+    public CertificateTransaction(String student, String course, String grade) {
+        this.student = student;
+        this.course = course;
+        this.grade = grade;
+        this.senderID = "institution";
+        this.receiverID = student;
+        // Generate hash-based transaction ID
+        this.transactionId = HashUtils.sha256(student + course + grade);
+    }
 
     public boolean isValid() {
         return student != null && course != null && grade != null;
@@ -599,9 +665,29 @@ public class CertificateTransaction implements Transaction {
     public String getReceiver() {
         return student;
     }
+    
+    public String getSenderID() {
+        return senderID;
+    }
+    
+    public String getReceiverID() {
+        return receiverID;
+    }
 
     public String getSummary() {
         return student + " earned " + grade + " in " + course;
+    }
+    
+    public String getTransactionId() {
+        return transactionId;
+    }
+    
+    public Object getHash() {
+        return transactionId;
+    }
+    
+    public String getType() {
+        return "CERTIFICATE";
     }
 }
 ```
@@ -617,6 +703,9 @@ public class MySignedTransaction implements SignedTransaction {
     private final String data;
     private final PublicKey senderPublicKey;
     private final String signature;
+    private final String transactionId;
+    private final String senderID;
+    private final String receiverID;
     
     // Constructor with signature generation
     public MySignedTransaction(String sender, String receiver, String data, 
@@ -624,8 +713,13 @@ public class MySignedTransaction implements SignedTransaction {
         this.sender = sender;
         this.receiver = receiver;
         this.data = data;
+        this.senderID = sender;
+        this.receiverID = receiver;
         this.senderPublicKey = keyPair.getPublic();
         this.signature = CryptoUtils.signData(this.getSummary(), keyPair.getPrivate());
+        // Generate hash-based transaction ID
+        this.transactionId = HashUtils.sha256(sender + receiver + data + 
+                                             Base64.getEncoder().encodeToString(senderPublicKey.getEncoded()));
     }
     
     @Override
@@ -640,7 +734,22 @@ public class MySignedTransaction implements SignedTransaction {
     public String getReceiver() { return receiver; }
     
     @Override
+    public String getSenderID() { return senderID; }
+    
+    @Override
+    public String getReceiverID() { return receiverID; }
+    
+    @Override
     public String getSummary() { return sender + ":" + receiver + ":" + data; }
+    
+    @Override
+    public String getTransactionId() { return transactionId; }
+    
+    @Override
+    public Object getHash() { return transactionId; }
+    
+    @Override
+    public String getType() { return "SIGNED"; }
     
     @Override
     public String getSignature() { return signature; }

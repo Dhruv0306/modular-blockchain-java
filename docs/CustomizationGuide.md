@@ -78,6 +78,10 @@ public interface Transaction {
     String getSender();
     String getReceiver();
     String getSummary();
+    String getTransactionId();
+    String getSenderID();
+    String getReceiverID();
+    Object getHash();
 }
 ```
 
@@ -99,6 +103,9 @@ public class SupplyChainTransaction implements Transaction {
     private final String productId;
     private final int quantity;
     private final String status;
+    private final String transactionId;
+    private final String senderID;
+    private final String receiverID;
     
     public SupplyChainTransaction(String supplier, String receiver, 
                                   String productId, int quantity, String status) {
@@ -107,6 +114,10 @@ public class SupplyChainTransaction implements Transaction {
         this.productId = productId;
         this.quantity = quantity;
         this.status = status;
+        this.senderID = supplier;
+        this.receiverID = receiver;
+        // Generate hash-based transaction ID
+        this.transactionId = HashUtils.sha256(supplier + receiver + productId + quantity + status);
     }
     
     @Override
@@ -128,6 +139,26 @@ public class SupplyChainTransaction implements Transaction {
     }
     
     @Override
+    public String getSenderID() {
+        return senderID;
+    }
+    
+    @Override
+    public String getReceiverID() {
+        return receiverID;
+    }
+    
+    @Override
+    public String getTransactionId() {
+        return transactionId;
+    }
+    
+    @Override
+    public Object getHash() {
+        return transactionId;
+    }
+    
+    @Override
     public String getSummary() {
         return supplier + " " + status + " " + quantity + 
                " units of product " + productId + " to " + receiver;
@@ -143,12 +174,19 @@ public class VotingTransaction implements Transaction {
     private final String candidate;
     private final String electionId;
     private final long timestamp;
+    private final String transactionId;
+    private final String senderID;
+    private final String receiverID;
     
     public VotingTransaction(String voter, String candidate, String electionId) {
         this.voter = voter;
         this.candidate = candidate;
         this.electionId = electionId;
         this.timestamp = System.currentTimeMillis();
+        this.senderID = voter;
+        this.receiverID = candidate;
+        // Generate hash-based transaction ID
+        this.transactionId = HashUtils.sha256(voter + candidate + electionId + timestamp);
     }
     
     @Override
@@ -164,6 +202,26 @@ public class VotingTransaction implements Transaction {
     @Override
     public String getReceiver() {
         return candidate;
+    }
+    
+    @Override
+    public String getSenderID() {
+        return senderID;
+    }
+    
+    @Override
+    public String getReceiverID() {
+        return receiverID;
+    }
+    
+    @Override
+    public String getTransactionId() {
+        return transactionId;
+    }
+    
+    @Override
+    public Object getHash() {
+        return transactionId;
     }
     
     @Override
@@ -1036,6 +1094,124 @@ When customizing the wallet system, consider these security best practices:
 3. **Implement proper authentication**: Verify ownership before sensitive operations
 4. **Encrypt wallet backups**: Add encryption to exported wallet data
 5. **Implement rate limiting**: Prevent brute force attacks on wallet endpoints
+
+## Mempool Customization
+
+The Mempool is a transaction pool that manages pending transactions awaiting inclusion in blocks. It provides thread-safe operations and transaction deduplication.
+
+### Understanding the Mempool
+
+```java
+public class Mempool<T extends Transaction> {
+    private final ConcurrentHashMap<Object, T> transactions;
+    
+    public Mempool() {
+        this.transactions = new ConcurrentHashMap<>();
+    }
+    
+    public boolean addTransaction(T transaction) {
+        if (transaction == null || !transaction.isValid()) {
+            return false;
+        }
+        
+        // Use transaction hash as key for deduplication
+        transactions.putIfAbsent(transaction.getHash(), transaction);
+        return true;
+    }
+    
+    public List<T> getTransactions() {
+        return new ArrayList<>(transactions.values());
+    }
+    
+    public void clear() {
+        transactions.clear();
+    }
+    
+    public void removeTransactions(List<T> processedTransactions) {
+        for (T tx : processedTransactions) {
+            transactions.remove(tx.getHash());
+        }
+    }
+    
+    public int size() {
+        return transactions.size();
+    }
+    
+    public boolean contains(T transaction) {
+        return transactions.containsKey(transaction.getHash());
+    }
+}
+```
+
+### Using the Mempool
+
+The Mempool is used to manage pending transactions before they are included in blocks:
+
+```java
+// Create a mempool for your transaction type
+Mempool<FinancialTransaction> mempool = new Mempool<>();
+
+// Add transactions to the mempool
+mempool.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
+mempool.addTransaction(new FinancialTransaction("Charlie", "Dave", 75));
+
+// Get all pending transactions
+List<FinancialTransaction> pendingTransactions = mempool.getTransactions();
+
+// Generate a block with pending transactions
+Block<FinancialTransaction> newBlock = consensus.generateBlock(
+        pendingTransactions.subList(0, Math.min(pendingTransactions.size(), maxTxPerBlock)),
+        blockchain.getLastBlock()
+);
+
+// After adding the block to the blockchain, remove the processed transactions from the mempool
+if (blockchain.addBlock(newBlock)) {
+    mempool.removeTransactions(pendingTransactions);
+}
+```
+
+### Customizing the Mempool
+
+You can extend the Mempool class to add custom functionality:
+
+```java
+public class PriorityMempool<T extends Transaction> extends Mempool<T> {
+    private final PriorityQueue<T> priorityQueue;
+    
+    public PriorityMempool(Comparator<T> comparator) {
+        super();
+        this.priorityQueue = new PriorityQueue<>(comparator);
+    }
+    
+    @Override
+    public boolean addTransaction(T transaction) {
+        boolean added = super.addTransaction(transaction);
+        if (added) {
+            priorityQueue.add(transaction);
+        }
+        return added;
+    }
+    
+    @Override
+    public List<T> getTransactions() {
+        // Return transactions in priority order
+        List<T> result = new ArrayList<>(priorityQueue);
+        return result;
+    }
+    
+    @Override
+    public void removeTransactions(List<T> processedTransactions) {
+        super.removeTransactions(processedTransactions);
+        priorityQueue.removeAll(processedTransactions);
+    }
+    
+    @Override
+    public void clear() {
+        super.clear();
+        priorityQueue.clear();
+    }
+}
+```
 
 ## Advanced Customizations
 
