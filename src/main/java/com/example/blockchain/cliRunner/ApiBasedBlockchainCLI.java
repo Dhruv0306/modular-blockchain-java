@@ -8,6 +8,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Scanner;
 
+import com.example.blockchain.cliRunner.utils.WalletDisplayUtils;
+
 public class ApiBasedBlockchainCLI {
     private static final String API_BASE_URL = "http://localhost:8080/api";
     private final HttpClient client;
@@ -36,7 +38,7 @@ public class ApiBasedBlockchainCLI {
                 case "mine" -> sendPost("/mine", "");
                 case "validate-chain" -> sendGet("/validate");
                 case "create-wallet" -> createWallet(scanner);
-                case "get-public-keys" -> sendGet("/wallets/public-keys");
+                case "get-public-keys" -> getPublicKeys();
                 case "get-public-key" -> getPublicKey(scanner);
                 case "exit" -> {
                     System.out.println("Exiting CLI.");
@@ -47,10 +49,48 @@ public class ApiBasedBlockchainCLI {
         }
     }
 
+    private void getPublicKeys() throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/wallets/public-keys"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        WalletDisplayUtils.printDivider();
+        if (response.statusCode() == 200) {
+            WalletDisplayUtils.displayPublicKeyMap(response.body());
+        } else {
+            System.out.println("Failed to retrieve public keys");
+            System.out.println(response.body());
+        }
+        WalletDisplayUtils.printDivider();
+    }
+
     private void getPublicKey(Scanner scanner) throws Exception {
         System.out.print("Enter userId: ");
-        String userId = scanner.nextLine();
-        sendGet("/wallets/public-key?userId=" + userId);
+        String userId = scanner.nextLine().trim();
+        String url = API_BASE_URL + "/wallets/public-key?userId=" + userId;
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        WalletDisplayUtils.printDivider();
+        System.out.println("Response status code: " + response.statusCode());
+        if (response.body().startsWith("-----BEGIN PUBLIC KEY-----")) {
+            System.out.println("Public Key for '" + userId + "':");
+            System.out.println(response.body());
+        } else if (response.body().startsWith("No wallet found for User ID:")) {
+            System.out.println("No wallet found for userId: " + userId);
+        } else {
+            System.out.println("Unexpected error: " + response.statusCode());
+            System.out.println(response.body());
+        }
+        WalletDisplayUtils.printDivider();
     }
 
     private void createWallet(Scanner scanner) throws IOException, InterruptedException {
@@ -66,7 +106,16 @@ public class ApiBasedBlockchainCLI {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
+
+        WalletDisplayUtils.printDivider();
+        if (response.statusCode() == 200) {
+            System.out.printf("Wallet created for '%s' [%s]\n", userName, userId);
+            System.out.println("Wallet keys saved to disk (see wallets/ directory)");
+        } else {
+            System.out.println("Failed to create wallet. Server response:");
+            System.out.println(response.body());
+        }
+        WalletDisplayUtils.printDivider();
     }
 
     private void showHelp() {
