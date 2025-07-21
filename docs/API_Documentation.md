@@ -13,10 +13,8 @@ This document provides a comprehensive guide to the REST API endpoints available
   - [Mine Block](#mine-block)
   - [Get Pending Transactions](#get-pending-transactions)
   - [Validate Chain](#validate-chain)
-  - [Get Block by Index](#get-block-by-index)
-  - [Get Blockchain Statistics](#get-blockchain-statistics)
 - [Wallet API](#wallet-api)
-  - [Create Wallet](#create-wallet)
+  - [Generate Wallet](#generate-wallet)
   - [List Wallets](#list-wallets)
   - [Get Public Keys](#get-public-keys)
   - [Get Public Key by User ID](#get-public-key-by-user-id)
@@ -27,7 +25,7 @@ This document provides a comprehensive guide to the REST API endpoints available
   - [Financial Transaction](#financial-transaction)
   - [Signed Financial Transaction](#signed-financial-transaction)
 - [Error Handling](#error-handling)
-- [Rate Limiting](#rate-limiting)
+- [Persistence](#persistence)
 - [Examples](#examples)
   - [cURL Examples](#curl-examples)
   - [JavaScript Examples](#javascript-examples)
@@ -43,6 +41,8 @@ The Modular Blockchain Java framework provides a REST API for interacting with t
 - Validate the blockchain
 - Create and manage cryptographic wallets
 - Sign and verify transactions
+- Export and import wallet data
+- Manage transaction pools via mempool
 
 ## Base URL
 
@@ -54,13 +54,13 @@ http://localhost:8080/api
 
 ## Authentication
 
-Most blockchain endpoints are publicly accessible. However, wallet operations that involve private keys require authentication by providing the private key file.
+Most blockchain endpoints are publicly accessible. However, wallet operations that involve private keys (such as exporting wallet data or deleting a wallet) require authentication by providing the private key file. The system validates the private key against the stored wallet data to ensure only the wallet owner can perform sensitive operations.
 
 ## Blockchain API
 
 ### Get Blockchain
 
-Retrieves the entire blockchain.
+Retrieves the entire blockchain with all blocks and their transactions.
 
 - **URL**: `/chain`
 - **Method**: `GET`
@@ -87,7 +87,9 @@ Retrieves the entire blockchain.
           "sender": "Alice",
           "receiver": "Bob",
           "amount": 100,
-          "transactionId": "tx123"
+          "transactionId": "tx123",
+          "senderID": "Alice",
+          "receiverID": "Bob"
         }
       ],
       "nonce": 12345,
@@ -96,9 +98,11 @@ Retrieves the entire blockchain.
   ]
   ```
 
+**Note**: For large blockchains, this endpoint returns all blocks which may result in a large response payload.
+
 ### Add Transaction
 
-Adds a new transaction to the mempool (transaction pool).
+Adds a new transaction to the mempool (transaction pool). The transaction will be included in a future block when mining occurs.
 
 - **URL**: `/transactions`
 - **Method**: `POST`
@@ -108,31 +112,51 @@ Adds a new transaction to the mempool (transaction pool).
   {
     "sender": "Alice",
     "receiver": "Bob",
-    "amount": 100
+    "amount": 100,
+    "senderID": "alice123",
+    "receiverID": "bob456",
+    "type": "FinancialTransaction"  
   }
   ```
+  
+  For signed transactions:
+  ```json
+  {
+    "sender": "Alice",
+    "receiver": "Bob",
+    "amount": 100,
+    "senderID": "alice123",
+    "receiverID": "bob456",
+    "type": "SignedFinancialTransaction"
+  }
+  ```
+  
 - **Success Response**:
   - **Code**: 200 OK
-  - **Content**: `"Transaction added."`
+  - **Content**: `"Transaction added to MemPool."`
 - **Error Response**:
-  - **Code**: 400 Bad Request
-  - **Content**: `"Invalid transaction."`
-  - **Code**: 409 Conflict
-  - **Content**: `"Duplicate transaction."`
+  - **Code**: 200 OK (with error message)
+  - **Content**: `"Invalid transaction data."`
+  - **Content**: `"Error processing transaction: [error details]"`
+
+**Note**: When adding a signed transaction, the system will automatically retrieve the sender's wallet and sign the transaction using the stored private key.
 
 ### Mine Block
 
-Mines a new block with transactions from the mempool, up to the configured maximum transactions per block.
+Mines a new block with transactions from the mempool, up to the configured maximum transactions per block. The system uses Proof of Work consensus to generate and validate the block.
 
 - **URL**: `/mine`
 - **Method**: `POST`
 - **URL Parameters**: None
 - **Success Response**:
   - **Code**: 200 OK
-  - **Content**: `"Block mined with hash: 00000a1b2c3d4e5f..."`
+  - **Content**: `"Block mined and added to chain: 00000a1b2c3d4e5f..."`
 - **Error Response**:
-  - **Code**: 400 Bad Request
-  - **Content**: `"No pending transactions to mine."`
+  - **Code**: 200 OK (with error message)
+  - **Content**: `"No transactions to mine."`
+  - **Content**: `"Block mining failed."`
+
+**Note**: The maximum number of transactions per block is configured in the blockchain properties (default is 10). If there are more pending transactions than this limit, only the top N transactions will be included in the block.
 
 ### Get Pending Transactions
 
@@ -151,23 +175,27 @@ Retrieves all pending transactions from the mempool that have not yet been inclu
       "receiver": "Bob",
       "amount": 100,
       "transactionId": "tx123",
-      "senderID": "Alice",
-      "receiverID": "Bob"
+      "senderID": "alice123",
+      "receiverID": "bob456",
+      "type": "FinancialTransaction"
     },
     {
       "sender": "Charlie",
       "receiver": "Dave",
       "amount": 50,
       "transactionId": "tx124",
-      "senderID": "Charlie",
-      "receiverID": "Dave"
+      "senderID": "charlie789",
+      "receiverID": "dave101",
+      "type": "FinancialTransaction"
     }
   ]
   ```
 
+**Note**: For signed transactions, additional fields like `senderPublicKey`, `signature`, and `timestamp` will be included in the response.
+
 ### Validate Chain
 
-Validates the integrity of the entire blockchain.
+Validates the integrity of the entire blockchain. This checks that all blocks are properly linked, all hashes are valid, and all signed transactions have valid signatures.
 
 - **URL**: `/validate`
 - **Method**: `GET`
@@ -179,62 +207,15 @@ Validates the integrity of the entire blockchain.
   - **Code**: 200 OK (with error message)
   - **Content**: `"Chain is invalid!"`
 
-### Get Block by Index
+**Note**: This operation performs a full validation of the entire blockchain, which may be resource-intensive for large chains.
 
-Retrieves a specific block by its index.
 
-- **URL**: `/block/{index}`
-- **Method**: `GET`
-- **URL Parameters**:
-  - `index`: The index of the block to retrieve
-- **Success Response**:
-  - **Code**: 200 OK
-  - **Content**: Block object
-  ```json
-  {
-    "index": 1,
-    "previousHash": "GENESIS_HASH",
-    "timestamp": 1625097660000,
-    "transactions": [
-      {
-        "sender": "Alice",
-        "receiver": "Bob",
-        "amount": 100,
-        "transactionId": "tx123"
-      }
-    ],
-    "nonce": 12345,
-    "hash": "00000a1b2c3d4e5f..."
-  }
-  ```
-- **Error Response**:
-  - **Code**: 404 Not Found
-  - **Content**: None
-
-### Get Blockchain Statistics
-
-Retrieves statistics about the blockchain.
-
-- **URL**: `/stats`
-- **Method**: `GET`
-- **URL Parameters**: None
-- **Success Response**:
-  - **Code**: 200 OK
-  - **Content**: Statistics object
-  ```json
-  {
-    "blockCount": 2,
-    "pendingTransactions": 1,
-    "totalTransactions": 3,
-    "maxTransactionsPerBlock": 10
-  }
-  ```
 
 ## Wallet API
 
-### Create Wallet
+### Generate Wallet
 
-Creates a new wallet with a key pair.
+Creates a new wallet with a key pair or returns an existing wallet if the userId already exists.
 
 - **URL**: `/wallets/generate`
 - **Method**: `POST`
@@ -244,19 +225,16 @@ Creates a new wallet with a key pair.
   - `userName`: Human-readable name for the wallet owner
 - **Success Response**:
   - **Code**: 200 OK
-  - **Content**: Wallet creation confirmation with download links
-  ```json
-  {
-    "message": "Wallet created successfully",
-    "userId": "alice123",
-    "userName": "Alice",
-    "publicKeyDownload": "/api/wallets/public-key?userId=alice123",
-    "privateKeyDownload": "/api/wallets/private-key?userId=alice123"
-  }
-  ```
+  - **Content**: Multipart response containing:
+    - Messages with wallet creation status
+    - Usage instructions
+    - Public key file for download
+    - Private key file for download
 - **Error Response**:
-  - **Code**: 400 Bad Request
-  - **Content**: `"User ID already exists."`
+  - **Code**: 500 Internal Server Error
+  - **Content**: Error message with details
+
+**Note**: The response includes downloadable public and private key files. The private key should be securely stored by the user as it will be required for wallet operations like export and deletion.
 
 ### List Wallets
 
@@ -283,26 +261,30 @@ Lists all wallets in the system (public information only).
   ]
   ```
 
+**Note**: This endpoint only returns public wallet information. Private keys are never exposed through this API.
+
 ### Get Public Keys
 
-Retrieves all public keys in the system.
+Retrieves all public keys in the system in PEM format.
 
 - **URL**: `/wallets/public-keys`
 - **Method**: `GET`
 - **URL Parameters**: None
 - **Success Response**:
   - **Code**: 200 OK
-  - **Content**: Map of user IDs to public keys
+  - **Content**: Map of user IDs to PEM-formatted public keys
   ```json
   {
-    "alice123": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...",
-    "bob456": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA..."
+    "alice123": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...\n-----END PUBLIC KEY-----",
+    "bob456": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...\n-----END PUBLIC KEY-----"
   }
   ```
 
+**Note**: These public keys can be used to verify signatures on transactions created by the respective users.
+
 ### Get Public Key by User ID
 
-Retrieves the public key for a specific user.
+Retrieves the public key for a specific user in PEM format.
 
 - **URL**: `/wallets/public-key`
 - **Method**: `GET`
@@ -310,17 +292,20 @@ Retrieves the public key for a specific user.
   - `userId`: The ID of the user whose public key to retrieve
 - **Success Response**:
   - **Code**: 200 OK
-  - **Content**: Public key in Base64 format
+  - **Content**: Public key in PEM format
   ```
+  -----BEGIN PUBLIC KEY-----
   MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
+  -----END PUBLIC KEY-----
   ```
 - **Error Response**:
-  - **Code**: 404 Not Found
-  - **Content**: `"Wallet not found."`
+  - **Code**: 200 OK (with error message)
+  - **Content**: `"No wallet found for User ID: [userId]"`
+  - **Content**: `"Error retrieving public key for user ID: [userId]. [error details]"`
 
 ### Export Wallet Data
 
-Exports wallet data for backup or transfer (requires authentication).
+Exports wallet data for backup or transfer (requires authentication with private key).
 
 - **URL**: `/wallets/export`
 - **Method**: `GET`
@@ -330,16 +315,26 @@ Exports wallet data for backup or transfer (requires authentication).
   - `privateKey`: The private key file for authentication
 - **Success Response**:
   - **Code**: 200 OK
-  - **Content**: Wallet data file (download)
+  - **Content**: Multipart response containing:
+    - Success message
+    - Usage tip
+    - Wallet data file for download
 - **Error Response**:
-  - **Code**: 401 Unauthorized
-  - **Content**: `"Authentication failed."`
-  - **Code**: 404 Not Found
-  - **Content**: `"Wallet not found."`
+  - **Code**: 400 Bad Request
+  - **Content**: Various error messages:
+    - `"User ID or Private key is missing."`
+    - `"No wallet found for User ID: [userId]. Please create a wallet first."`
+    - `"Failed to read private key file: [error details]"`
+    - `"Private key file is empty."`
+    - `"Invalid private key provided for User ID: [userId]"`
+  - **Code**: 500 Internal Server Error
+  - **Content**: `"Error Validating Privatekey. Error: [error details]"`
+
+**Note**: The exported wallet file contains all wallet data including the encrypted private key and can be used to restore the wallet on another system.
 
 ### Import Wallet
 
-Imports a wallet from a backup file.
+Imports a wallet from a backup file previously exported from the system.
 
 - **URL**: `/wallets/import`
 - **Method**: `POST`
@@ -348,16 +343,21 @@ Imports a wallet from a backup file.
   - `file`: The wallet backup file
 - **Success Response**:
   - **Code**: 200 OK
-  - **Content**: `"Wallet imported successfully."`
+  - **Content**: `"Wallet imported successfully for user: [userName]"`
 - **Error Response**:
   - **Code**: 400 Bad Request
-  - **Content**: `"Invalid wallet file."`
-  - **Code**: 409 Conflict
-  - **Content**: `"Wallet with this ID already exists."`
+  - **Content**: Various error messages:
+    - `"File is empty. Please upload a valid wallet file."`
+    - `"Invalid wallet data in file."`
+    - `"Wallet already exists for User ID: [userId]"`
+  - **Code**: 500 Internal Server Error
+  - **Content**: `"Internal error during import."`
+
+**Note**: The imported wallet will be added to the system's wallet list and can be used immediately for transactions.
 
 ### Delete Wallet
 
-Deletes a wallet (requires authentication).
+Deletes a wallet (requires authentication with private key).
 
 - **URL**: `/wallets/delete`
 - **Method**: `DELETE`
@@ -367,12 +367,19 @@ Deletes a wallet (requires authentication).
   - `privateKey`: The private key file for authentication
 - **Success Response**:
   - **Code**: 200 OK
-  - **Content**: `"Wallet deleted successfully."`
+  - **Content**: `"Wallet deleted successfully for userId: [userId]"`
 - **Error Response**:
-  - **Code**: 401 Unauthorized
-  - **Content**: `"Authentication failed."`
-  - **Code**: 404 Not Found
-  - **Content**: `"Wallet not found."`
+  - **Code**: 400 Bad Request
+  - **Content**: Various error messages:
+    - `"No wallet found with userId: [userId]"`
+    - `"Private key file is empty."`
+    - `"Failed to read private key file: [error details]"`
+  - **Code**: 403 Forbidden
+  - **Content**: `"Private key does not match. Deletion unauthorized."`
+  - **Code**: 500 Internal Server Error
+  - **Content**: `"Error validating private key: [error details]"`
+
+**Note**: Once a wallet is deleted, it cannot be recovered unless you have previously exported it. All transactions associated with the wallet will remain in the blockchain, but you will no longer be able to sign new transactions with this wallet.
 
 ## Transaction Types
 
@@ -386,14 +393,15 @@ Standard financial transaction used in the blockchain.
   "receiver": "Bob",
   "amount": 100,
   "transactionId": "tx123",
-  "senderID": "Alice",
-  "receiverID": "Bob"
+  "senderID": "alice123",
+  "receiverID": "bob456",
+  "type": "FinancialTransaction"
 }
 ```
 
 ### Signed Financial Transaction
 
-Financial transaction with digital signature for enhanced security.
+Financial transaction with digital signature for enhanced security. The signature is created using the sender's private key and can be verified using their public key.
 
 ```json
 {
@@ -401,36 +409,40 @@ Financial transaction with digital signature for enhanced security.
   "receiver": "Bob",
   "amount": 100,
   "transactionId": "tx123",
-  "senderID": "Alice",
-  "receiverID": "Bob",
+  "senderID": "alice123",
+  "receiverID": "bob456",
   "senderPublicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...",
   "signature": "MEUCIQD0lkJH9BqXFwQv7xOJ9w4U8+SY5IGBH0MbXs+B9eKJ0AIgFOeQvqFu...",
-  "timestamp": 1625097600000
+  "timestamp": 1625097600000,
+  "type": "SignedFinancialTransaction"
 }
 ```
 
+**Note**: When submitting a transaction with type "SignedFinancialTransaction", the system will automatically retrieve the sender's wallet, sign the transaction data, and verify the signature before adding it to the mempool.
+
 ## Error Handling
 
-The API uses standard HTTP status codes to indicate the success or failure of requests:
+The API uses HTTP status codes to indicate the success or failure of requests:
 
 - `200 OK`: The request was successful
 - `400 Bad Request`: The request was invalid or cannot be served
-- `401 Unauthorized`: Authentication failed
-- `404 Not Found`: The requested resource does not exist
-- `409 Conflict`: The request conflicts with the current state of the server
+- `403 Forbidden`: Authentication failed or operation not permitted
 - `500 Internal Server Error`: An error occurred on the server
 
-Error responses include a message describing the error.
+Error responses include a message describing the error. Note that some error responses may return a 200 OK status code with an error message in the response body.
 
-## Rate Limiting
+## Persistence
 
-To prevent abuse, the API implements rate limiting:
+The blockchain system implements automatic persistence to maintain state across application restarts:
 
-- Basic endpoints: 100 requests per minute
-- Mining endpoints: 10 requests per minute
-- Wallet creation: 5 requests per minute
+- **Blockchain Persistence**: The blockchain state is automatically saved to disk when the application shuts down and loaded when it starts up.
+- **Wallet Persistence**: Wallet data is also persisted between application runs.
+- **Configuration**: Persistence can be configured in the blockchain properties file:
+  - `persistence.enabled`: Enable/disable persistence (default: true)
+  - `persistence.file`: File path for blockchain data (default: data/chain-data.json)
+  - `persistence.wallet_file`: File path for wallet data (default: data/wallet-data.json)
 
-Exceeding these limits will result in a `429 Too Many Requests` response.
+The persistence mechanism ensures that blockchain data and wallet information are not lost when the application is restarted.
 
 ## Examples
 
@@ -445,7 +457,7 @@ curl http://localhost:8080/api/chain
 ```bash
 curl -X POST http://localhost:8080/api/transactions \
   -H "Content-Type: application/json" \
-  -d '{"sender": "Alice", "receiver": "Bob", "amount": 100}'
+  -d '{"sender": "Alice", "receiver": "Bob", "amount": 100, "senderID": "alice123", "receiverID": "bob456", "type": "FinancialTransaction"}'
 ```
 
 **Mine a block:**
@@ -453,11 +465,26 @@ curl -X POST http://localhost:8080/api/transactions \
 curl -X POST http://localhost:8080/api/mine
 ```
 
-**Create a wallet:**
+**Generate a wallet:**
 ```bash
 curl -X POST http://localhost:8080/api/wallets/generate \
   -F "userId=alice123" \
   -F "userName=Alice"
+```
+
+**Export a wallet (requires private key file):**
+```bash
+curl -X GET http://localhost:8080/api/wallets/export \
+  -F "userId=alice123" \
+  -F "privateKey=@/path/to/alice123_privateKey.key" \
+  -o alice_wallet_backup.json
+```
+
+**Delete a wallet (requires private key file):**
+```bash
+curl -X DELETE http://localhost:8080/api/wallets/delete \
+  -F "userId=alice123" \
+  -F "privateKey=@/path/to/alice123_privateKey.key"
 ```
 
 ### JavaScript Examples
@@ -480,10 +507,36 @@ fetch('http://localhost:8080/api/transactions', {
   body: JSON.stringify({
     sender: 'Alice',
     receiver: 'Bob',
-    amount: 100
+    amount: 100,
+    senderID: 'alice123',
+    receiverID: 'bob456',
+    type: 'FinancialTransaction'
   }),
 })
 .then(response => response.text())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
+
+**Get pending transactions:**
+```javascript
+fetch('http://localhost:8080/api/pending')
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+**Generate a wallet:**
+```javascript
+const formData = new FormData();
+formData.append('userId', 'alice123');
+formData.append('userName', 'Alice');
+
+fetch('http://localhost:8080/api/wallets/generate', {
+  method: 'POST',
+  body: formData
+})
+.then(response => response.json())
 .then(data => console.log(data))
 .catch(error => console.error('Error:', error));
 ```
@@ -521,13 +574,77 @@ import java.net.http.HttpResponse;
 
 public class BlockchainClient {
     public static void main(String[] args) throws Exception {
-        String json = "{\"sender\":\"Alice\",\"receiver\":\"Bob\",\"amount\":100}";
+        String json = "{\"sender\":\"Alice\",\"receiver\":\"Bob\",\"amount\":100,\"senderID\":\"alice123\",\"receiverID\":\"bob456\",\"type\":\"FinancialTransaction\"}";
         
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/api/transactions"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        
+        HttpResponse<String> response = client.send(request, 
+                HttpResponse.BodyHandlers.ofString());
+        
+        System.out.println(response.body());
+    }
+}
+```
+
+**Mine a block:**
+```java
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+public class BlockchainClient {
+    public static void main(String[] args) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8080/api/mine"))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+        
+        HttpResponse<String> response = client.send(request, 
+                HttpResponse.BodyHandlers.ofString());
+        
+        System.out.println(response.body());
+    }
+}
+```
+
+**Import a wallet:**
+```java
+import java.io.File;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+public class BlockchainClient {
+    public static void main(String[] args) throws Exception {
+        // Create multipart form data
+        String boundary = "Boundary-" + System.currentTimeMillis();
+        
+        // Read wallet file
+        File walletFile = new File("/path/to/wallet_backup.json");
+        byte[] fileContent = Files.readAllBytes(walletFile.toPath());
+        
+        // Build multipart request body
+        String multipartBody = "--" + boundary + "\r\n" +
+                "Content-Disposition: form-data; name=\"file\"; filename=\"wallet_backup.json\"\r\n" +
+                "Content-Type: application/json\r\n\r\n" +
+                new String(fileContent) + "\r\n" +
+                "--" + boundary + "--\r\n";
+        
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8080/api/wallets/import"))
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(HttpRequest.BodyPublishers.ofString(multipartBody))
                 .build();
         
         HttpResponse<String> response = client.send(request, 
