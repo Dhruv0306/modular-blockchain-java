@@ -81,3 +81,5 @@ logs/
 data/
 wallet-data/
 test-dir/
+
+*.key

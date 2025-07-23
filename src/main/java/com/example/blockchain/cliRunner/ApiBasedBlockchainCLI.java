@@ -1,12 +1,23 @@
 package com.example.blockchain.cliRunner;
 
 import java.io.IOException;
-import java.io.ObjectInputValidation;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
+
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.ParseException;
 
 import com.example.blockchain.cliRunner.utils.WalletDisplayUtils;
 
@@ -100,20 +111,52 @@ public class ApiBasedBlockchainCLI {
         String userName = scanner.nextLine();
 
         String url = String.format("%s/wallets/generate?userId=%s&userName=%s", API_BASE_URL, userId, userName);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .POST(HttpRequest.BodyPublishers.noBody())
-                .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        // Create directory for wallet files if it doesn't exist
+        Path walletDir = Paths.get("wallets");
+        if (!Files.exists(walletDir)) {
+            Files.createDirectories(walletDir);
+        }
 
-        WalletDisplayUtils.printDivider();
-        if (response.statusCode() == 200) {
-            System.out.printf("Wallet created for '%s' [%s]\n", userName, userId);
-            System.out.println("Wallet keys saved to disk (see wallets/ directory)");
-        } else {
-            System.out.println("Failed to create wallet. Server response:");
-            System.out.println(response.body());
+        // Use Apache HttpComponents for handling multipart response
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpPost httpPost = new HttpPost(url);
+            
+            // Use the recommended HttpClientResponseHandler approach
+            httpClient.execute(httpPost, response -> {
+                int statusCode = response.getCode();
+                HttpEntity entity = response.getEntity();
+                
+                WalletDisplayUtils.printDivider();
+                if (statusCode == 200) {
+                    System.out.printf("Wallet created for '%s' [%s]%n", userName, userId);
+                    
+                    // Check if response is multipart
+                    Header contentTypeHeader = response.getHeader("Content-Type");
+                    String contentType = contentTypeHeader != null ? contentTypeHeader.getValue() : "";
+                    
+                    if (contentType.contains("multipart")) {
+                        // Process multipart response using utility method
+                        WalletDisplayUtils.processMultipartResponse(entity, userId);
+                    } else {
+                        // Handle as regular response
+                        System.out.println("Response received but not in multipart format");
+                        System.out.println("Content-Type: " + contentType);
+                    }
+                } else {
+                    System.out.println("Failed to create wallet. Status code: " + statusCode);
+                    if (entity != null) {
+                        try {
+                            System.out.println(org.apache.hc.core5.http.io.entity.EntityUtils.toString(entity));
+                        } catch (ParseException e) {
+                            System.out.println("Error parsing response body: " + e.getMessage());
+                        }
+                    }
+                }
+                return null; // The response handler must return something
+            });
+        } catch (Exception e) {
+            System.out.println("Error during wallet creation: " + e.getMessage());
         }
         WalletDisplayUtils.printDivider();
     }
@@ -129,7 +172,7 @@ public class ApiBasedBlockchainCLI {
                 mine             - Mine a block
                 validate-chain   - Check blockchain integrity
                 exit             - Quit CLI
-                Wallet Commands"
+                Wallet Commands:
                 create-wallet     - Create a new wallet with userId and name
                 get-public-keys   - List all userId → publicKey mappings
                 get-public-key    - Get public key for a specific userId
