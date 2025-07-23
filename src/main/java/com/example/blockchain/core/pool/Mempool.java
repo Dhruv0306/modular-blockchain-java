@@ -21,7 +21,7 @@ public class Mempool {
             if (!tx.isValid()) return false;
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To varify Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         transactionMap.put(tx.getHash().toString(), tx);

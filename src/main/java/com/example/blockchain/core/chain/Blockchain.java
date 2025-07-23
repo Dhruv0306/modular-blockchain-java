@@ -86,7 +86,7 @@ public class Blockchain<T extends Transaction> {
             }
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed to Validate Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         return false;

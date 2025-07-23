@@ -26,7 +26,7 @@ public class HashUtils {
                     block.getNonce());
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             String error = "Failed to compute block hash: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
     }
@@ -58,13 +58,13 @@ public class HashUtils {
                 sb.append(String.format("%02x", b));
             return sb.toString();
         } catch (java.security.NoSuchAlgorithmException e) {
-            logger.error("SHA-256 algorithm not available for hash computation", e);
+            logger.error("SHA-256 algorithm not available for hash computation", e.getMessage());
             throw new NoSuchAlgorithmException("Failed to compute block hash: SHA-256 algorithm not available", e);
         } catch (java.io.UnsupportedEncodingException e) {
-            logger.error("UTF-8 encoding not supported for hash computation", e);
+            logger.error("UTF-8 encoding not supported for hash computation", e.getMessage());
             throw new UnsupportedEncodingException("Failed to compute block hash: UTF-8 encoding not supported");
         } catch (Exception e) {
-            logger.error("Unexpected error computing block hash for block with index " + index, e);
+            logger.error("Unexpected error computing block hash for block with index " + index, e.getMessage());
             throw new RuntimeException("Failed to compute block hash: " + e.getMessage(), e);
         }
     }

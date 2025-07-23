@@ -67,7 +67,7 @@ public class FinancialTransaction implements Transaction {
             this.transactionId = generateTransactionId();
         } catch (NoSuchAlgorithmException e) {
             String error = "Error generating transaction ID. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
         }
     }
@@ -95,7 +95,7 @@ public class FinancialTransaction implements Transaction {
             this.transactionId = transactionId != null ? transactionId : generateTransactionId();
         } catch (NoSuchAlgorithmException e) {
             String error = "Error generating transaction ID. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
         }
     }
@@ -120,7 +120,7 @@ public class FinancialTransaction implements Transaction {
             this.transactionId = generateTransactionId();
         } catch (NoSuchAlgorithmException e) {
             String error = "Error generating transaction ID. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
         }
     }
@@ -146,7 +146,7 @@ public class FinancialTransaction implements Transaction {
             this.transactionId = transactionId != null ? transactionId : generateTransactionId();
         } catch (NoSuchAlgorithmException e) {
             String error = "Error generating transaction ID. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
         }
     }
@@ -167,7 +167,7 @@ public class FinancialTransaction implements Transaction {
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
             String error = "Error generating transaction ID. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
         }
     }

@@ -34,7 +34,7 @@ class MempoolTest {
             when(validTransaction.isValid()).thenReturn(true);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To varify Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         
@@ -45,7 +45,7 @@ class MempoolTest {
             when(invalidTransaction.isValid()).thenReturn(false);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To varify Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         
@@ -56,7 +56,7 @@ class MempoolTest {
             when(duplicateTransaction.isValid()).thenReturn(true);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To varify Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
     }
@@ -162,7 +162,7 @@ class MempoolTest {
             when(anotherTransaction.isValid()).thenReturn(true);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To varify Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         mempool.addTransaction(anotherTransaction);
@@ -186,7 +186,7 @@ class MempoolTest {
             when(anotherTransaction.isValid()).thenReturn(true);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To varify Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         mempool.addTransaction(anotherTransaction);
@@ -198,7 +198,7 @@ class MempoolTest {
             when(thirdTransaction.isValid()).thenReturn(true);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To varify Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         mempool.addTransaction(thirdTransaction);

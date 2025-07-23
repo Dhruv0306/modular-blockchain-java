@@ -102,7 +102,7 @@ public class WalletUtils {
             writer.close();
             logger.info("Temporary key file created: {}", tempFile.getAbsolutePath());
         } catch (IOException e) {
-            logger.error("Failed to create temporary key file: {}", fileName, e);
+            logger.error("Failed to create temporary key file: {}", fileName, e.getMessage());
             if (tempFile != null && tempFile.exists()) {
                 tempFile.delete();
             }
@@ -157,15 +157,15 @@ public class WalletUtils {
             // Return the validation result
             return isValid;
         } catch (NullPointerException e) {
-            logger.error("Error validating private key for user: {}", userId, e);
+            logger.error("Error validating private key for user: {}", userId, e.getMessage());
             String error = "Error validating private key for user: " + userId + " \nError: " + e.getMessage();
             throw new NullPointerException(error);
         } catch (NoSuchAlgorithmException e) {
-            logger.error("Error validating private key for user: {}", userId, e);
+            logger.error("Error validating private key for user: {}", userId, e.getMessage());
             String error = "Error validating private key for user: " + userId + " \nError: " + e.getMessage();
             throw new NoSuchAlgorithmException(error, e);
         } catch (InvalidKeySpecException e) {
-            logger.error("Error validating private key for user: {}", userId, e);
+            logger.error("Error validating private key for user: {}", userId, e.getMessage());
             String error = "Error validating private key for user: " + userId + " \nError: " + e.getMessage();
             throw new InvalidKeySpecException(error, e);
         }
@@ -208,7 +208,7 @@ public class WalletUtils {
             return tempFile;
 
         } catch (IOException e) {
-            logger.error("Failed to export wallet data for user: {}", userId, e);
+            logger.error("Failed to export wallet data for user: {}", userId, e.getMessage());
             String error = "Failed to export wallet data for user: " + userId + " \nError: " + e.getMessage();
             throw new IOException(error, e);
         } catch (NoSuchAlgorithmException e) {
@@ -274,15 +274,15 @@ public class WalletUtils {
             wallet.setEncodedPublicKey(Base64.getEncoder().encodeToString(publicKey.getEncoded()));
 
         } catch (NoSuchAlgorithmException e) {
-            logger.error("RSA algorithm not available", e);
+            logger.error("RSA algorithm not available", e.getMessage());
             String error = "RSA algorithm not available \nError: " + e.getMessage();
             throw new NoSuchAlgorithmException(error, e);
         } catch (InvalidKeySpecException e) {
-            logger.error("Invalid key specification while importing wallet", e);
+            logger.error("Invalid key specification while importing wallet", e.getMessage());
             String error = "Invalid key specification while importing wallet \nError: " + e.getMessage();
             throw new InvalidKeySpecException(error, e);
         } catch (IOException e) {
-            logger.error("Error reading wallet file data", e);
+            logger.error("Error reading wallet file data", e.getMessage());
             String error = "Error reading wallet file data \nError: " + e.getMessage();
             throw new IOException(error, e);
         }
@@ -339,13 +339,13 @@ public class WalletUtils {
                     logger.info("Successfully read private key in Base64 format");
                     return content.trim();
                 } catch (IllegalArgumentException e) {
-                    logger.error("File does not contain a valid Base64 encoded private key", e);
+                    logger.error("File does not contain a valid Base64 encoded private key", e.getMessage());
                     String error = "File does not contain a valid Base64 encoded private key \nError: " + e.getMessage();
                     throw new IllegalArgumentException(error, e);
                 }
             }
         } catch (IOException e) {
-            logger.error("Error reading private key file", e);
+            logger.error("Error reading private key file", e.getMessage());
             String error = "Error reading private key file \nError: " + e.getMessage();
             throw new IOException(error, e);
         }

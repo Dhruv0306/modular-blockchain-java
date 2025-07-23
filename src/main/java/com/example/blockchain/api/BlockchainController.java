@@ -116,7 +116,7 @@ public class BlockchainController {
                         tx.getReceiverID());
             } catch (NoSuchAlgorithmException e) {
                 String error = "Failed to create transaction: " + e.getMessage();
-                logger.error(error, e);
+                logger.error(error, e.getMessage());
                 return error;
             }
         }

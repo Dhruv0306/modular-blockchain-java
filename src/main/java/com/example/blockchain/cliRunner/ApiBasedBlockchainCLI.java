@@ -8,7 +8,13 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
@@ -43,8 +49,8 @@ public class ApiBasedBlockchainCLI {
 
             switch (command) {
                 case "help" -> showHelp();
-                case "view-chain" -> sendGet("/chain");
-                case "view-pending" -> sendGet("/pending");
+                case "view-chain" -> getChain();
+                case "view-pending" -> getPendingTransactions();
                 case "add-tx" -> addTransaction(scanner);
                 case "mine" -> sendPost("/mine", "");
                 case "validate-chain" -> sendGet("/validate");
@@ -233,6 +239,97 @@ public class ApiBasedBlockchainCLI {
         sendPost("/transactions", jsonBody);
     }
 
+    private void getChain() throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/chain"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        
+        if (response.statusCode() == 200) {
+            // Parse the JSON response to extract block information
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                List<Map<String, Object>> blocks = mapper.readValue(response.body(), 
+                        new TypeReference<List<Map<String, Object>>>() {});
+                
+                System.out.println("==".repeat(25));
+                System.out.println("BLOCKCHAIN");
+                System.out.println("==".repeat(25));
+                
+                for (int i = 0; i < blocks.size(); i++) {
+                    Map<String, Object> block = blocks.get(i);
+                    System.out.println("Block #" + block.get("index"));
+                    System.out.println("Hash: " + block.get("hash"));
+                    System.out.println("Previous Hash: " + block.get("previousHash"));
+                    System.out.println("Timestamp: " + new Date((Long) block.get("timestamp")));
+                    System.out.println("Nonce: " + block.get("nonce"));
+                    
+                    List<Map<String, Object>> transactions = (List<Map<String, Object>>) block.get("transactions");
+                    System.out.println("Transactions: " + transactions.size());
+                    
+                    for (int j = 0; j < transactions.size(); j++) {
+                        Map<String, Object> tx = transactions.get(j);
+                        System.out.println("  TX #" + (j+1) + ": " + tx.get("sender") + " -> " + 
+                                tx.get("receiver") + ", Amount: " + tx.get("amount"));
+                    }
+                    System.out.println("-".repeat(50));
+                }
+            } catch (Exception e) {
+                System.out.println("Error parsing blockchain data: " + e.getMessage());
+                System.out.println(response.body());
+            }
+        } else {
+            System.out.println("Failed to retrieve blockchain. Status code: " + response.statusCode());
+            System.out.println(response.body());
+        }
+    }
+    
+    private void getPendingTransactions() throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/pending"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        
+        if (response.statusCode() == 200) {
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                List<Map<String, Object>> transactions = mapper.readValue(response.body(), 
+                        new TypeReference<List<Map<String, Object>>>() {});
+                
+                System.out.println("==".repeat(25));
+                System.out.println("PENDING TRANSACTIONS");
+                System.out.println("==".repeat(25));
+                
+                if (transactions.isEmpty()) {
+                    System.out.println("No pending transactions in mempool.");
+                } else {
+                    System.out.println("Total pending transactions: " + transactions.size());
+                    System.out.println("-".repeat(50));
+                    
+                    for (int i = 0; i < transactions.size(); i++) {
+                        Map<String, Object> tx = transactions.get(i);
+                        System.out.println("TX #" + (i+1));
+                        System.out.println("  ID: " + tx.get("transactionId"));
+                        System.out.println("  From: " + tx.get("sender") + " (ID: " + tx.get("senderID") + ")");
+                        System.out.println("  To: " + tx.get("receiver") + " (ID: " + tx.get("receiverID") + ")");
+                        System.out.println("  Amount: " + tx.get("amount"));
+                        System.out.println("  Type: " + tx.get("type"));
+                        System.out.println("-".repeat(50));
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Error parsing pending transactions: " + e.getMessage());
+                System.out.println(response.body());
+            }
+        } else {
+            System.out.println("Failed to retrieve pending transactions. Status code: " + response.statusCode());
+            System.out.println(response.body());
+        }
+    }
     public static void main(String[] args) throws Exception {
         new ApiBasedBlockchainCLI().start();
     }

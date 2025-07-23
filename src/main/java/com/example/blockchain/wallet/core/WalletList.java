@@ -145,11 +145,11 @@ public class WalletList {
         try {
             JsonUtils.writeToFile(this, file);
         } catch (NullPointerException e) {
-            logger.error("Failed to export wallet list to JSON file: " + file.getAbsolutePath(), e);
+            logger.error("Failed to export wallet list to JSON file: " + file.getAbsolutePath(), e.getMessage());
             String error = "Failed to export wallet list to JSON file: " + file.getAbsolutePath();
             throw new NullPointerException(error);
         } catch (IOException e) {
-            logger.error("Failed to export wallet list to JSON file: " + file.getAbsolutePath(), e);
+            logger.error("Failed to export wallet list to JSON file: " + file.getAbsolutePath(), e.getMessage());
             String error = "Failed to export wallet list to JSON file: " + file.getAbsolutePath();
             throw new IOException(error, e);
         }

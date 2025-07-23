@@ -66,7 +66,7 @@ public class BlockchainEdgeCasesTest {
             tx2 = new FinancialTransaction("Alice", "Bob", 100);
         } catch (NoSuchAlgorithmException e) {
             String error = "Error generating transaction. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         
@@ -113,7 +113,7 @@ public class BlockchainEdgeCasesTest {
                 blockchain.addTransaction(new FinancialTransaction("User" + i, "Receiver" + i, i + 1));
             } catch (NoSuchAlgorithmException e) {
                 String error = "Error generating transaction. \nError: " + e.getMessage();
-                logger.error(error, e);
+                logger.error(error, e.getMessage());
                 throw new RuntimeException(error, e);
             }
         }

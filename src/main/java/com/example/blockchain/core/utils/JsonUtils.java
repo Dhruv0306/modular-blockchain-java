@@ -39,7 +39,7 @@ public class JsonUtils {
         try {
             mapper.writeValue(file, object);
         } catch (IOException e) {
-            logger.error("Failed to write object to JSON file: " + file.getAbsolutePath(), e);
+            logger.error("Failed to write object to JSON file: " + file.getAbsolutePath(), e.getMessage());
             String error = "Failed to write object to JSON file: " + file.getAbsolutePath();
             throw new IOException(error, e);
         }

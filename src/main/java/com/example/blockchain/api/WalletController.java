@@ -158,7 +158,7 @@ public class WalletController {
                     .contentType(MediaType.MULTIPART_MIXED)
                     .body(responseBody);
         } catch (Exception e) {
-            logger.error("Failed to create wallet for user: {}", userName, e);
+            logger.error("Failed to create wallet for user: {}", userName, e.getMessage());
             throw e;
         }
     }
@@ -200,7 +200,7 @@ public class WalletController {
                         String base64 = Base64.getEncoder().encodeToString(publicKey.getEncoded());
                         return "-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----";
                     } catch (Exception e) {
-                        logger.error("Error retrieving public key for user: {}", entry.getKey(), e);
+                        logger.error("Error retrieving public key for user: {}", entry.getKey(), e.getMessage());
                         return "Error retrieving public key";
                     }
                 }));
@@ -315,7 +315,7 @@ public class WalletController {
                     .contentType(MediaType.MULTIPART_MIXED)
                     .body(responseBody);
         } catch (Exception e) {
-            logger.error("Failed to export wallet data for user ID: {}", userId, e);
+            logger.error("Failed to export wallet data for user ID: {}", userId, e.getMessage());
             return ResponseEntity.status(500).body(null);
         }
     }
@@ -352,7 +352,7 @@ public class WalletController {
             walletList.addWallet(wallet.getUserId(), wallet.getUserName(), wallet);
             return ResponseEntity.ok("Wallet imported successfully for user: " + wallet.getUserName());
         } catch (Exception e) {
-            logger.error("Failed to import wallet", e);
+            logger.error("Failed to import wallet", e.getMessage());
             return ResponseEntity.status(500).body("Internal error during import.");
         }
     }

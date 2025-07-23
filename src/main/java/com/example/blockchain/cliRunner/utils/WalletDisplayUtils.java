@@ -24,20 +24,20 @@ public class WalletDisplayUtils {
             Map<String, String> keys = mapper.readValue(jsonResponse, Map.class);
 
             System.out.println("Registered Public Keys:");
-            System.out.println("+----------------+---------------------------------------------+");
-            System.out.println("| User ID        | Public Key (Shortened)                     |");
-            System.out.println("+----------------+---------------------------------------------+");
+            System.out.println("+----------------+-----------------------------------------------------------------+");
+            System.out.println("| User ID        | Public Key (Shortened)                                          |");
+            System.out.println("+----------------+-----------------------------------------------------------------+");
 
             for (Map.Entry<String, String> entry : keys.entrySet()) {
                 String userId = entry.getKey();
                 String key = entry.getValue().replace("-----BEGIN PUBLIC KEY-----", "")
                         .replace("-----END PUBLIC KEY-----", "")
                         .replace("\r", "").replace("\n", "").replace("\s", "");
-                String shortened = key.length() > 40 ? key.substring(0, 40) + "..." : key;
-                System.out.printf("| %-14s | %-43s |\n", userId, shortened);
+                String shortened = key.length() > 60 ? key.substring(0, 60) + "..." : key;
+                System.out.printf("| %-14s | %-63s |\n", userId, shortened);
             }
 
-            System.out.println("+----------------+---------------------------------------------+");
+            System.out.println("+----------------+-----------------------------------------------------------------+");
         } catch (Exception e) {
             System.out.println("Failed to parse public keys: " + e.getMessage());
         }
@@ -129,24 +129,24 @@ public class WalletDisplayUtils {
                         if (contentEnd != -1) {
                             // Extract the file content
                             String fileContent = content.substring(contentStart, contentEnd).trim();
-                            
+
                             // Debug content
                             System.out.println("Extracted content length: " + fileContent.length());
-                            
+
                             // If content is empty or doesn't contain key markers, try direct search
                             if (fileContent.isEmpty() || !fileContent.contains("-----BEGIN")) {
                                 // Try to find key content directly in the entire response
                                 String keyType = originalFilename.contains("publicKey") ? "PUBLIC" : "PRIVATE";
                                 String startMarker = "-----BEGIN " + keyType + " KEY-----";
                                 String endMarker = "-----END " + keyType + " KEY-----";
-                                
+
                                 // For private key, we need to be more precise to avoid the format example
                                 if (keyType.equals("PRIVATE")) {
                                     // Look for the private key in the attachment section
-                                    String attachmentMarker = "Content-Disposition: attachment; filename=\"" + 
-                                                             originalFilename + "\"";
+                                    String attachmentMarker = "Content-Disposition: attachment; filename=\"" +
+                                            originalFilename + "\"";
                                     int attachmentPos = content.indexOf(attachmentMarker);
-                                    
+
                                     if (attachmentPos != -1) {
                                         // Find the start marker after the attachment header
                                         int keyStart = content.indexOf(startMarker, attachmentPos);
@@ -156,7 +156,8 @@ public class WalletDisplayUtils {
                                                 // Include the end marker
                                                 keyEnd += endMarker.length();
                                                 fileContent = content.substring(keyStart, keyEnd);
-                                                System.out.println("Found private key using attachment search, length: " + fileContent.length());
+                                                System.out.println("Found private key using attachment search, length: "
+                                                        + fileContent.length());
                                             }
                                         }
                                     }
@@ -169,23 +170,24 @@ public class WalletDisplayUtils {
                                             // Include the end marker
                                             keyEnd += endMarker.length();
                                             fileContent = content.substring(keyStart, keyEnd);
-                                            System.out.println("Found public key using direct search, length: " + fileContent.length());
+                                            System.out.println("Found public key using direct search, length: "
+                                                    + fileContent.length());
                                         }
                                     }
                                 }
                             }
-                            
+
                             // Only save if we have content
                             if (!fileContent.isEmpty()) {
                                 // Save to file
                                 Path filePath = walletDir.resolve(targetFilename);
                                 Files.writeString(filePath, fileContent);
-                                
+
                                 System.out.println(
                                         "Saved " + (originalFilename.contains("publicKey") ? "public" : "private") +
                                                 " key to: " + filePath);
                             } else {
-                                System.out.println("Warning: Empty content for " + 
+                                System.out.println("Warning: Empty content for " +
                                         (originalFilename.contains("publicKey") ? "public" : "private") + " key");
                             }
                         }
@@ -198,8 +200,6 @@ public class WalletDisplayUtils {
             System.out.println("Error extracting attachments: " + e.getMessage());
         }
     }
-
-
 
     /**
      * Extract and display message parts from multipart content

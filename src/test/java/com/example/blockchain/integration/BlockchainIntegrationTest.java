@@ -51,7 +51,7 @@ class BlockchainIntegrationTest {
                         blockchain.addTransaction(new FinancialTransaction("Charlie", "Dave", 75));
                 } catch (NoSuchAlgorithmException e) {
                         String error = "Failed To create Transection. \nError: " + e.getMessage();
-                        logger.error(error, e);
+                        logger.error(error, e.getMessage());
                         throw new RuntimeException(error, e);
                 }
 
@@ -92,7 +92,7 @@ class BlockchainIntegrationTest {
                                         .build();
                 } catch (NoSuchAlgorithmException e) {
                         String error = "Failed To create Transection. \nError: " + e.getMessage();
-                        logger.error(error, e);
+                        logger.error(error, e.getMessage());
                         throw new RuntimeException(error, e);
                 }
 
@@ -113,7 +113,7 @@ class BlockchainIntegrationTest {
                         blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
                 } catch (NoSuchAlgorithmException e) {
                         String error = "Failed To create Transection. \nError: " + e.getMessage();
-                        logger.error(error, e);
+                        logger.error(error, e.getMessage());
                         throw new RuntimeException(error, e);
                 }
                 Block<FinancialTransaction> newBlock = consensus.generateBlock(
@@ -147,7 +147,7 @@ class BlockchainIntegrationTest {
                         validTx = new FinancialTransaction("Alice", "Bob", 100);
                 } catch (NoSuchAlgorithmException e) {
                         String error = "Failed To create Transection. \nError: " + e.getMessage();
-                        logger.error(error, e);
+                        logger.error(error, e.getMessage());
                         throw new RuntimeException(error, e);
                 }
                 Block<FinancialTransaction> genesisBlock = blockchain.getLastBlock();
@@ -164,7 +164,7 @@ class BlockchainIntegrationTest {
                         tamperedTx = new FinancialTransaction("Alice", "Bob", 1000);
                 } catch (NoSuchAlgorithmException e) {
                         String error = "Failed To create Transection. \nError: " + e.getMessage();
-                        logger.error(error, e);
+                        logger.error(error, e.getMessage());
                         throw new RuntimeException(error, e);
                 }
                 List<FinancialTransaction> tamperedTxs = new ArrayList<>();
@@ -201,7 +201,7 @@ class BlockchainIntegrationTest {
                         txs.add(new FinancialTransaction("Eve", "Frank", 300));
                 } catch (NoSuchAlgorithmException e) {
                         String error = "Failed To create Transection. \nError: " + e.getMessage();
-                        logger.error(error, e);
+                        logger.error(error, e.getMessage());
                         throw new RuntimeException(error, e);
                 }
 
@@ -238,7 +238,7 @@ class BlockchainIntegrationTest {
                         blockchain.addTransaction(new FinancialTransaction("Alice", "Bob", 100));
                 } catch (NoSuchAlgorithmException e) {
                         String error = "Failed To create Transection. \nError: " + e.getMessage();
-                        logger.error(error, e);
+                        logger.error(error, e.getMessage());
                         throw new RuntimeException(error, e);
                 }
                 Block<FinancialTransaction> validBlock = consensus.generateBlock(
@@ -252,7 +252,7 @@ class BlockchainIntegrationTest {
                         txs.add(new FinancialTransaction("Eve", "Frank", 200));
                 } catch (NoSuchAlgorithmException e) {
                         String error = "Failed To create Transection. \nError: " + e.getMessage();
-                        logger.error(error, e);
+                        logger.error(error, e.getMessage());
                         throw new RuntimeException(error, e);
                 }
                 String validHash = "0000" + System.currentTimeMillis();
