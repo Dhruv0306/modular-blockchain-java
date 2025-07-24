@@ -17,8 +17,10 @@ import com.example.blockchain.core.utils.PersistenceManager;
 import com.example.blockchain.crypto.CryptoUtils;
 import com.example.blockchain.logging.BlockchainLoggerFactory;
 
+import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.NoSuchAlgorithmException;
@@ -85,8 +87,8 @@ public class BlockchainController {
      * @return List of all blocks in chronological order
      */
     @GetMapping("/chain")
-    public List<Block<Transaction>> getBlockchain() {
-        return blockchain.getChain();
+    public ResponseEntity<List<Block<Transaction>>> getBlockchain() {
+        return ResponseEntity.ok(blockchain.getChain());
     }
 
     /**
@@ -97,31 +99,41 @@ public class BlockchainController {
      * @return Success/failure message indicating transaction status
      */
     @PostMapping("/transactions")
-    public String addTransaction(@RequestBody Transaction tx) {
+    public ResponseEntity<String> addTransaction(@RequestBody Transaction tx) {
         if (tx == null || tx.getSender() == null || tx.getReceiver() == null || tx.getAmount() <= 0
                 || tx.getSenderID() == null || tx.getReceiverID() == null) {
-            return "Invalid transaction data.";
+            logger.error("Error: ", "\"Invalid transaction data.\"");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid transaction data.");
         }
 
-        if (tx.getType().equalsIgnoreCase("SignedFinancialTransaction")) {
-            try {
+        try {
+            if (tx.getType().equalsIgnoreCase("SignedFinancialTransaction")) {
                 tx = changeToSignedFinancialTransaction(tx);
-            } catch (Exception e) {
-                // Log the exception or handle it appropriately
-                return "Error processing transaction: " + e.getMessage();
-            }
-        } else {
-            try {
+            } else {
                 tx = new FinancialTransaction(tx.getSender(), tx.getReceiver(), tx.getAmount(), tx.getSenderID(),
                         tx.getReceiverID());
-            } catch (NoSuchAlgorithmException e) {
-                String error = "Failed to create transaction: " + e.getMessage();
-                logger.error(error, e.getMessage());
-                return error;
             }
+
+            boolean added = mempool.addTransaction(tx);
+            if (added) {
+                logger.info("Added: ", "\"Transaction added to MemPool.\"");
+                return ResponseEntity.status(HttpStatus.CREATED).body("Transaction added to MemPool.");
+            } else {
+                logger.error("Error: ", "\"Invalid transaction.\"");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid transaction.");
+            }
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid transaction: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid transaction: " + e.getMessage());
+        } catch (RuntimeException e) {
+            logger.error("Transaction processing error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body("Transaction processing error: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Failed to process transaction: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to process transaction: " + e.getMessage());
         }
-        boolean added = mempool.addTransaction(tx);
-        return added ? "Transaction added to MemPool." : "Invalid transaction.";
     }
 
     /**
@@ -183,24 +195,34 @@ public class BlockchainController {
      * @return Success message with block hash or failure message
      */
     @PostMapping("/mine")
-    public String mineBlock() {
-        Block<Transaction> newBlock = null;
+    public ResponseEntity<String> mineBlock() {
         if (mempool.isEmpty()) {
-            return "No transactions to mine.";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No transactions to mine.");
         }
-        if (mempool.size() < this.MAX_TRANSECTIONS_PER_BLOCK) {
-            newBlock = consensus.generateBlock(mempool.getAllTransactions(),
-                    blockchain.getLastBlock());
-        } else {
-            newBlock = consensus.generateBlock(mempool.getTopN(MAX_TRANSECTIONS_PER_BLOCK),
-                    blockchain.getLastBlock());
-        }
-        if (consensus.validateBlock(newBlock, blockchain.getLastBlock())) {
-            blockchain.addBlock(newBlock);
-            mempool.removeAllTransactions(newBlock.getTransactions());
-            return "Block mined and added to chain: " + newBlock.getHash();
-        } else {
-            return "Block mining failed.";
+
+        try {
+            Block<Transaction> newBlock;
+            if (mempool.size() < this.MAX_TRANSECTIONS_PER_BLOCK) {
+                newBlock = consensus.generateBlock(mempool.getAllTransactions(),
+                        blockchain.getLastBlock());
+            } else {
+                newBlock = consensus.generateBlock(mempool.getTopN(MAX_TRANSECTIONS_PER_BLOCK),
+                        blockchain.getLastBlock());
+            }
+
+            if (consensus.validateBlock(newBlock, blockchain.getLastBlock())) {
+                blockchain.addBlock(newBlock);
+                mempool.removeAllTransactions(newBlock.getTransactions());
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body("Block mined and added to chain: " + newBlock.getHash());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body("Block mining failed: validation error.");
+            }
+        } catch (Exception e) {
+            logger.error("Block mining failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Block mining failed: " + e.getMessage());
         }
     }
 
@@ -211,8 +233,9 @@ public class BlockchainController {
      * @return List of pending transactions in the pool
      */
     @GetMapping("/pending")
-    public List<Transaction> getPendingTransactions() {
-        return mempool.getAllTransactions();
+    public ResponseEntity<List<Transaction>> getPendingTransactions() {
+        List<Transaction> transactions = mempool.getAllTransactions();
+        return ResponseEntity.ok(transactions);
     }
 
     /**
@@ -225,8 +248,13 @@ public class BlockchainController {
      * @return Status message indicating if chain is valid
      */
     @GetMapping("/validate")
-    public String validateChain() {
-        return blockchain.isChainValid() ? "Chain is valid." : "Chain is invalid!";
+    public ResponseEntity<String> validateChain() {
+        boolean isValid = blockchain.isChainValid();
+        if (isValid) {
+            return ResponseEntity.ok("Chain is valid.");
+        } else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Chain is invalid!");
+        }
     }
 
     /**
