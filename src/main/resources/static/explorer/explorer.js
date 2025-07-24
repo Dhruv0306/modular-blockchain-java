@@ -37,3 +37,8 @@ function renderTransactions(txs) {
 }
 
 window.onload = loadBlockchain;
+
+// Auto-refresh every 10 seconds
+setInterval(() => {
+  loadBlockchain();
+}, 10000);
