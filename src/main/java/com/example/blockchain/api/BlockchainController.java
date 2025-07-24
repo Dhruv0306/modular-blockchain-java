@@ -165,10 +165,20 @@ public class BlockchainController {
                 throw new IllegalArgumentException(
                         "Sender wallet not found for Sender: " + tx.getSender() + " and ID: " + tx.getSenderID());
             }
+            if (!tx.getSender().equalsIgnoreCase(senderEaWalletEntry.userName)){
+                throw new IllegalArgumentException(
+                        "Sender name does not match wallet name for Sender: " + tx.getSender() + " and ID: " + tx.getSenderID());
+            }
+
             WalletList.WalletEntry receiverEaWalletEntry = walletList.getWalletByUserID(tx.getReceiverID());
             if (receiverEaWalletEntry == null) {
                 throw new IllegalArgumentException(
                         "Receiver wallet not found for Receiver: " + tx.getReceiver() + " and ID: "
+                                + tx.getReceiverID());
+            }
+            if (!tx.getReceiver().equalsIgnoreCase(receiverEaWalletEntry.userName)){
+                throw new IllegalArgumentException(
+                        "Receiver name does not match wallet name for Receiver: " + tx.getReceiver() + " and ID: "
                                 + tx.getReceiverID());
             }
 
