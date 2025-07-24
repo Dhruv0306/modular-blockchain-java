@@ -238,13 +238,15 @@ public class ApiBasedBlockchainCLI {
         try {
             CloseableHttpClient httpClient = HttpClients.createDefault();
 
-            // Create multipart request
+            // Create multipart request for GET with parameters
+            String url = API_BASE_URL + "/wallets/export?userId=" + userId;
+            HttpGet httpGet = new HttpGet(url);
+            httpGet.setHeader("X-HTTP-Method-Override", "GET"); // Indicate this should be treated as GET
+
+            // Add private key file as multipart
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-            builder.addTextBody("userId", userId);
             builder.addBinaryBody("privateKey", privateKeyFile, ContentType.APPLICATION_OCTET_STREAM,
                     privateKeyFile.getName());
-
-            HttpGet httpGet = new HttpGet(API_BASE_URL + "/wallets/export");
             httpGet.setEntity(builder.build());
 
             // Execute and get the response
@@ -254,10 +256,10 @@ public class ApiBasedBlockchainCLI {
                 String contentType = entity.getContentType();
 
                 if (statusCode == 200) {
-                    System.out.println("Wallet exported successfully!");
+                    System.out.println("Wallet export successful!");
                     if (contentType != null && contentType.contains("multipart")) {
                         // Handle multipart response (download wallet data)
-                        WalletDisplayUtils.processMultipartResponse(entity, userId);
+                        WalletDisplayUtils.processWalletExportResponse(entity, userId);
                     } else {
                         System.out.println(EntityUtils.toString(entity));
                     }

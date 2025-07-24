@@ -250,4 +250,101 @@ public class WalletDisplayUtils {
             }
         }
     }
+
+    /**
+     * Process multipart response from wallet export endpoint
+     * 
+     * @param entity The HttpEntity containing the multipart response
+     * @param userId The user ID for naming the saved files
+     */
+    public static void processWalletExportResponse(HttpEntity entity, String userId) {
+        try {
+            // Create directory for wallet files if it doesn't exist
+            Path walletDir = Paths.get("wallets");
+            if (!Files.exists(walletDir)) {
+                Files.createDirectories(walletDir);
+            }
+
+            // Create temporary directory to extract parts
+            Path tempDir = Files.createTempDirectory("wallet-export-");
+
+            // Save the full response to a temporary file
+            File tempFile = tempDir.resolve("export-response.bin").toFile();
+            try (FileOutputStream outStream = new FileOutputStream(tempFile);
+                    InputStream inStream = entity.getContent()) {
+
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = inStream.read(buffer)) != -1) {
+                    outStream.write(buffer, 0, bytesRead);
+                }
+            }
+
+            // Read the response file and extract parts
+            String content = Files.readString(tempFile.toPath());
+
+            // Extract and display messages
+            extractAndDisplayMessages(content);
+
+            // Extract wallet data file
+            extractWalletDataFile(content, userId, walletDir);
+
+            // Clean up temporary files
+            Files.delete(tempFile.toPath());
+            Files.delete(tempDir);
+
+        } catch (IOException e) {
+            System.out.println("Error processing wallet export response: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Extract wallet data file from multipart content
+     */
+    private static void extractWalletDataFile(String content, String userId, Path walletDir) {
+        try {
+            // Look for wallet data attachment
+            String attachmentHeader = "Content-Disposition: attachment; filename=";
+            int pos = content.indexOf(attachmentHeader);
+
+            if (pos != -1) {
+                // Extract filename
+                int filenameStart = pos + attachmentHeader.length() + 1; // +1 for the quote
+                int filenameEnd = content.indexOf('"', filenameStart);
+
+                if (filenameEnd != -1) {
+                    String originalFilename = content.substring(filenameStart, filenameEnd);
+
+                    // Create target filename
+                    String targetFilename = userId + "_wallet_backup.json";
+
+                    // Find the start of the file content (after headers)
+                    int contentStart = content.indexOf("\r\n\r\n", filenameEnd);
+                    if (contentStart != -1) {
+                        contentStart += 4; // Skip the double newline
+
+                        // Find the end of this part (next boundary)
+                        int contentEnd = content.indexOf("}", contentStart) + 1;
+                        if (contentEnd != -1) {
+                            // Extract the file content
+                            String fileContent = content.substring(contentStart, contentEnd).trim();
+
+                            if (!fileContent.isEmpty()) {
+                                // Save the wallet data file
+                                Path targetPath = walletDir.resolve(targetFilename);
+                                Files.writeString(targetPath, fileContent);
+                                System.out.println("Wallet data saved to: " + targetPath.toAbsolutePath());
+                            } else {
+                                System.out.println("Wallet data file appears to be empty");
+                            }
+                        }
+                    }
+                }
+            } else {
+                System.out.println("No wallet data file found in response");
+            }
+        } catch (IOException e) {
+            System.out.println("Error extracting wallet data file: " + e.getMessage());
+        }
+    }
 }
