@@ -25,7 +25,7 @@ public class FinancialTransactionTest {
             tx = new FinancialTransaction("Alice", "Bob", 10.0);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         assertTrue(tx.isValid());
@@ -41,7 +41,7 @@ public class FinancialTransactionTest {
             tx = new FinancialTransaction(null, "Bob", 10.0);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         assertFalse(tx.isValid());
@@ -57,7 +57,7 @@ public class FinancialTransactionTest {
             tx = new FinancialTransaction("Alice", null, 10.0);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         assertFalse(tx.isValid());
@@ -73,7 +73,7 @@ public class FinancialTransactionTest {
             tx = new FinancialTransaction("Alice", "Bob", 0.0);
         } catch (NoSuchAlgorithmException e) {
 String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         assertFalse(tx.isValid());
@@ -89,7 +89,7 @@ String error = "Failed To create Transection. \nError: " + e.getMessage();
             tx = new FinancialTransaction("Alice", "Bob", -5.0);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         assertFalse(tx.isValid());
@@ -105,7 +105,7 @@ String error = "Failed To create Transection. \nError: " + e.getMessage();
             tx = new FinancialTransaction("Alice", "Bob", 25.5);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         assertEquals("Alice -> Bob : $25.5", tx.getSummary());
@@ -123,7 +123,7 @@ String error = "Failed To create Transection. \nError: " + e.getMessage();
                     "74c4f2fc-5c91-31ed-a105-471ca9c83bd1");
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         assertEquals("Alice -> Bob : $25.5 [ID: 74c4f2fc-5c91-31ed-a105-471ca9c83bd1]", tx.toString());
@@ -154,7 +154,7 @@ String error = "Failed To create Transection. \nError: " + e.getMessage();
             tx5 = new FinancialTransaction("Alice", "Bob", 15.0);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         assertTrue(tx1.equals(tx1));
@@ -178,7 +178,7 @@ String error = "Failed To create Transection. \nError: " + e.getMessage();
             tx1 = new FinancialTransaction("Alice", "Bob", 10.0);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
         // Add a small delay to ensure different timestamps in transaction ID generation
@@ -188,7 +188,7 @@ String error = "Failed To create Transection. \nError: " + e.getMessage();
             tx2 = new FinancialTransaction("Alice", "Bob", 10.0);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed To create Transection. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
 

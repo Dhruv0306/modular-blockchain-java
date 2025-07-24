@@ -34,7 +34,7 @@ public class CryptoUtils {
             return gen.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed to generate RSA key pair: RSA algorithm not available. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
         }
     }
@@ -61,19 +61,19 @@ public class CryptoUtils {
             return Base64.getEncoder().encodeToString(signature);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed to sign data: SHA256withRSA algorithm not available. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
         } catch (InvalidKeyException e) {
             String error = "Failed to sign data: Invalid private key provided. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new InvalidKeyException(error, e);
         } catch (UnsupportedEncodingException e) {
             String error = "Failed to sign data: UTF-8 encoding not supported. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new UnsupportedEncodingException(error);
         } catch (SignatureException e) {
             String error = "Failed to sign data: Error during signature operation. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new SignatureException(error, e);
         }
     }
@@ -101,23 +101,23 @@ public class CryptoUtils {
             return verifier.verify(sigBytes);
         } catch (NoSuchAlgorithmException e) {
             String error = "Failed to verify signature: SHA256withRSA algorithm not available. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
         } catch (InvalidKeyException e) {
             String error = "Failed to verify signature: Invalid public key provided. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new InvalidKeyException(error, e);
         } catch (UnsupportedEncodingException e) {
             String error = "Failed to verify signature: UTF-8 encoding not supported. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new UnsupportedEncodingException(error);
         } catch (SignatureException e) {
             String error = "Failed to verify signature: Error during verification operation. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new SignatureException(error, e);
         } catch (IllegalArgumentException e) {
             String error = "Failed to verify signature: Invalid Base64 encoded signature. \nError: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new IllegalArgumentException(error, e);
         }
     }

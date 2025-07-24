@@ -68,10 +68,11 @@ public class SignedFinancialTransaction implements SignedTransaction {
      * @param amount          The amount to transfer
      * @param senderPublicKey The sender's public key for verification
      * @param signature       The transaction's digital signature
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     public SignedFinancialTransaction(String sender, String receiver, double amount,
-            PublicKey senderPublicKey, String signature, String senderID, String receiverID) throws NoSuchAlgorithmException {
+            PublicKey senderPublicKey, String signature, String senderID, String receiverID)
+            throws NoSuchAlgorithmException {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
@@ -100,10 +101,11 @@ public class SignedFinancialTransaction implements SignedTransaction {
      * @param senderPublicKey The sender's public key for verification
      * @param signature       The transaction's digital signature
      * @param transactionId   Custom transaction ID (for testing)
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     public SignedFinancialTransaction(String sender, String receiver, double amount,
-            PublicKey senderPublicKey, String signature, String senderID, String receiverID, String transactionId) throws NoSuchAlgorithmException {
+            PublicKey senderPublicKey, String signature, String senderID, String receiverID, String transactionId)
+            throws NoSuchAlgorithmException {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
@@ -134,7 +136,7 @@ public class SignedFinancialTransaction implements SignedTransaction {
      * @param signature       The transaction's digital signature
      * @param transactionId   Custom transaction ID (for testing)
      * @param timestamp       Custom timestamp (for testing)
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     public SignedFinancialTransaction(String sender, String receiver, double amount,
             PublicKey senderPublicKey, String signature, String senderID, String receiverID, String transactionId,
@@ -169,10 +171,11 @@ public class SignedFinancialTransaction implements SignedTransaction {
      * @param signature       The transaction's digital signature
      * @param transactionId   Custom transaction ID (for testing)
      * @param timestamp       Custom timestamp (for testing)
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     public SignedFinancialTransaction(String sender, String receiver, double amount,
-            PublicKey senderPublicKey, String signature, String senderID, String receiverID, long timestamp) throws NoSuchAlgorithmException {
+            PublicKey senderPublicKey, String signature, String senderID, String receiverID, long timestamp)
+            throws NoSuchAlgorithmException {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
@@ -196,7 +199,7 @@ public class SignedFinancialTransaction implements SignedTransaction {
      * Generates a deterministic transaction ID based on the transaction data
      * 
      * @return UUID string generated from transaction details
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     private String generateTransactionId() throws NoSuchAlgorithmException {
         // Create a deterministic ID based on transaction data + signature + timestamp
@@ -219,7 +222,7 @@ public class SignedFinancialTransaction implements SignedTransaction {
      * Validates the transaction by checking sender, receiver, amount and signature
      * 
      * @return true if transaction is valid, false otherwise
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     @Override
     public boolean isValid() throws NoSuchAlgorithmException {
@@ -265,7 +268,7 @@ public class SignedFinancialTransaction implements SignedTransaction {
                 X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");
                 senderPublicKey = keyFactory.generatePublic(spec);
-            }  catch (NoSuchAlgorithmException e) {
+            } catch (NoSuchAlgorithmException e) {
                 String error = "Failed to get sender public key. \n Error: " + e.getMessage();
                 logger.error(error, e.getMessage());
                 throw new NoSuchAlgorithmException(error, e);
@@ -282,15 +285,26 @@ public class SignedFinancialTransaction implements SignedTransaction {
      * Verifies the digital signature of the transaction
      * 
      * @return true if signature is valid, false otherwise
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     @Override
     public boolean verifySignature() throws NoSuchAlgorithmException {
         try {
             String data = getSummary(); // must match the signed input
             // logger.info("Verifying signature for transaction: " + data);
+            if (senderPublicKey == null && encodedSenderPublicKey != null) {
+                try {
+                    byte[] keyBytes = Base64.getDecoder().decode(encodedSenderPublicKey);
+                    X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+                    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                    senderPublicKey = keyFactory.generatePublic(spec);
+                } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                    logger.error("Failed to decode sender public key from encoded key", e.getMessage());
+                    throw new NoSuchAlgorithmException("Failed to decode sender public key", e);
+                }
+            }
             return CryptoUtils.verifySignature(data, signature, senderPublicKey);
-        }  catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             String error = "Failed to verify signature. \n Error: " + e.getMessage();
             logger.error(error, e.getMessage());
             throw new NoSuchAlgorithmException(error, e);
@@ -361,6 +375,6 @@ public class SignedFinancialTransaction implements SignedTransaction {
 
     @Override
     public Object getHash() {
-       return transactionId;
+        return transactionId;
     }
 }

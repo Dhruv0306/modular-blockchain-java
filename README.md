@@ -19,6 +19,7 @@ This project is designed for developers, researchers, and educators who want to 
 - [Architecture Overview](#️-architecture-overview)
 - [Example Use Case](#-example-use-case)
 - [How to Run](#-how-to-run)
+- [CLI Interface](#-cli-interface)
 - [Key Packages](#-key-packages)
 - [Utility Classes](#-utility-classes)
 - [Configuration](#️-configuration)
@@ -63,6 +64,7 @@ This project is designed for developers, researchers, and educators who want to 
 | 📝 Structured Logging       | SLF4J logging with environment-specific configurations                       |
 | 🧪 Comprehensive Testing    | JUnit 5 test suite with high coverage for all components                     |
 | 🌐 REST API                | Spring Boot REST API for blockchain interaction                              |
+| 🖥️ CLI Interface          | Command-line interface for blockchain and wallet operations                   |
 | 👛 Wallet Management       | Create, export, import, and manage cryptographic wallets                     |
 | 🏊 Mempool Management      | Thread-safe transaction pool with deduplication and validation               |
 
@@ -503,7 +505,26 @@ set BLOCKCHAIN_ENV=dev
 mvn exec:java -Dexec.mainClass="com.example.blockchain.Main"
 ```
 
-4. Access the REST API:
+4. Use the CLI Interface:
+
+```bash
+# Start the CLI client (ensure REST API is running first)
+java -cp target/classes com.example.blockchain.cli.ApiBasedBlockchainCLI
+
+# Available CLI commands:
+# - get-chain: View the blockchain
+# - add-transaction: Add a new transaction
+# - mine-block: Mine a new block
+# - get-pending: View pending transactions
+# - validate-chain: Validate the blockchain
+# - create-wallet: Create a new wallet
+# - get-public-keys: List all public keys
+# - export-wallet: Export wallet data
+# - import-wallet: Import wallet from file
+# - delete-wallet: Delete a wallet
+```
+
+5. Access the REST API:
 
 ```
 # View the blockchain
@@ -530,6 +551,59 @@ GET http://localhost:8080/api/validate
 ```
 
 > 📘 For detailed run instructions including all CLI options, environment configurations, and troubleshooting tips, see the [Run Guide](docs/RunGuide.md)
+> 
+> 🖥️ For comprehensive CLI usage instructions, see the [CLI Guide](docs/CLIGuide.md)
+
+---
+
+## 🖥️ CLI Interface
+
+The framework includes a user-friendly command-line interface for blockchain and wallet operations.
+
+### Quick Start
+
+1. **Start the REST API:**
+```bash
+mvn spring-boot:run
+```
+
+2. **Start the CLI (in separate terminal):**
+```bash
+java -cp target/classes com.example.blockchain.cli.ApiBasedBlockchainCLI
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `get-chain` | View the entire blockchain |
+| `add-transaction` | Add a new transaction |
+| `mine-block` | Mine a new block |
+| `get-pending` | View pending transactions |
+| `validate-chain` | Validate blockchain integrity |
+| `create-wallet` | Create a new wallet |
+| `get-public-keys` | List all public keys |
+| `export-wallet` | Export wallet for backup |
+| `import-wallet` | Import wallet from backup |
+| `delete-wallet` | Delete a wallet |
+
+### Example CLI Session
+
+```bash
+Enter command: create-wallet
+Enter User ID: alice123
+Enter User Name: Alice
+✅ Wallet created successfully!
+
+Enter command: add-transaction
+Enter sender: Alice
+Enter receiver: Bob
+Enter amount: 100
+✅ Transaction added successfully!
+
+Enter command: mine-block
+✅ Block mined successfully!
+```
 
 ---
 
@@ -544,6 +618,7 @@ GET http://localhost:8080/api/validate
 | `com.example.blockchain.crypto`        | Cryptographic utilities and signatures   |
 | `com.example.blockchain.logging`       | Logging configuration and utilities     |
 | `com.example.blockchain.api`           | REST API controllers and application    |
+| `com.example.blockchain.cli`           | Command-line interface and utilities    |
 | `com.example.blockchain.wallet`        | Wallet management components and controllers |
 | `com.example.blockchain.mempool`       | Transaction pool management and processing |
 | `com.example.blockchain.Main`          | Demo runner showing how it all works    |

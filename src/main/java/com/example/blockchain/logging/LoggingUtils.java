@@ -36,7 +36,7 @@ public class LoggingUtils {
         } catch (Exception e) {
             // Log the error and return false to indicate failure
             org.slf4j.Logger rootLogger = BlockchainLoggerFactory.getLogger(LoggingUtils.class);
-            rootLogger.error("Failed to set log level: " + e.getMessage(), e);
+            rootLogger.error("Failed to set log level: " + e.getMessage(), e.getMessage());
             String error = "Failed to set log level: " + e.getMessage();
             throw new RuntimeException(error, e);
         }

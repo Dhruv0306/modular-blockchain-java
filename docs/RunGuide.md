@@ -7,6 +7,9 @@ This guide provides detailed instructions for running the Modular Blockchain Jav
 - [Basic Run Commands](#basic-run-commands)
   - [Using Maven](#using-maven)
   - [Using Convenience Scripts](#using-convenience-scripts)
+- [CLI Interface](#cli-interface)
+  - [Starting the CLI](#starting-the-cli)
+  - [CLI Commands](#cli-commands)
 - [Environment-Specific Configurations](#environment-specific-configurations)
   - [Using Configuration Files](#using-configuration-files)
   - [Using Environment Variables](#using-environment-variables)
@@ -63,6 +66,68 @@ run-blockchain.bat
 # Run with default settings (PowerShell)
 .\run-blockchain.bat
 ```
+
+## CLI Interface
+
+The blockchain framework includes a command-line interface for easy interaction with the blockchain and wallet management.
+
+### Starting the CLI
+
+1. **Start the REST API server first:**
+```bash
+mvn spring-boot:run
+```
+
+2. **In a separate terminal, start the CLI:**
+```bash
+# Ensure the project is built
+mvn clean install
+
+# Start the CLI client
+java -cp target/classes com.example.blockchain.cli.ApiBasedBlockchainCLI
+```
+
+### CLI Commands
+
+Once the CLI is running, you can use these commands:
+
+**Blockchain Operations:**
+```bash
+get-chain          # View the entire blockchain
+add-transaction    # Add a new transaction
+mine-block         # Mine a new block
+get-pending        # View pending transactions
+validate-chain     # Validate blockchain integrity
+```
+
+**Wallet Operations:**
+```bash
+create-wallet      # Create a new wallet
+get-public-keys    # List all public keys
+get-public-key     # Get specific user's public key
+export-wallet      # Export wallet for backup
+import-wallet      # Import wallet from backup
+delete-wallet      # Delete a wallet
+```
+
+**Example CLI Session:**
+```bash
+Enter command: create-wallet
+Enter User ID: alice123
+Enter User Name: Alice
+✅ Wallet created successfully!
+
+Enter command: add-transaction
+Enter sender: Alice
+Enter receiver: Bob
+Enter amount: 100
+✅ Transaction added successfully!
+
+Enter command: mine-block
+✅ Block mined successfully!
+```
+
+> 📘 For detailed CLI usage instructions, see the [CLI Guide](CLIGuide.md)
 
 ## Environment-Specific Configurations
 
@@ -454,7 +519,36 @@ The HTML coverage report will be available at `target/site/jacoco/index.html`.
    }
    ```
 
-5. **REST API Issues**
+5. **CLI Issues**
+
+   **CLI won't start:**
+   ```bash
+   # Ensure project is built
+   mvn clean install
+   
+   # Check Java classpath
+   java -cp target/classes com.example.blockchain.cli.ApiBasedBlockchainCLI
+   ```
+   
+   **Connection errors:**
+   ```bash
+   # Verify REST API is running
+   curl http://localhost:8080/api/chain
+   
+   # Check if port 8080 is available
+   netstat -an | grep 8080
+   ```
+   
+   **Wallet file errors:**
+   ```bash
+   # Check wallet directory exists
+   ls -la wallets/
+   
+   # Verify file permissions
+   ls -la wallets/alice123/
+   ```
+
+6. **REST API Issues**
 
    If you're having trouble with the REST API:
    

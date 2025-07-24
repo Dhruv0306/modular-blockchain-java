@@ -98,7 +98,7 @@ public class ProofOfWork<T extends Transaction> implements Consensus<T> {
                 hash = HashUtils.computeHash(index, previousBlock.getHash(), timestamp, txs, nonce);
             } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
                 String error = "Error computing hash. \nError: " + e.getMessage();
-                logger.error(error, e);
+                logger.error(error, e.getMessage());
                 throw new RuntimeException(error, e);
             }
             nonce++;

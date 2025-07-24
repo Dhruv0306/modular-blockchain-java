@@ -18,6 +18,8 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
@@ -154,12 +156,15 @@ public class WalletController {
             responseBody.add("publicKey", publicKeyEntity);
             responseBody.add("privateKey", privateKeyEntity);
 
-            return ResponseEntity.ok()
-                    .contentType(MediaType.MULTIPART_MIXED)
-                    .body(responseBody);
+            return alreadyExist ? ResponseEntity.ok()
+                    .contentType(MediaType.MULTIPART_MIXED).body(responseBody)
+                    : ResponseEntity.status(HttpStatus.CREATED)
+                            .contentType(MediaType.MULTIPART_MIXED).body(responseBody);
         } catch (Exception e) {
-            logger.error("Failed to create wallet for user: {}", userName, e);
-            throw e;
+            logger.error("Failed to create wallet for user: {}", userName, e.getMessage());
+            MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
+            errorBody.add("error", "Failed to create wallet: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
         }
     }
 
@@ -170,9 +175,9 @@ public class WalletController {
      * @return List of WalletDTO objects
      */
     @GetMapping
-    public List<WalletDTO> list() {
+    public ResponseEntity<List<WalletDTO>> list() {
         logger.debug("Retrieving list of all wallets");
-        return walletList.getAllWalletEntries().stream()
+        List<WalletDTO> walletDTOs = walletList.getAllWalletEntries().stream()
                 .map(t -> {
                     try {
                         return new WalletDTO(t);
@@ -182,6 +187,7 @@ public class WalletController {
                     }
                 })
                 .collect(Collectors.toList());
+        return ResponseEntity.ok(walletDTOs);
     }
 
     /**
@@ -191,19 +197,21 @@ public class WalletController {
      * @return Map of user IDs to public key strings
      */
     @GetMapping("/public-keys")
-    public Map<Object, Object> getPublicKeys() {
+    public ResponseEntity<Map<Object, Object>> getPublicKeys() {
         logger.debug("Retrieving public keys of all wallets");
-        return walletList.getAllWalletsAsMap().entrySet().stream()
+        Map<Object, Object> publicKeys = walletList.getAllWalletsAsMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     try {
                         PublicKey publicKey = entry.getValue().wallet.getPublicKey();
                         String base64 = Base64.getEncoder().encodeToString(publicKey.getEncoded());
                         return "-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----";
                     } catch (Exception e) {
-                        logger.error("Error retrieving public key for user: {}", entry.getKey(), e);
+                        logger.error("Error retrieving public key for user: {}", entry.getKey(), e.getMessage());
                         return "Error retrieving public key";
                     }
                 }));
+
+        return ResponseEntity.ok(publicKeys);
     }
 
     /**
@@ -214,7 +222,7 @@ public class WalletController {
      * @return Public key string or error message
      */
     @GetMapping("/public-key")
-    public String getPublicKey(@RequestParam("userId") String userId) {
+    public ResponseEntity<String> getPublicKey(@RequestParam("userId") String userId) {
         logger.debug("Retrieving public key for user ID: {}", userId);
         Wallet wallet = walletList.getWalletByUserID(userId).wallet;
         if (wallet != null) {
@@ -224,13 +232,13 @@ public class WalletController {
             } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                 logger.error("Error retrieving public key for user ID: " + userId + ". " + e.getMessage());
                 String error = "Error retrieving public key for user ID: " + userId + ". " + e.getMessage();
-                return error;
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
             }
             String base64 = Base64.getEncoder().encodeToString(publicKey.getEncoded());
-            return "-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----";
+            return ResponseEntity.ok("-----BEGIN PUBLIC KEY-----\n" + base64 + "\n-----END PUBLIC KEY-----");
         } else {
             logger.warn("No wallet found for user ID: {}", userId);
-            return "No wallet found for User ID: " + userId;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No wallet found for User ID: " + userId);
         }
     }
 
@@ -260,7 +268,7 @@ public class WalletController {
             logger.warn("No wallet found for user ID: {}", userId);
             MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
             errorBody.add("Error", "No wallet found for User ID: " + userId + ". Please create a wallet first.");
-            return ResponseEntity.badRequest().body(errorBody);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody);
         }
 
         // Read Private Key from the file provided
@@ -287,14 +295,14 @@ public class WalletController {
                 logger.warn("Invalid private key provided for user ID: {}", userId);
                 MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
                 errorBody.add("Error", "Invalid private key provided for User ID: " + userId);
-                return ResponseEntity.badRequest().body(errorBody);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
             }
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             logger.error("Error Validating Privatekey. \nError: ", e.getMessage());
             String error = "Error Validating Privatekey. \nError: " + e.getMessage();
             MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
             errorBody.add("Error", error);
-            return ResponseEntity.badRequest().body(errorBody);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
         }
 
         try {
@@ -315,8 +323,10 @@ public class WalletController {
                     .contentType(MediaType.MULTIPART_MIXED)
                     .body(responseBody);
         } catch (Exception e) {
-            logger.error("Failed to export wallet data for user ID: {}", userId, e);
-            return ResponseEntity.status(500).body(null);
+            logger.error("Failed to export wallet data for user ID: {}", userId, e.getMessage());
+            MultiValueMap<String, Object> errorBody = new LinkedMultiValueMap<>();
+            errorBody.add("Error", "Failed to export wallet data: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
         }
     }
 
@@ -344,16 +354,16 @@ public class WalletController {
             // Check if a wallet with this ID already exists in the system
             if (walletList.getWalletByUserID(wallet.getUserId()) != null) {
                 logger.warn("Wallet already exists for user ID: {}", wallet.getUserId());
-                return ResponseEntity.badRequest().body("Wallet already exists for User ID: " + wallet.getUserId());
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Wallet already exists for User ID: " + wallet.getUserId());
             }
 
             // Add the valid wallet to the system's wallet list
             logger.info("Adding imported wallet for user: {}", wallet.getUserName());
             walletList.addWallet(wallet.getUserId(), wallet.getUserName(), wallet);
-            return ResponseEntity.ok("Wallet imported successfully for user: " + wallet.getUserName());
+            return ResponseEntity.status(HttpStatus.CREATED).body("Wallet imported successfully for user: " + wallet.getUserName());
         } catch (Exception e) {
-            logger.error("Failed to import wallet", e);
-            return ResponseEntity.status(500).body("Internal error during import.");
+            logger.error("Failed to import wallet", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal error during import.");
         }
     }
 
@@ -371,7 +381,7 @@ public class WalletController {
         // Verify the wallet exists
         Wallet wallet = walletList.getWalletByUserID(userId).wallet;
         if (wallet == null) {
-            return ResponseEntity.badRequest().body("No wallet found with userId: " + userId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No wallet found with userId: " + userId);
         }
 
         // Check if the private key file is empty
@@ -395,16 +405,16 @@ public class WalletController {
         // Validate the provided private key matches the wallet
         try {
             if (!WalletUtils.isPrivateKeyVlid(userId, wallet, privateKeyString)) {
-                return ResponseEntity.status(403).body("Private key does not match. Deletion unauthorized.");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Private key does not match. Deletion unauthorized.");
             }
         } catch (NoSuchAlgorithmException e) {
             logger.error("Error validating private key: " + e.getMessage());
             String error = "Error validating private key: " + e.getMessage();
-            return ResponseEntity.status(500).body(error);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         } catch (InvalidKeySpecException e) {
             logger.error("Error validating private key: " + e.getMessage());
             String error = "Error validating private key: " + e.getMessage();
-            return ResponseEntity.status(500).body(error);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
 
         // Remove the wallet if validation passes

@@ -45,7 +45,7 @@ class HashUtilsTest {
                     block.getNonce());
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             String error = "Failed to compute block hash: " + e.getMessage();
-            logger.error(error, e);
+            logger.error(error, e.getMessage());
             throw new RuntimeException(error, e);
         }
 
