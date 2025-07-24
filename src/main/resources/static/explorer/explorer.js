@@ -1,7 +1,12 @@
+let fullChain = [];
+
 async function loadBlockchain() {
   const response = await fetch('/api/chain');
-  const chain = await response.json();
+  fullChain = await response.json();
+  renderBlocks(fullChain);
+}
 
+function renderBlocks(chain) {
   const container = document.getElementById('blockchain');
   container.innerHTML = '';
 
@@ -36,7 +41,23 @@ function renderTransactions(txs) {
   }).join('');
 }
 
-window.onload = loadBlockchain;
+window.onload = () => {
+  loadBlockchain();
+  
+  // Add search functionality
+  document.getElementById("search").addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const filtered = fullChain.filter(block =>
+      block.hash.toLowerCase().includes(value) ||
+      block.index.toString() === value ||
+      block.transactions.some(tx =>
+        tx.sender?.toLowerCase().includes(value) ||
+        tx.receiver?.toLowerCase().includes(value)
+      )
+    );
+    renderBlocks(filtered);
+  });
+};
 
 // Auto-refresh every 10 seconds
 setInterval(() => {
