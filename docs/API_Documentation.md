@@ -132,12 +132,15 @@ Adds a new transaction to the mempool (transaction pool). The transaction will b
   ```
   
 - **Success Response**:
-  - **Code**: 200 OK
+  - **Code**: 201 Created
   - **Content**: `"Transaction added to MemPool."`
 - **Error Response**:
-  - **Code**: 200 OK (with error message)
+  - **Code**: 400 Bad Request
   - **Content**: `"Invalid transaction data."`
+  - **Code**: 422 Unprocessable Entity
   - **Content**: `"Error processing transaction: [error details]"`
+  - **Code**: 500 Internal Server Error
+  - **Content**: `"Unexpected server error"`
 
 **Note**: When adding a signed transaction, the system will automatically retrieve the sender's wallet and sign the transaction using the stored private key.
 
@@ -149,12 +152,15 @@ Mines a new block with transactions from the mempool, up to the configured maxim
 - **Method**: `POST`
 - **URL Parameters**: None
 - **Success Response**:
-  - **Code**: 200 OK
+  - **Code**: 201 Created
   - **Content**: `"Block mined and added to chain: 00000a1b2c3d4e5f..."`
 - **Error Response**:
-  - **Code**: 200 OK (with error message)
+  - **Code**: 400 Bad Request
   - **Content**: `"No transactions to mine."`
+  - **Code**: 409 Conflict
   - **Content**: `"Block mining failed."`
+  - **Code**: 500 Internal Server Error
+  - **Content**: `"Mining operation failed"`
 
 **Note**: The maximum number of transactions per block is configured in the blockchain properties (default is 10). If there are more pending transactions than this limit, only the top N transactions will be included in the block.
 
@@ -204,8 +210,10 @@ Validates the integrity of the entire blockchain. This checks that all blocks ar
   - **Code**: 200 OK
   - **Content**: `"Chain is valid."`
 - **Error Response**:
-  - **Code**: 200 OK (with error message)
+  - **Code**: 409 Conflict
   - **Content**: `"Chain is invalid!"`
+  - **Code**: 500 Internal Server Error
+  - **Content**: `"Validation error occurred"`
 
 **Note**: This operation performs a full validation of the entire blockchain, which may be resource-intensive for large chains.
 
@@ -224,13 +232,17 @@ Creates a new wallet with a key pair or returns an existing wallet if the userId
   - `userId`: Unique identifier for the wallet
   - `userName`: Human-readable name for the wallet owner
 - **Success Response**:
-  - **Code**: 200 OK
+  - **Code**: 201 Created
   - **Content**: Multipart response containing:
     - Messages with wallet creation status
     - Usage instructions
     - Public key file for download
     - Private key file for download
 - **Error Response**:
+  - **Code**: 409 Conflict
+  - **Content**: `"Wallet already exists for User ID: [userId]"`
+  - **Code**: 400 Bad Request
+  - **Content**: `"Invalid userId or userName provided"`
   - **Code**: 500 Internal Server Error
   - **Content**: Error message with details
 
@@ -299,8 +311,9 @@ Retrieves the public key for a specific user in PEM format.
   -----END PUBLIC KEY-----
   ```
 - **Error Response**:
-  - **Code**: 200 OK (with error message)
+  - **Code**: 404 Not Found
   - **Content**: `"No wallet found for User ID: [userId]"`
+  - **Code**: 500 Internal Server Error
   - **Content**: `"Error retrieving public key for user ID: [userId]. [error details]"`
 
 ### Export Wallet Data
@@ -342,14 +355,17 @@ Imports a wallet from a backup file previously exported from the system.
 - **Form Parameters**:
   - `file`: The wallet backup file
 - **Success Response**:
-  - **Code**: 200 OK
+  - **Code**: 201 Created
   - **Content**: `"Wallet imported successfully for user: [userName]"`
 - **Error Response**:
   - **Code**: 400 Bad Request
   - **Content**: Various error messages:
     - `"File is empty. Please upload a valid wallet file."`
     - `"Invalid wallet data in file."`
-    - `"Wallet already exists for User ID: [userId]"`
+  - **Code**: 409 Conflict
+  - **Content**: `"Wallet already exists for User ID: [userId]"`
+  - **Code**: 422 Unprocessable Entity
+  - **Content**: `"Invalid wallet file format"`
   - **Code**: 500 Internal Server Error
   - **Content**: `"Internal error during import."`
 
@@ -424,12 +440,16 @@ Financial transaction with digital signature for enhanced security. The signatur
 
 The API uses HTTP status codes to indicate the success or failure of requests:
 
-- `200 OK`: The request was successful
+- `200 OK`: The request was successful (for read operations)
+- `201 Created`: Resource was successfully created
 - `400 Bad Request`: The request was invalid or cannot be served
 - `403 Forbidden`: Authentication failed or operation not permitted
-- `500 Internal Server Error`: An error occurred on the server
+- `404 Not Found`: The requested resource was not found
+- `409 Conflict`: Request conflicts with current state (e.g., duplicate resource, invalid blockchain)
+- `422 Unprocessable Entity`: Request is well-formed but contains semantic errors
+- `500 Internal Server Error`: An unexpected error occurred on the server
 
-Error responses include a message describing the error. Note that some error responses may return a 200 OK status code with an error message in the response body.
+Error responses include a descriptive message explaining the specific error condition.
 
 ## Persistence
 
