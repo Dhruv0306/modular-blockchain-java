@@ -92,6 +92,21 @@ public class BlockchainController {
     }
 
     /**
+     * Retrieves a single block by its index.
+     * 
+     * @param index Block index to retrieve
+     * @return Block data or 404 if not found
+     */
+    @GetMapping("/block/{index}")
+    public ResponseEntity<Block<Transaction>> getBlock(@PathVariable("index") int index) {
+        if (index < 0 || index >= blockchain.getBlockCount()) {
+            return ResponseEntity.notFound().build();
+        }
+        logger.info("Retriving Block # {}", index);
+        return ResponseEntity.ok(blockchain.getChain().get(index));
+    }
+
+    /**
      * Adds a new transaction to the pending transaction pool.
      * Transaction will be included in the next mined block.
      * 
