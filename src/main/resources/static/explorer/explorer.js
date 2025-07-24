@@ -8,24 +8,34 @@ async function loadBlockchain() {
 
 function renderBlocks(chain) {
   const container = document.getElementById('blockchain');
-  container.innerHTML = '';
+  
+  if (chain.length === 0) {
+    container.innerHTML = '<p>No blocks found.</p>';
+    return;
+  }
 
-  chain.forEach(block => {
-    const blockEl = document.createElement('div');
-    blockEl.className = 'block';
-
-    blockEl.innerHTML = `
-      <h3>📦 Block #${block.index}</h3>
-      <p><strong>Hash:</strong> ${block.hash}</p>
-      <p><strong>PrevHash:</strong> ${block.previousHash}</p>
-      <p><strong>Nonce:</strong> ${block.nonce}</p>
-      <p><strong>Timestamp:</strong> ${new Date(block.timestamp).toLocaleString()}</p>
-      <p><strong>Transactions:</strong></p>
-      <div class="tx">${renderTransactions(block.transactions)}</div>
-    `;
-
-    container.appendChild(blockEl);
-  });
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Block</th>
+          <th>Hash</th>
+          <th>Transactions</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${chain.map(block => `
+          <tr>
+            <td>Block #${block.index}</td>
+            <td>${block.hash.substring(0, 16)}...</td>
+            <td>${block.transactions.length} transaction(s)</td>
+            <td><button class="view-btn" onclick="viewBlock(${block.index})">View Details</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 function renderTransactions(txs) {
@@ -67,4 +77,9 @@ setInterval(() => {
 // Dark mode toggle
 function toggleTheme() {
   document.body.classList.toggle("dark-mode");
+}
+
+// Navigate to block detail page
+function viewBlock(index) {
+  window.location.href = `/explorer/block.html?id=${index}`;
 }

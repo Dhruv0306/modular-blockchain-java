@@ -83,3 +83,49 @@ button {
 .dark-mode .no-tx{
   color: #777777;
 }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+}
+
+th, td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background: #f8f9fa;
+  font-weight: bold;
+}
+
+.view-btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.dark-mode table {
+  background: #2c2c2c;
+}
+
+.dark-mode th {
+  background: #1e1e1e;
+  color: #eee;
+}
+
+.dark-mode td {
+  border-color: #555;
+  color: #eee;
+}
+
+.dark-mode .view-btn {
+  background: #ffaa00;
+  border-color: #ffaa00;
+  color: #000;
+}
