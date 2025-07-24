@@ -8,9 +8,9 @@
 | 4  | 🔐 **Wallet System & Key Management**                 | Generate/manage public/private keys, sign transactions securely             | `feature/wallet-support`              |✅              |
 | 5  | 🕒 **Transaction Pool / Mempool**                     | Manage unconfirmed transactions waiting to be mined                         | `feature/txpool-mempool-sim`          |✅              |
 | 6  | 🌍 **Multi-Node Simulation**                          | Simulate syncing between blockchain nodes (mock networking)                 | `feature/multi-node-sync`             |❌ Not Fisible  |
-| 7  | 🧑‍💻 **CLI Runner**                                   | Create a `BlockchainCLI.java` for interactive terminal-based operations     | `feature/cli-interface`               |☑️              |
-| 8  | 📤 **JSON Import/Export CLI Commands**                | Commands to export and import chain data to/from JSON files                 | `feature/json-cli-commands`           |⬜              |
-| 9  | 🧭 **Visual Block Explorer (Optional)**               | Build a lightweight frontend to visualize blockchain activity               | `feature/block-explorer-ui`           |⬜              |
+| 7  | 🧑‍💻 **CLI Runner**                                   | Create a `BlockchainCLI.java` for interactive terminal-based operations     | `feature/cli-interface`               |✅              |
+| 8  | 📤 **JSON Import/Export CLI Commands**                | Commands to export and import chain data to/from JSON files                 | `feature/json-cli-commands`           |✅              |
+| 9  | 🧭 **Visual Block Explorer (Optional)**               | Build a lightweight frontend to visualize blockchain activity               | `feature/block-explorer-ui`           |☑️              |
 
 > **Use these Unicode symbols accordingly based on the task status: ✅ (U+2705) for completed, ⬜ (U+2B1C) for not started, and ☑️ (U+2611) for in progress or partially done.**
 ### 🔧 Dependencies & Enhancements
@@ -20,4 +20,4 @@
 - Include **unit tests and integration tests** in each feature branch.
 - Integrate with your existing logging and configuration system.
 
-> **🧑‍💻 Starting: CLI Runner (Task 7)**
+> **🧭 Starting: Visual Block Explorer (Task 9)**
