@@ -63,3 +63,8 @@ window.onload = () => {
 setInterval(() => {
   loadBlockchain();
 }, 10000);
+
+// Dark mode toggle
+function toggleTheme() {
+  document.body.classList.toggle("dark-mode");
+}

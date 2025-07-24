@@ -42,3 +42,44 @@ body {
   border-radius: 6px;
   font-size: 1rem;
 }
+
+button {
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #007bff;
+  background: #007bff;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dark-mode {
+  background: #1e1e1e;
+  color: #eee;
+}
+
+.dark-mode .block {
+  background: #2c2c2c;
+  border-color: #ffaa00;
+  box-shadow: 0 0 8px #ffaa00fd;
+}
+
+.dark-mode #search {
+  background: #2c2c2c;
+  border-color: #555;
+  color: #eee;
+}
+
+.dark-mode button {
+  background: #ffaa00;
+  border-color: #ffaa00;
+  color: #000;
+}
+
+.dark-mode .tx {
+  color: #ddd;
+}
+
+.dark-mode .no-tx{
+  color: #777777;
+}
